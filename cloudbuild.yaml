@@ -1,4 +1,14 @@
 steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/gui-dev-br/cloudruns/home-gcp:latest'
+      - '.'
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/gui-dev-br/cloudruns/home-gcp:latest'
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - run
@@ -7,3 +17,5 @@ steps:
       - --image=us-central1-docker.pkg.dev/gui-dev-br/cloudruns/home-gcp:latest
       - --region=us-central1
       - --platform=managed
+images:
+  - 'us-central1-docker.pkg.dev/gui-dev-br/cloudruns/home-gcp:latest'
