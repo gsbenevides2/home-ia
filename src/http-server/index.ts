@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { CodespacesControllers } from "./controllers/codespaces.ts";
+import { CronControllers } from "./controllers/cron.ts";
 
 export class HTTPServer {
   private static instance: HTTPServer = new HTTPServer();
@@ -27,6 +28,7 @@ export class HTTPServer {
   }
 
   private makeRoutes() {
+    this.router.register(CronControllers);
     this.router.register(CodespacesControllers);
   }
 }

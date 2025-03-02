@@ -3,15 +3,6 @@ import { CodespacesSensor } from "../../home-assistant/MySensors/CodespacesSenso
 import { Controllers } from "./types.ts";
 
 export const CodespacesControllers: Controllers = (router) => {
-  // Get Codespaces machine status
-  router.get("/codespaces", async () => {
-    const codespacesComputeEngineMachine = CodespacesComputeEngineMachine.getInstance();
-    const codespacesSensor = CodespacesSensor.getInstance();
-    const status = await codespacesComputeEngineMachine.getMachineStatus();
-    await codespacesSensor.sendState(status);
-    return { status };
-  });
-
   // Toogle Codespaces machine
   router.post("/codespaces", async () => {
     const codespacesCompute = await CodespacesComputeEngineMachine.getInstance();
