@@ -1,12 +1,15 @@
 {
   "tasks": {
-    "dev": "deno run -A --env-file=.env --watch main.ts",
-    "start": "deno run -A --env-file=.env main.ts"
+    "dev": "deno run -A --env-file=.env --watch src/main.ts",
+    "start": "deno run -A --env-file=.env src/main.ts"
   },
   "imports": {
     "@google-cloud/compute": "npm:@google-cloud/compute",
     "axios": "npm:axios",
-    "fastify": "npm:fastify",
-    "@fastify/middie": "npm:@fastify/middie"
+    "hono": "npm:hono"
+  },
+  "compilerOptions": {
+    "jsx": "precompile",
+    "jsxImportSource": "hono/jsx"
   }
 }
