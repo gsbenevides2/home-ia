@@ -24,6 +24,26 @@ app.use(async (ctx, next) => {
   await next();
 });
 
+app.use(async (ctx, next) => {
+  await next();
+  try {
+    const method = ctx.req.method;
+    const accept = ctx.req.header("Accept");
+    const ua = ctx.req.header("User-Agent");
+    const reqBody = await ctx.req.raw.clone().text();
+    const resBody = await ctx.res.clone().text();
+    const url = ctx.req.url;
+    const status = ctx.res.status;
+
+    console.log({ method, accept, url, status, ua, reqBody, resBody });
+  } catch (e) {
+    console.log(e);
+  }
+
+  return;
+});
+
+// Codespaces Compute Engine toogle
 app.post("/codespaces", async (c) => {
   const codespacesCompute = await CodespacesComputeEngineMachine.getInstance();
   await codespacesCompute.toogleMachine();
@@ -33,7 +53,9 @@ app.post("/codespaces", async (c) => {
   return c.json({ status });
 });
 
+// Cron job
 app.get("/cron", async (c) => {
+  console.log("Cron job started");
   // Codespaces Sensor Update
   const codespacesComputeEngineMachine = CodespacesComputeEngineMachine.getInstance();
   const codespacesSensor = CodespacesSensor.getInstance();
