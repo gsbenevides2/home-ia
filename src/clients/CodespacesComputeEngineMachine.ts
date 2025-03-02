@@ -31,7 +31,7 @@ export class CodespacesComputeEngineMachine {
     if (status === CodespacesInstanceStatus.RUNNING) {
       console.log("Instance is already running. Stopping it.");
       await this.instancesClient.stop(this.instanceData);
-    } else if (status === CodespacesInstanceStatus.STOPPED) {
+    } else if (status === CodespacesInstanceStatus.STOPPED || status === CodespacesInstanceStatus.TERMINATED) {
       console.log("Instance is stopped. Starting it.");
       await this.instancesClient.start(this.instanceData);
     } else {
