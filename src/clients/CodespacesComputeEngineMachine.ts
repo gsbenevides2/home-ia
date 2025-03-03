@@ -33,14 +33,20 @@ export class CodespacesComputeEngineMachine {
   async toogleMachine() {
     const status = await this.getMachineStatus();
     if (StatesToStop.includes(status)) {
-      console.log("Instance is already running. Stopping it.");
-      await this.instancesClient.stop(this.instanceData);
+      await this.stopMachine();
     } else if (StatesToStart.includes(status)) {
-      console.log("Instance is stopped. Starting it.");
-      await this.instancesClient.start(this.instanceData);
+      await this.startMachine();
     } else {
       throw new Error(`Instance is in an invalid state: ${status}`);
     }
+  }
+
+  async startMachine() {
+    await this.instancesClient.start(this.instanceData);
+  }
+
+  async stopMachine() {
+    await this.instancesClient.stop(this.instanceData);
   }
 
   async getMachineStatus() {

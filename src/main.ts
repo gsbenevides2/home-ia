@@ -11,6 +11,26 @@ if (!port) {
 const app = new Hono();
 
 app.use(async (ctx, next) => {
+  await next();
+  try {
+    const method = ctx.req.method;
+    const accept = ctx.req.header("Accept");
+    const ua = ctx.req.header("User-Agent");
+    const authorization = ctx.req.header("Authorization");
+    const reqBody = await ctx.req.raw.clone().text();
+    const resBody = await ctx.res.clone().text();
+    const url = ctx.req.url;
+    const status = ctx.res.status;
+
+    console.log({ method, accept, url, status, ua, reqBody, resBody, authorization });
+  } catch (e) {
+    console.log(e);
+  }
+
+  return;
+});
+
+app.use(async (ctx, next) => {
   // CORS
   ctx.res.headers.set("Access-Control-Allow-Origin", "*");
   ctx.res.headers.set("Access-Control-Allow-Headers", "*");
@@ -25,22 +45,15 @@ app.use(async (ctx, next) => {
 });
 
 app.use(async (ctx, next) => {
-  await next();
-  try {
-    const method = ctx.req.method;
-    const accept = ctx.req.header("Accept");
-    const ua = ctx.req.header("User-Agent");
-    const reqBody = await ctx.req.raw.clone().text();
-    const resBody = await ctx.res.clone().text();
-    const url = ctx.req.url;
-    const status = ctx.res.status;
-
-    console.log({ method, accept, url, status, ua, reqBody, resBody });
-  } catch (e) {
-    console.log(e);
+  const authorization = ctx.req.header("Authorization");
+  if (!authorization) {
+    return ctx.json({ error: "Authorization header is required" }, 401);
   }
-
-  return;
+  const token = authorization.split(" ")[1];
+  if (token !== Deno.env.get("API_TOKEN")) {
+    return ctx.json({ error: "Invalid token" }, 401);
+  }
+  await next();
 });
 
 // Codespaces Compute Engine toogle
@@ -52,6 +65,26 @@ app.post("/codespaces", async (c) => {
   await codespacesSensor.sendState(status);
   return c.json({ status });
 });
+
+app.post("/codespaces/start", async (c) => {
+  const codespacesCompute = await CodespacesComputeEngineMachine.getInstance();
+  await codespacesCompute.startMachine();
+  const status = await codespacesCompute.getMachineStatus();
+  const codespacesSensor = CodespacesSensor.getInstance();
+  await codespacesSensor.sendState(status);
+  return c.json({ status });
+});
+
+app.post("/codespaces/stop", async (c) => {
+  const codespacesCompute = await CodespacesComputeEngineMachine.getInstance();
+  await codespacesCompute.stopMachine();
+  const status = await codespacesCompute.getMachineStatus();
+  const codespacesSensor = CodespacesSensor.getInstance();
+  await codespacesSensor.sendState(status);
+  return c.json({ status });
+});
+
+app.post();
 
 // Cron job
 app.get("/cron", async (c) => {
