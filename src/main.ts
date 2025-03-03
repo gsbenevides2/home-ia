@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { CodespacesComputeEngineMachine } from "./clients/CodespacesComputeEngineMachine.ts";
 import { DiretoDosTrens } from "./clients/DiretoDosTres.ts";
 import { CodespacesSensor } from "./home-assistant/MySensors/CodespacesSensor.ts";
+import { StatusSensors } from "./home-assistant/MySensors/StatusSensors.ts";
 import { TrainSensors } from "./home-assistant/MySensors/TrainSensors.ts";
 
 const port = Deno.env.get("PORT");
@@ -102,6 +103,13 @@ app.get("/cron", async (c) => {
   const lineStatus = await DiretoDosTrens.getInstance().getLines();
   await trainSensors.updateSensors(lineStatus);
 
+  // Status
+  await StatusSensors.getInstance().sendAllStatus();
+
+  return c.json({ status: "ok" });
+});
+
+app.get("/cron/new", (c) => {
   return c.json({ status: "ok" });
 });
 
