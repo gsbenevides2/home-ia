@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { CodespacesComputeEngineMachine } from "./clients/CodespacesComputeEngineMachine.ts";
+import { DiretoDosTrens } from "./clients/DiretoDosTres.ts";
 import { CodespacesSensor } from "./home-assistant/MySensors/CodespacesSensor.ts";
+import { TrainSensors } from "./home-assistant/MySensors/TrainSensors.ts";
 
 const port = Deno.env.get("PORT");
 const IS_GOOGLE_CLOUD_RUN = Deno.env.get("K_SERVICE") !== undefined;
@@ -90,10 +92,15 @@ app.post();
 app.get("/cron", async (c) => {
   console.log("Cron job started");
   // Codespaces Sensor Update
-  const codespacesComputeEngineMachine = CodespacesComputeEngineMachine.getInstance();
-  const codespacesSensor = CodespacesSensor.getInstance();
-  const status = await codespacesComputeEngineMachine.getMachineStatus();
-  await codespacesSensor.sendState(status);
+  // const codespacesComputeEngineMachine = CodespacesComputeEngineMachine.getInstance();
+  // const codespacesSensor = CodespacesSensor.getInstance();
+  // const status = await codespacesComputeEngineMachine.getMachineStatus();
+  // await codespacesSensor.sendState(status);
+
+  // Train Sensor Update
+  const trainSensors = TrainSensors.getInstance();
+  const lineStatus = await DiretoDosTrens.getInstance().getLines();
+  await trainSensors.updateSensors(lineStatus);
 
   return c.json({ status: "ok" });
 });
