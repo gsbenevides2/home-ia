@@ -92,10 +92,10 @@ app.post();
 app.get("/cron", async (c) => {
   console.log("Cron job started");
   // Codespaces Sensor Update
-  // const codespacesComputeEngineMachine = CodespacesComputeEngineMachine.getInstance();
-  // const codespacesSensor = CodespacesSensor.getInstance();
-  // const status = await codespacesComputeEngineMachine.getMachineStatus();
-  // await codespacesSensor.sendState(status);
+  const codespacesComputeEngineMachine = CodespacesComputeEngineMachine.getInstance();
+  const codespacesSensor = CodespacesSensor.getInstance();
+  const status = await codespacesComputeEngineMachine.getMachineStatus();
+  await codespacesSensor.sendState(status);
 
   // Train Sensor Update
   const trainSensors = TrainSensors.getInstance();

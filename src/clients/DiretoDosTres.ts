@@ -53,6 +53,7 @@ export class DiretoDosTrens {
         "User-Agent": "Mozilla/5.0",
       },
     });
+    console.log("Line response", lineResponse.data);
 
     return lineResponse.data.map((line) => {
       const status = this.getStatus(line.situacao);
