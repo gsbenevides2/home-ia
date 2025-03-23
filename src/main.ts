@@ -1,9 +1,5 @@
 import { Hono } from "hono";
-import { CodespacesComputeEngineMachine } from "./clients/CodespacesComputeEngineMachine.ts";
-import { DiretoDosTrens } from "./clients/DiretoDosTres.ts";
-import { CodespacesSensor } from "./home-assistant/MySensors/CodespacesSensor.ts";
-import { StatusSensors } from "./home-assistant/MySensors/StatusSensors.ts";
-import { TrainSensors } from "./home-assistant/MySensors/TrainSensors.ts";
+import { addToQueue, Operations } from "./queue.ts";
 
 const port = Deno.env.get("PORT");
 const IS_GOOGLE_CLOUD_RUN = Deno.env.get("K_SERVICE") !== undefined;
@@ -25,7 +21,7 @@ app.use(async (ctx, next) => {
     const url = ctx.req.url;
     const status = ctx.res.status;
 
-    console.log({ method, accept, url, status, ua, reqBody, resBody, authorization });
+    console.log("Request processed", { method, accept, url, status, ua, reqBody, resBody, authorization });
   } catch (e) {
     console.log(e);
   }
@@ -60,53 +56,31 @@ app.use(async (ctx, next) => {
 });
 
 // Codespaces Compute Engine toogle
-app.post("/codespaces", async (c) => {
-  const codespacesCompute = await CodespacesComputeEngineMachine.getInstance();
-  await codespacesCompute.toogleMachine();
-  const status = await codespacesCompute.getMachineStatus();
-  const codespacesSensor = CodespacesSensor.getInstance();
-  await codespacesSensor.sendState(status);
-  return c.json({ status });
+app.post("/codespaces", (c) => {
+  addToQueue(Operations.codespacesToggle);
+  return c.json({ status: "Codespaces Compute Engine toogle" });
 });
 
-app.post("/codespaces/start", async (c) => {
-  const codespacesCompute = await CodespacesComputeEngineMachine.getInstance();
-  await codespacesCompute.startMachine();
-  const status = await codespacesCompute.getMachineStatus();
-  const codespacesSensor = CodespacesSensor.getInstance();
-  await codespacesSensor.sendState(status);
-  return c.json({ status });
+app.post("/codespaces/start", (c) => {
+  addToQueue(Operations.codespacesStart);
+  return c.json({ status: "Codespaces Compute Engine start" });
 });
 
-app.post("/codespaces/stop", async (c) => {
-  const codespacesCompute = await CodespacesComputeEngineMachine.getInstance();
-  await codespacesCompute.stopMachine();
-  const status = await codespacesCompute.getMachineStatus();
-  const codespacesSensor = CodespacesSensor.getInstance();
-  await codespacesSensor.sendState(status);
-  return c.json({ status });
+app.post("/codespaces/stop", (c) => {
+  addToQueue(Operations.codespacesStop);
+  return c.json({ status: "Codespaces Compute Engine stop" });
 });
 
-app.post();
+app.get("/codespaces/status", async (c) => {
+  addToQueue(Operations.updateCodespacesSensor);
+  return c.json({ status: "Codespaces Compute Engine status" });
+});
 
 // Cron job
-app.get("/cron", async (c) => {
-  console.log("Cron job started");
-  // Codespaces Sensor Update
-  const codespacesComputeEngineMachine = CodespacesComputeEngineMachine.getInstance();
-  const codespacesSensor = CodespacesSensor.getInstance();
-  const status = await codespacesComputeEngineMachine.getMachineStatus();
-  await codespacesSensor.sendState(status);
-
-  // Train Sensor Update
-  const trainSensors = TrainSensors.getInstance();
-  const lineStatus = await DiretoDosTrens.getInstance().getLines();
-  await trainSensors.updateSensors(lineStatus);
-
-  // Status
-  await StatusSensors.getInstance().sendAllStatus();
-
-  return c.json({ status: "ok" });
+app.get("/cron", (c) => {
+  addToQueue(Operations.updateTrainSensors);
+  addToQueue(Operations.updateCodespacesSensor);
+  return c.json({ status: "Cron job started" });
 });
 
 app.get("/cron/new", (c) => {
