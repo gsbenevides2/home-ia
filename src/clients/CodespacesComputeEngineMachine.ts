@@ -1,6 +1,6 @@
 import { InstancesClient } from "@google-cloud/compute";
+import { Buffer } from "node:buffer";
 import { GoogleAuth } from "npm:google-auth-library";
-
 export enum CodespacesInstanceStatus {
   PROVISIONING = "PROVISIONING",
   STAGING = "STAGING",
@@ -29,7 +29,7 @@ export class CodespacesComputeEngineMachine {
     if (!this.instanceClient) {
       const projectId = Deno.env.get("GCP_SERVICE_ACCOUNT_PROJECT_ID");
       const clientEmail = Deno.env.get("GCP_SERVICE_ACCOUNT_CLIENT_EMAIL");
-      const privateKey = Deno.env.get("GCP_SERVICE_ACCOUNT_PRIVATE_KEY")?.replace(/\\n/g, "\n");
+      const privateKey = Buffer.from(Deno.env.get("GCP_SERVICE_ACCOUNT_PRIVATE_KEY") ?? "", "base64").toString("ascii");
 
       if (!projectId || !clientEmail || !privateKey) {
         throw new Error("Missing required GCP credentials in environment variables");
