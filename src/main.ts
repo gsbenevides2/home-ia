@@ -80,6 +80,7 @@ app.get("/codespaces/status", async (c) => {
 app.get("/cron", (c) => {
   addToQueue(Operations.updateTrainSensors);
   addToQueue(Operations.updateCodespacesSensor);
+  addToQueue(Operations.updatePageStatusSensors);
   return c.json({ status: "Cron job started" });
 });
 
