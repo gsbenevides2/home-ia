@@ -2,6 +2,7 @@ import { codespacesStart } from "./operations/codespacesStart.ts";
 import { codespacesStop } from "./operations/codespacesStop.ts";
 import { codespacesToggle } from "./operations/codespacesToggle.ts";
 import { updateCodespacesSensor } from "./operations/updateCodespacesSensor.ts";
+import { updateDNSSensors } from "./operations/updateDNSSensors.ts";
 import { updatePageStatusSensors } from "./operations/updatePageStatusSensors.ts";
 import { updateTrainSensors } from "./operations/updateTrainSensors.ts";
 export const db = await Deno.openKv();
@@ -13,6 +14,7 @@ export enum Operations {
   updateTrainSensors = "update-train-sensors",
   updateCodespacesSensor = "update-codespaces-sensor",
   updatePageStatusSensors = "update-page-status-sensors",
+  updateDNSSensors = "update-dns-sensors",
 }
 
 const nonImplemented = () => {
@@ -29,6 +31,7 @@ const opFuncs: Record<Operations, () => Promise<void>> = {
   "update-train-sensors": updateTrainSensors,
   "update-codespaces-sensor": updateCodespacesSensor,
   "update-page-status-sensors": updatePageStatusSensors,
+  "update-dns-sensors": updateDNSSensors,
 };
 
 db.listenQueue(async (operation: Operations) => {

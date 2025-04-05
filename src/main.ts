@@ -81,11 +81,11 @@ app.get("/cron", (c) => {
   addToQueue(Operations.updateTrainSensors);
   addToQueue(Operations.updateCodespacesSensor);
   addToQueue(Operations.updatePageStatusSensors);
+  addToQueue(Operations.updateDNSSensors);
   return c.json({ status: "Cron job started" });
 });
 
 app.get("/cron/new", (c) => {
-  addToQueue(Operations.updatePageStatusSensors);
   return c.json({ status: "ok" });
 });
 
