@@ -85,6 +85,7 @@ app.get("/cron", (c) => {
 });
 
 app.get("/cron/new", (c) => {
+  addToQueue(Operations.updatePageStatusSensors);
   return c.json({ status: "ok" });
 });
 

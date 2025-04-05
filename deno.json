@@ -6,7 +6,8 @@
   "imports": {
     "@google-cloud/compute": "npm:@google-cloud/compute",
     "axios": "npm:axios",
-    "hono": "npm:hono"
+    "hono": "npm:hono",
+    "postgres": "https://deno.land/x/postgres/mod.ts"
   },
   "compilerOptions": {
     "jsx": "precompile",
