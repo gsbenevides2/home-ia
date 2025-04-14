@@ -104,5 +104,7 @@ if (!port) {
 app.listen(port, async () => {
   console.log(`HTTPServer is running on port ${port}`);
   await MCPClient.getInstance().connectToServer();
-  await DiscordBot.getInstance().connect();
+  if (Deno.env.get("ENABLE_DISCORD") === "true") {
+    await DiscordBot.getInstance().connect();
+  }
 });
