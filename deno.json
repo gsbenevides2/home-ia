@@ -1,13 +1,19 @@
 {
   "tasks": {
     "dev": "deno run -A --unstable-kv --env-file=.env --watch src/main.ts",
-    "start": "deno run -A --unstable-kv --env-file=.env src/main.ts"
+    "start": "deno run -A --unstable-kv --env-file=.env src/main.ts",
+    "compile": "deno compile -A --unstable-kv --env-file=.env --output home-gcp src/main.ts"
   },
   "imports": {
+    "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@1",
     "@google-cloud/compute": "npm:@google-cloud/compute",
     "axios": "npm:axios",
-    "hono": "npm:hono",
-    "postgres": "https://deno.land/x/postgres/mod.ts"
+    "postgres": "https://deno.land/x/postgres@v0.19.3/mod.ts",
+    "express": "npm:express@4",
+    "zod-express-middleware": "npm:zod-express-middleware",
+    "zod": "npm:zod",
+    "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk",
+    "discord.js": "npm:discord.js"
   },
   "compilerOptions": {
     "jsx": "precompile",

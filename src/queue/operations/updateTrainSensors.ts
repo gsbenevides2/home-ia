@@ -1,5 +1,5 @@
-import { DiretoDosTrens } from "../clients/DiretoDosTres.ts";
-import { TrainSensors } from "../home-assistant/MySensors/TrainSensors.ts";
+import { DiretoDosTrens } from "../../clients/DiretoDosTres.ts";
+import { TrainSensors } from "../../clients/homeAssistant/MySensors/TrainSensors.ts";
 
 export async function updateTrainSensors() {
   const trainSensors = TrainSensors.getInstance();

@@ -1,16 +1,12 @@
 import { Entity, EntityAttributes, SensorType } from "./Entity.ts";
 
-export class BinarySensor extends Entity {
-  protected declare attributes: BinarySensorAttributes;
-
-  constructor(entity_id: string, unique_id: string, attributes: BinarySensorAttributes) {
+export class BinarySensor<SensorAttributes extends BinarySensorAttributes> extends Entity<SensorState, SensorAttributes> {
+  constructor(entity_id: string, unique_id: string, attributes: SensorAttributes) {
     super(SensorType.BINARY_SENSOR, entity_id, unique_id, attributes);
   }
-
-  override sendState(state: boolean): Promise<void> {
-    return super.sendState(state ? "on" : "off");
-  }
 }
+
+type SensorState = "on" | "off";
 
 export enum BinarySensorDeviceClass {
   BATTERY = "battery",

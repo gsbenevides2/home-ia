@@ -4,25 +4,16 @@ import { codespacesToggle } from "./operations/codespacesToggle.ts";
 import { updateCodespacesSensor } from "./operations/updateCodespacesSensor.ts";
 import { updateDNSSensors } from "./operations/updateDNSSensors.ts";
 import { updatePageStatusSensors } from "./operations/updatePageStatusSensors.ts";
+import { updateSensors } from "./operations/updateSensors.ts";
 import { updateTrainSensors } from "./operations/updateTrainSensors.ts";
+
 export const db = await Deno.openKv();
 
-export enum Operations {
-  codespacesStart = "codespaces-start",
-  codespacesStop = "codespaces-stop",
-  codespacesToggle = "codespaces-toggle",
-  updateTrainSensors = "update-train-sensors",
-  updateCodespacesSensor = "update-codespaces-sensor",
-  updatePageStatusSensors = "update-page-status-sensors",
-  updateDNSSensors = "update-dns-sensors",
-}
+export const publicOperations = ["codespaces-start", "codespaces-stop", "codespaces-toggle", "update-train-sensors", "update-codespaces-sensor", "update-page-status-sensors", "update-dns-sensors", "update-sensors"] as const;
 
-const nonImplemented = () => {
-  return new Promise<void>((resolve) => {
-    console.log("Not implemented");
-    resolve();
-  });
-};
+export type PublicOperations = (typeof publicOperations)[number];
+
+export type Operations = PublicOperations;
 
 const opFuncs: Record<Operations, () => Promise<void>> = {
   "codespaces-start": codespacesStart,
@@ -32,6 +23,7 @@ const opFuncs: Record<Operations, () => Promise<void>> = {
   "update-codespaces-sensor": updateCodespacesSensor,
   "update-page-status-sensors": updatePageStatusSensors,
   "update-dns-sensors": updateDNSSensors,
+  "update-sensors": updateSensors,
 };
 
 db.listenQueue(async (operation: Operations) => {

@@ -1,5 +1,5 @@
-import { CodespacesComputeEngineMachine } from "../clients/CodespacesComputeEngineMachine.ts";
-import { CodespacesSensor } from "../home-assistant/MySensors/CodespacesSensor.ts";
+import { CodespacesComputeEngineMachine } from "../../clients/CodespacesComputeEngineMachine.ts";
+import { CodespacesSensor } from "../../clients/homeAssistant/MySensors/CodespacesSensor.ts";
 
 export async function updateCodespacesSensor() {
   const codespacesCompute = await CodespacesComputeEngineMachine.getInstance();

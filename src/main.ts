@@ -1,13 +1,14 @@
-import { Hono } from "hono";
-import { addToQueue, Operations } from "./queue.ts";
+import express from "express";
+import { DiscordBot } from "./discord/index.ts";
+import { MCPClient } from "./mcp/client.ts";
+import authenticationRouter from "./routers/authentication.ts";
+import mcpRouter from "./routers/mcp.ts";
+import queueRouters from "./routers/queue.ts";
 
-const port = Deno.env.get("PORT");
-const IS_GOOGLE_CLOUD_RUN = Deno.env.get("K_SERVICE") !== undefined;
-if (!port) {
-  throw new Error("PORT not set");
-}
+const app = express();
 
-const app = new Hono();
+/*
+//const app = new Hono();
 
 app.use(async (ctx, next) => {
   await next();
@@ -88,11 +89,20 @@ app.get("/cron", (c) => {
 app.get("/cron/new", (c) => {
   return c.json({ status: "ok" });
 });
+*/
 
-Deno.serve(
-  {
-    port: parseInt(port),
-    hostname: IS_GOOGLE_CLOUD_RUN ? "0.0.0.0" : undefined,
-  },
-  app.fetch
-);
+app.use(authenticationRouter);
+app.use(mcpRouter);
+app.use(express.json());
+app.use(queueRouters);
+
+const port = Deno.env.get("PORT");
+
+if (!port) {
+  throw new Error("PORT not set");
+}
+app.listen(port, async () => {
+  console.log(`HTTPServer is running on port ${port}`);
+  await MCPClient.getInstance().connectToServer();
+  await DiscordBot.getInstance().connect();
+});

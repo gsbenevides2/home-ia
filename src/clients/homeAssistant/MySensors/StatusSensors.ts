@@ -1,14 +1,14 @@
-import { fetchFromAtlassianStatuspage } from "../../clients/AtlasianStatus.ts";
-import { fetchFromIncidentIoStatus } from "../../clients/IncidentStatus.ts";
-import { fetchFromInstatusStatuspage } from "../../clients/InStatusStatus.ts";
-import { DatabaseClient } from "../../clients/Postgres.ts";
+import { DatabaseClient } from "../../Postgres.ts";
+import { fetchFromAtlassianStatuspage } from "../../status/AtlasianStatus.ts";
+import { fetchFromIncidentIoStatus } from "../../status/IncidentStatus.ts";
+import { fetchFromInstatusStatuspage } from "../../status/InStatusStatus.ts";
 import { BinarySensor, BinarySensorDeviceClass } from "../AbstractEntities/BinarySensor.ts";
 
 const platforms = {
-  "incident_io": fetchFromIncidentIoStatus,
-  "atlassian": fetchFromAtlassianStatuspage,
-  "instatus": fetchFromInstatusStatuspage,
-}
+  incident_io: fetchFromIncidentIoStatus,
+  atlassian: fetchFromAtlassianStatuspage,
+  instatus: fetchFromInstatusStatuspage,
+};
 
 interface DbRow {
   sensor_id: string;
@@ -24,7 +24,7 @@ export class StatusSensors {
     return this.instance;
   }
 
-  public async getDbStatusPages(){
+  public async getDbStatusPages() {
     const db = DatabaseClient.getInstance();
     const result = await db.queryObject<DbRow>({
       text: "SELECT sensor_id, sensor_name, status_platform, status_url  FROM status_pages",
@@ -33,13 +33,13 @@ export class StatusSensors {
     return result.rows;
   }
 
-  public async sendSensor(sensorData: DbRow){
+  public async sendSensor(sensorData: DbRow) {
     const status = await platforms[sensorData.status_platform as keyof typeof platforms](sensorData.status_url);
-    const sensor = new BinarySensor(sensorData.sensor_id, sensorData.sensor_id, {
+    const sensor = new BinarySensor(sensorData.sensor_id, `binary_sensor.${sensorData.sensor_id}`, {
       friendly_name: sensorData.sensor_name,
       device_class: BinarySensorDeviceClass.PROBLEM,
     });
-    await sensor.sendState(status === "DOWN");
+    await sensor.sendData(status === "DOWN" ? "on" : "off");
   }
   public async sendAllStatus() {
     const statusPages = await this.getDbStatusPages();
