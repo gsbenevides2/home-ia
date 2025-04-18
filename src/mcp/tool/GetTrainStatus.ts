@@ -12,14 +12,23 @@ export class GetTrainStatus extends AbstractTool {
   };
 
   async execute(parameters: z.infer<z.ZodType<typeof this.parameters>>): Promise<ToolExecuteResult> {
-    const trainStatus = await TrainSensors.getInstance().getTrainLineData(parameters.lineCode as unknown as string);
-    return {
-      content: [
-        {
-          type: "text",
-          text: `O status da linha ${trainStatus.attributes.codigo} - ${trainStatus.attributes.cor} é ${trainStatus.state} - ${trainStatus.attributes.descricao ?? "OK"}`,
-        },
-      ],
-    };
+    console.log("[MCP - GetTrainStatus] Getting train status");
+    try {
+      const trainStatus = await TrainSensors.getInstance().getTrainLineData(parameters.lineCode as unknown as string);
+      console.log("[MCP - GetTrainStatus] Train status retrieved");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `O status da linha ${trainStatus.attributes.codigo} - ${trainStatus.attributes.cor} é ${trainStatus.state} - ${trainStatus.attributes.descricao ?? "OK"}`,
+          },
+        ],
+      };
+    } catch (e) {
+      console.log("[MCP - GetTrainStatus] Error getting train status", e);
+      return {
+        content: [{ type: "text", text: "Ocorreu um erro ao obter o status da linha" }],
+      };
+    }
   }
 }

@@ -32,12 +32,6 @@ class EnvironmentOAuthProvider implements OAuthClientProvider {
   };
 }
 
-interface MCPTool {
-  name: string;
-  description: string;
-  inputSchema: Tool.InputSchema;
-}
-
 export class MCPClient {
   private static instance: MCPClient;
 
@@ -102,36 +96,51 @@ export class MCPClient {
       },
     ]);
     const dispatchMessage = async () => {
-      const response = await this.anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 1000,
-        messages: this.messages,
-        system: systemPrompt,
-        tools: this.tools,
-      });
-      const fixedContent = this.fixMessageOrder(response.content);
-      await this.saveMessage("assistant", fixedContent);
-      for (const content of fixedContent) {
-        if (content.type === "text") {
-          console.log("Text:", content);
-          await onMessage(content.text);
-        } else if (content.type === "tool_use") {
-          console.log("Tool use:", content);
-          const toolName = content.name;
-          const toolUseID = content.id;
-          const toolInput = content.input as { [x: string]: unknown } | undefined;
-          const result = await this.mcp.callTool({
-            name: toolName,
-            arguments: toolInput,
-          });
-          await this.saveMessage("user", [
-            {
-              type: "tool_result",
-              tool_use_id: toolUseID,
-              content: result.content as Array<TextBlockParam | ImageBlockParam> | string,
-            },
-          ]);
-          await dispatchMessage();
+      try {
+        const response = await this.anthropic.messages.create({
+          model: "claude-3-5-sonnet-20241022",
+          max_tokens: 1000,
+          messages: this.messages,
+          system: systemPrompt,
+          tools: this.tools,
+        });
+        const fixedContent = this.fixMessageOrder(response.content);
+        await this.saveMessage("assistant", fixedContent);
+        for (const content of fixedContent) {
+          if (content.type === "text") {
+            console.log("Text:", content);
+            await onMessage(content.text);
+          } else if (content.type === "tool_use") {
+            console.log("Tool use:", content);
+            const toolName = content.name;
+            const toolUseID = content.id;
+            const toolInput = content.input as { [x: string]: unknown } | undefined;
+            const result = await this.mcp.callTool({
+              name: toolName,
+              arguments: toolInput,
+            });
+            console.log("Tool result:", result);
+            await this.saveMessage("user", [
+              {
+                type: "tool_result",
+                tool_use_id: toolUseID,
+                content: result.content as Array<TextBlockParam | ImageBlockParam> | string,
+              },
+            ]);
+            await dispatchMessage();
+          }
+        }
+      } catch (e) {
+        console.log("Error processing query:", e);
+        const isToolUseError = e.message.includes("`tool_use` ids were found without `tool_result`");
+        console.log("Is tool use error:", isToolUseError);
+        if (isToolUseError) {
+          await this.clearMessages();
+          await this.processQuery(query, onMessage);
+        } else {
+          console.log("Error is not a tool use error, rethrowing");
+          console.log(e);
+          await onMessage("Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde.");
         }
       }
     };
@@ -139,10 +148,13 @@ export class MCPClient {
   }
 
   async loadOldMessages(): Promise<void> {
-    const messages = await DatabaseClient.getInstance().queryObject<{
+    const client = await DatabaseClient.getConnection();
+    const messages = await client.queryObject<{
       content: Array<ContentBlockParam>;
       role: "user" | "assistant";
     }>('SELECT c.content, c.role FROM chatbot c ORDER BY c."date" DESC LIMIT 10');
+    await client.release();
+
     this.messages = messages.rows.reverse();
     const firstMessage = this.messages[0];
     if (Array.isArray(firstMessage.content)) {
@@ -152,6 +164,7 @@ export class MCPClient {
       }
     }
   }
+
   fixMessageOrder(message: Array<ContentBlockParam>) {
     // text should be the first element
     return message.sort((a, b) => {
@@ -196,10 +209,19 @@ export class MCPClient {
       role: role,
       content: message,
     });
-    await DatabaseClient.getInstance().queryArray(`INSERT INTO chatbot (role, content) VALUES ($1, $2)`, [role, JSON.stringify(message)]);
+    const client = await DatabaseClient.getConnection();
+    await client.queryArray(`INSERT INTO chatbot (role, content) VALUES ($1, $2)`, [role, JSON.stringify(message)]);
+    await client.release();
   }
 
   async cleanup() {
     await this.mcp.close();
+  }
+
+  async clearMessages() {
+    this.messages = [];
+    const client = await DatabaseClient.getConnection();
+    await client.queryArray(`DELETE FROM chatbot`);
+    await client.release();
   }
 }

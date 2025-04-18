@@ -18,25 +18,36 @@ export class DNSSensor {
   }
 
   private async getDbDNSServers() {
-    const db = DatabaseClient.getInstance();
+    const db = await DatabaseClient.getConnection();
     const result = await db.queryObject<DbRow>({
       text: "SELECT sensor_id, sensor_name, expected_cname, domain, nsdomain FROM dns_checks",
       fields: ["sensor_id", "sensor_name", "expected_cname", "domain", "nsdomain"],
     });
+    await db.release();
     return result.rows;
   }
 
   private async sendSensor(sensorData: DbRow) {
-    const testResult = await makeDNSTest(sensorData.domain, sensorData.expected_cname, sensorData.nsdomain);
-    const sensor = new BinarySensor(`binary_sensor.${sensorData.sensor_id}`, `binary_sensor.${sensorData.sensor_id}`, {
-      friendly_name: sensorData.sensor_name,
-      device_class: BinarySensorDeviceClass.PROBLEM,
-    });
-    await sensor.sendData(testResult === false ? "on" : "off");
+    try {
+      const testResult = await makeDNSTest(sensorData.domain, sensorData.expected_cname, sensorData.nsdomain);
+      const sensor = new BinarySensor(`binary_sensor.${sensorData.sensor_id}`, `binary_sensor.${sensorData.sensor_id}`, {
+        friendly_name: sensorData.sensor_name,
+        device_class: BinarySensorDeviceClass.PROBLEM,
+      });
+      await sensor.sendData(testResult === false ? "on" : "off");
+    } catch (error) {
+      console.error(`Failed to send sensor data for ${sensorData.sensor_id}:`, error);
+      throw error;
+    }
   }
 
   public async sendAllSensors() {
-    const dnsServers = await this.getDbDNSServers();
-    await Promise.all(dnsServers.map(this.sendSensor));
+    try {
+      const dnsServers = await this.getDbDNSServers();
+      await Promise.all(dnsServers.map(this.sendSensor));
+    } catch (error) {
+      console.error("Failed to send all sensors:", error);
+      throw error;
+    }
   }
 }

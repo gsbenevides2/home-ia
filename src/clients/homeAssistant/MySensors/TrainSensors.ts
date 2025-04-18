@@ -36,7 +36,6 @@ export class TrainSensors {
       cor: "unknown",
       descricao: "unknown",
     });
-
     const response = await sensor.getData();
     return response;
   }

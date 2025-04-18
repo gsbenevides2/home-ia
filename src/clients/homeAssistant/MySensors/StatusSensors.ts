@@ -25,17 +25,18 @@ export class StatusSensors {
   }
 
   public async getDbStatusPages() {
-    const db = DatabaseClient.getInstance();
+    const db = await DatabaseClient.getConnection();
     const result = await db.queryObject<DbRow>({
       text: "SELECT sensor_id, sensor_name, status_platform, status_url  FROM status_pages",
       fields: ["sensor_id", "sensor_name", "status_platform", "status_url"],
     });
+    await db.release();
     return result.rows;
   }
 
   public async sendSensor(sensorData: DbRow) {
     const status = await platforms[sensorData.status_platform as keyof typeof platforms](sensorData.status_url);
-    const sensor = new BinarySensor(sensorData.sensor_id, `binary_sensor.${sensorData.sensor_id}`, {
+    const sensor = new BinarySensor(`binary_sensor.${sensorData.sensor_id}`, `binary_sensor.${sensorData.sensor_id}`, {
       friendly_name: sensorData.sensor_name,
       device_class: BinarySensorDeviceClass.PROBLEM,
     });
