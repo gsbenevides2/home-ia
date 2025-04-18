@@ -1,6 +1,8 @@
+import { Logger } from "../../logger/index.ts";
+
 export const nonImplemented = () => {
   return new Promise<void>((resolve) => {
-    console.log("Not implemented");
+    Logger.error("Queue", "Not implemented");
     resolve();
   });
 };

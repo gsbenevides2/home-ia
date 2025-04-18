@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Logger } from "../../logger/index.ts";
 import { AvailableLightsNames, availableLightsNames, TuyaLight } from "./../../clients/homeAssistant/MySensors/TuyaLight.ts";
 import { AbstractTool, ToolExecuteResult } from "./AbstractTool.ts";
 
@@ -10,16 +11,23 @@ export class GetRoomLampTool extends AbstractTool {
   };
 
   async execute(parameters: z.infer<z.ZodType<typeof this.parameters>>): Promise<ToolExecuteResult> {
-    console.log(parameters.roomName);
-    const lightState = await TuyaLight.getLightState(parameters.roomName as unknown as AvailableLightsNames);
-    console.log(lightState);
-    return {
-      content: [
-        {
-          type: "text",
-          text: `The lamp in the ${parameters.roomName} is ${lightState}`,
-        },
-      ],
-    };
+    Logger.info("MCP Server - GetRoomLampTool", "Getting lamp status", parameters);
+    try {
+      const lightState = await TuyaLight.getLightState(parameters.roomName as unknown as AvailableLightsNames);
+      Logger.info("MCP Server - GetRoomLampTool", "Lamp status retrieved", lightState);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `The lamp in the ${parameters.roomName} is ${lightState}`,
+          },
+        ],
+      };
+    } catch (error) {
+      Logger.error("MCP Server - GetRoomLampTool", "Error getting lamp status", error);
+      return {
+        content: [{ type: "text", text: "Ocorreu um erro ao obter o status da lâmpada" }],
+      };
+    }
   }
 }

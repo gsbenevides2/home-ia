@@ -1,7 +1,7 @@
 {
   "tasks": {
-    "dev": "deno run -A --unstable-kv --env-file=.env --watch src/main.ts",
-    "start": "deno run -A --unstable-kv --env-file=.env src/main.ts",
+    "dev": "deno run --unstable-otel -A --unstable-kv --env-file=.env --watch src/main.ts",
+    "start": "deno run --unstable-otel -A --unstable-kv --env-file=.env src/main.ts",
     "compile": "deno compile -A --unstable-kv --env-file=.env --output home-gcp src/main.ts"
   },
   "imports": {
@@ -13,7 +13,10 @@
     "zod-express-middleware": "npm:zod-express-middleware",
     "zod": "npm:zod",
     "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk",
-    "discord.js": "npm:discord.js"
+    "discord.js": "npm:discord.js",
+    "winston": "npm:winston",
+    "winston-transport": "npm:winston-transport",
+    "date-fns": "npm:date-fns"
   },
   "compilerOptions": {
     "jsx": "precompile",

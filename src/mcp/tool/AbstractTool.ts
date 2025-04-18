@@ -16,6 +16,7 @@ export abstract class AbstractTool {
   abstract name: string;
   abstract description: string;
   abstract parameters: Parameters;
+
   abstract execute(parameters: z.infer<z.ZodType<Parameters>>): Promise<ToolExecuteResult>;
 
   serverRegister(server: McpServer) {

@@ -4,6 +4,7 @@ import { OAuthClientMetadata, OAuthClientProvider } from "@modelcontextprotocol/
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { DatabaseClient } from "../clients/Postgres.ts";
+import { Logger } from "../logger/index.ts";
 
 const systemPrompt = await Deno.readTextFile("./src/mcp/systemPrompt.txt");
 
@@ -63,7 +64,8 @@ export class MCPClient {
 
   async connectToServer() {
     try {
-      this.transport = new SSEClientTransport(new URL("http://localhost:3000/sse"), {
+      const port = Deno.env.get("PORT") || 3000;
+      this.transport = new SSEClientTransport(new URL(`http://localhost:${port}/sse`), {
         authProvider: new EnvironmentOAuthProvider(),
       });
       await this.mcp.connect(this.transport);
@@ -76,14 +78,15 @@ export class MCPClient {
           input_schema: tool.inputSchema,
         };
       });
-      console.log(
+      Logger.info(
+        "MCP Client",
         "Connected to MCP server with tools:",
         this.tools.map(({ name }) => name)
       );
       await this.loadOldMessages();
-      console.log("Loaded old messages:", this.messages);
+      Logger.info("MCP Client", "Loaded old messages:", this.messages);
     } catch (e) {
-      console.log("Failed to connect to MCP server: ", e);
+      Logger.error("MCP Client", "Failed to connect to MCP server: ", e);
       throw e;
     }
   }
@@ -108,10 +111,10 @@ export class MCPClient {
         await this.saveMessage("assistant", fixedContent);
         for (const content of fixedContent) {
           if (content.type === "text") {
-            console.log("Text:", content);
+            Logger.info("MCP Client", "Text:", content);
             await onMessage(content.text);
           } else if (content.type === "tool_use") {
-            console.log("Tool use:", content);
+            Logger.info("MCP Client", "Tool use:", content);
             const toolName = content.name;
             const toolUseID = content.id;
             const toolInput = content.input as { [x: string]: unknown } | undefined;
@@ -119,7 +122,7 @@ export class MCPClient {
               name: toolName,
               arguments: toolInput,
             });
-            console.log("Tool result:", result);
+            Logger.info("MCP Client", "Tool result:", result);
             await this.saveMessage("user", [
               {
                 type: "tool_result",
@@ -130,16 +133,15 @@ export class MCPClient {
             await dispatchMessage();
           }
         }
-      } catch (e) {
-        console.log("Error processing query:", e);
-        const isToolUseError = e.message.includes("`tool_use` ids were found without `tool_result`");
-        console.log("Is tool use error:", isToolUseError);
+      } catch (e: unknown) {
+        Logger.error("MCP Client", "Error processing query:", e);
+        const isToolUseError = e instanceof Error && e.message.includes("`tool_use` ids were found without `tool_result`");
+        Logger.info("MCP Client", "Is tool use error:", isToolUseError);
         if (isToolUseError) {
           await this.clearMessages();
           await this.processQuery(query, onMessage);
         } else {
-          console.log("Error is not a tool use error, rethrowing");
-          console.log(e);
+          Logger.error("MCP Client", "Error is not a tool use error, rethrowing", e);
           await onMessage("Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde.");
         }
       }
@@ -190,7 +192,7 @@ export class MCPClient {
         });
         if (correspondingToolResult) {
           const removedMessage = this.messages.splice(0, correspondingToolResult + 1);
-          console.log("Removed message:", removedMessage);
+          Logger.info("MCP Client", "Removed message:", removedMessage);
         }
       } else {
         this.messages.shift();

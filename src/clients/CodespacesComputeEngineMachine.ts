@@ -1,6 +1,7 @@
 import { InstancesClient } from "@google-cloud/compute";
 import { Buffer } from "node:buffer";
 import { GoogleAuth } from "npm:google-auth-library";
+import { Logger } from "../logger/index.ts";
 export enum CodespacesInstanceStatus {
   PROVISIONING = "PROVISIONING",
   STAGING = "STAGING",
@@ -35,8 +36,8 @@ export class CodespacesComputeEngineMachine {
         throw new Error("Missing required GCP credentials in environment variables");
       }
 
-      console.log("Using service account:", clientEmail);
-      console.log("Project ID:", projectId);
+      Logger.info("CodespacesComputeEngineMachine", "Using service account:", clientEmail);
+      Logger.info("CodespacesComputeEngineMachine", "Project ID:", projectId);
 
       const auth = new GoogleAuth({
         credentials: {

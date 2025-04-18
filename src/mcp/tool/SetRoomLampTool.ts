@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { AvailableLightsNames, availableLightsNames, TuyaLight } from "../../clients/homeAssistant/MySensors/TuyaLight.ts";
+import { Logger } from "../../logger/index.ts";
 import { AbstractTool, ToolExecuteResult } from "./AbstractTool.ts";
 
 export class SetRoomLampTool extends AbstractTool {
@@ -11,14 +12,23 @@ export class SetRoomLampTool extends AbstractTool {
   };
 
   async execute(parameters: z.infer<z.ZodType<typeof this.parameters>>): Promise<ToolExecuteResult> {
-    await TuyaLight.setLightState(parameters.roomName as unknown as AvailableLightsNames, parameters.status as unknown as "on" | "off");
-    return {
-      content: [
-        {
-          type: "text",
-          text: `The lamp in the ${parameters.roomName} is turned ${parameters.status}`,
-        },
-      ],
-    };
+    Logger.info("MCP Server - SetRoomLampTool", "Setting lamp status", parameters);
+    try {
+      await TuyaLight.setLightState(parameters.roomName as unknown as AvailableLightsNames, parameters.status as unknown as "on" | "off");
+      Logger.info("MCP Server - SetRoomLampTool", "Lamp status set", parameters);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `The lamp in the ${parameters.roomName} is turned ${parameters.status}`,
+          },
+        ],
+      };
+    } catch (error) {
+      Logger.error("MCP Server - SetRoomLampTool", "Error setting lamp status", error);
+      return {
+        content: [{ type: "text", text: "Ocorreu um erro ao definir o status da lâmpada" }],
+      };
+    }
   }
 }

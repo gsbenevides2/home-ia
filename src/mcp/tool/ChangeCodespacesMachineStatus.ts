@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Logger } from "../../logger/index.ts";
 import { addToQueue } from "../../queue/queue.ts";
 import { AbstractTool, ToolExecuteResult } from "./AbstractTool.ts";
 
@@ -10,6 +11,7 @@ export class ChangeCodespacesStatusTool extends AbstractTool {
   };
 
   async execute(parameters: z.infer<z.ZodType<typeof this.parameters>>): Promise<ToolExecuteResult> {
+    Logger.info("MCP Server - ChangeCodespacesStatusTool", "Changing codespaces status", parameters);
     const status = parameters.status as unknown as "start" | "stop";
     addToQueue(status === "start" ? "codespaces-start" : "codespaces-stop");
 

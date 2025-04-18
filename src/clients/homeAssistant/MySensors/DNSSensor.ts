@@ -1,3 +1,4 @@
+import { Logger } from "../../../logger/index.ts";
 import { makeDNSTest } from "../../MakeDNSTest.ts";
 import { DatabaseClient } from "../../Postgres.ts";
 import { BinarySensor, BinarySensorDeviceClass } from "../AbstractEntities/BinarySensor.ts";
@@ -36,7 +37,7 @@ export class DNSSensor {
       });
       await sensor.sendData(testResult === false ? "on" : "off");
     } catch (error) {
-      console.error(`Failed to send sensor data for ${sensorData.sensor_id}:`, error);
+      Logger.error("DNSSensor", `Failed to send sensor data for ${sensorData.sensor_id}:`, error);
       throw error;
     }
   }
@@ -46,7 +47,7 @@ export class DNSSensor {
       const dnsServers = await this.getDbDNSServers();
       await Promise.all(dnsServers.map(this.sendSensor));
     } catch (error) {
-      console.error("Failed to send all sensors:", error);
+      Logger.error("DNSSensor", "Failed to send all sensors:", error);
       throw error;
     }
   }

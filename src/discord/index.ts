@@ -1,4 +1,5 @@
 import { Client, GatewayIntentBits, Partials } from "discord.js";
+import { Logger } from "../logger/index.ts";
 import { MCPClient } from "../mcp/client.ts";
 export class DiscordBot {
   private client: Client;
@@ -26,10 +27,11 @@ export class DiscordBot {
     });
 
     this.client.on("ready", () => {
-      console.log("Bot is connected to Discord");
+      Logger.info("Discord Bot", "Bot is connected to Discord");
     });
 
     this.client.on("messageCreate", (message) => {
+      Logger.info("Discord Bot", "Message received", message);
       const authorId = message.author.id;
       if (authorId === DISCORD_BOT_ID) {
         return;
@@ -67,9 +69,10 @@ export class DiscordBot {
   async connect() {
     const DISCORD_TOKEN = Deno.env.get("DISCORD_TOKEN");
     if (!DISCORD_TOKEN) {
+      Logger.error("Discord Bot", "DISCORD_TOKEN is not set");
       throw new Error("DISCORD_TOKEN is not set");
     }
-
+    Logger.info("Discord Bot", "Logging in to Discord");
     await this.client.login(DISCORD_TOKEN);
   }
 }

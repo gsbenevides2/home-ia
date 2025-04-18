@@ -1,3 +1,4 @@
+import { Logger } from "../logger/index.ts";
 import { codespacesStart } from "./operations/codespacesStart.ts";
 import { codespacesStop } from "./operations/codespacesStop.ts";
 import { codespacesToggle } from "./operations/codespacesToggle.ts";
@@ -27,12 +28,12 @@ const opFuncs: Record<Operations, () => Promise<void>> = {
 };
 
 db.listenQueue(async (operation: Operations) => {
-  console.log("Operation received", operation);
+  Logger.info("Queue", "Operation received", operation);
   try {
     await opFuncs[operation]();
-    console.log("Operation completed", operation);
-  } catch (e) {
-    console.error("Operation failed", operation, e);
+    Logger.info("Queue", "Operation completed", operation);
+  } catch (e: unknown) {
+    Logger.error("Queue", "Operation failed", operation, e);
   }
 });
 
