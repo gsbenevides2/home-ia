@@ -31,4 +31,14 @@ export class TuyaLight {
     });
     await sensor.updateService("light", state === "on" ? "turn_on" : "turn_off");
   }
+
+  public static async setLightBrightness(light: AvailableLightsNames, brightness: number) {
+    const sensorId = `light.${lightsId[light]}`;
+    const sensor = new BinarySensor(sensorId, sensorId, {
+      friendly_name: light,
+      device_class: BinarySensorDeviceClass.LIGHT,
+    });
+
+    await sensor.updateService("light", "turn_on", { brightness_pct: brightness });
+  }
 }

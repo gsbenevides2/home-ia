@@ -24,7 +24,7 @@ export class GetCodespacesStatusTool extends AbstractTool {
     } catch (error) {
       Logger.error("MCP Server - GetCodespacesStatusTool", "Error getting codespaces status", error);
       return {
-        content: [{ type: "text", text: "Ocorreu um erro ao obter o status da máquina de códigos" }],
+        content: [{ type: "text", text: "Has occurred an error while getting the codespaces status" }],
       };
     }
   }

@@ -26,7 +26,7 @@ export class GetRoomLampTool extends AbstractTool {
     } catch (error) {
       Logger.error("MCP Server - GetRoomLampTool", "Error getting lamp status", error);
       return {
-        content: [{ type: "text", text: "Ocorreu um erro ao obter o status da lâmpada" }],
+        content: [{ type: "text", text: "Has occurred an error while getting the lamp status" }],
       };
     }
   }

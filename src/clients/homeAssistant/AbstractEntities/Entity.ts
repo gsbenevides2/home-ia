@@ -42,9 +42,10 @@ export abstract class Entity<SensorState, SensorAttributes extends EntityAttribu
     return response.data;
   }
 
-  updateService(domain: string, service: string) {
+  updateService(domain: string, service: string, data?: Record<string, unknown>) {
     return this.api.post(`/services/${domain}/${service}`, {
       entity_id: this.entity_id,
+      ...data,
     });
   }
 }

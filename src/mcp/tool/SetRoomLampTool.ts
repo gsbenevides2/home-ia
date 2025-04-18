@@ -27,7 +27,7 @@ export class SetRoomLampTool extends AbstractTool {
     } catch (error) {
       Logger.error("MCP Server - SetRoomLampTool", "Error setting lamp status", error);
       return {
-        content: [{ type: "text", text: "Ocorreu um erro ao definir o status da lâmpada" }],
+        content: [{ type: "text", text: "Has occurred an error while setting the lamp status" }],
       };
     }
   }
