@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { CodespacesSensor } from "../../clients/homeAssistant/MySensors/CodespacesSensor.ts";
-import { Logger } from "../../logger/index.ts";
-import { AbstractTool, ToolExecuteResult } from "./AbstractTool.ts";
+import { CodespacesSensor } from "../../../../clients/homeAssistant/MySensors/CodespacesSensor.ts";
+import { Logger } from "../../../../logger/index.ts";
+import { AbstractTool, ToolExecuteResult } from "../../AbstractTool.ts";
 
 export class GetCodespacesStatusTool extends AbstractTool {
   name = "get-codespaces-status";

@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { AvailableLightsNames, availableLightsNames, TuyaLight } from "../../clients/homeAssistant/MySensors/TuyaLight.ts";
-import { Logger } from "../../logger/index.ts";
-import { AbstractTool, ToolExecuteResult } from "./AbstractTool.ts";
+import { AvailableLightsNames, availableLightsNames, TuyaLight } from "../../../../clients/homeAssistant/MySensors/TuyaLight.ts";
+import { Logger } from "../../../../logger/index.ts";
+import { AbstractTool, ToolExecuteResult } from "../../AbstractTool.ts";
 
 export class SetRoomLampTool extends AbstractTool {
   name = "set-lamp-status";

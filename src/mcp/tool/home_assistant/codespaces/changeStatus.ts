@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { Logger } from "../../logger/index.ts";
-import { addToQueue } from "../../queue/queue.ts";
-import { AbstractTool, ToolExecuteResult } from "./AbstractTool.ts";
+import { Logger } from "../../../../logger/index.ts";
+import { addToQueue } from "../../../../queue/queue.ts";
+import { AbstractTool, ToolExecuteResult } from "../../AbstractTool.ts";
 
 export class ChangeCodespacesStatusTool extends AbstractTool {
   name = "change-codespaces-status";
