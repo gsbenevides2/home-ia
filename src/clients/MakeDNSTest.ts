@@ -1,3 +1,4 @@
+import { randomUUIDv7 } from "bun";
 import { spawn } from "node:child_process";
 import { Logger } from "../logger/index.ts";
 
@@ -14,13 +15,13 @@ function nodeSpawn(command: string) {
     child.on("close", () => resolve(result));
   });
 }
-async function runDigCommand(domain: string, ns: string) {
+async function runDigCommand(domain: string, ns: string, tracerId: string) {
   try {
     const result = await nodeSpawn(`/usr/bin/dig ${domain} @${ns} +short CNAME`);
 
     return result.split("\n")[0];
   } catch (error) {
-    Logger.error("MakeDNSTest", "Error running dig command: ${error}");
+    Logger.error("MakeDNSTest", "Error running dig command:", error, tracerId);
     return null;
   }
 }
@@ -32,19 +33,54 @@ async function getNSRecords(domain: string) {
 
 export async function makeDNSTest(domain: string, expectedCname: string, nsDomain: string): Promise<boolean> {
   let testResult = false;
-
+  const tracerId = randomUUIDv7();
   const nsRecords = await getNSRecords(nsDomain);
   for (const ns of nsRecords) {
-    Logger.info("MakeDNSTest", `Testing ${domain} with NS ${ns}`);
-    const cname = await runDigCommand(domain, ns);
+    Logger.info(
+      "MakeDNSTest",
+      `Checking DNS records`,
+      {
+        domain,
+        ns,
+      },
+      tracerId
+    );
+    const cname = await runDigCommand(domain, ns, tracerId);
+    if (cname === null) {
+      Logger.error(
+        "MakeDNSTest",
+        "Error running dig command:",
+        {
+          domain,
+          ns,
+        },
+        tracerId
+      );
+      return false;
+    }
     if (cname === expectedCname) {
-      Logger.info("MakeDNSTest", `Test passed for ${domain} with NS ${ns}`);
+      Logger.info(
+        "MakeDNSTest",
+        `Test passed`,
+        {
+          domain,
+          ns,
+        },
+        tracerId
+      );
       testResult = true;
       break;
     }
   }
   if (!testResult) {
-    Logger.error("MakeDNSTest", `Test failed for ${domain}`);
+    Logger.info(
+      "MakeDNSTest",
+      `Test failed`,
+      {
+        domain,
+      },
+      tracerId
+    );
   }
   return testResult;
 }

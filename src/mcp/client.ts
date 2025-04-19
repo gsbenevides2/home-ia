@@ -95,8 +95,10 @@ export class MCPClient {
     }
   }
 
-  async processQuery(query: string, onMessage: (message: string) => Promise<void>) {
-    const tracerId = randomUUIDv7();
+  async processQuery(query: string, onMessage: (message: string) => Promise<void>, tracerId?: string) {
+    if (!tracerId) {
+      tracerId = randomUUIDv7();
+    }
 
     await this.saveMessage("user", [
       {

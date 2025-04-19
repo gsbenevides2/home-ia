@@ -52,30 +52,34 @@ export class DiscordBot {
         },
         tracerId
       );
-      MCPClient.getInstance().processQuery(content, async (response) => {
-        if (response.length > 2000) {
-          const lines = response.split("\n");
-          const linesBlock = lines.reduce(
-            (acc, line) => {
-              const lastBlock = acc[acc.length - 1];
-              if (lastBlock.length + line.length > 2000) {
-                acc.push(line);
-              } else {
-                acc[acc.length - 1] += line;
-              }
-              return acc;
-            },
-            [""]
-          );
-          for (const block of linesBlock) {
-            Logger.info("Discord Bot", "Sending message to user", block, tracerId);
-            await message.author.send(block);
+      MCPClient.getInstance().processQuery(
+        content,
+        async (response) => {
+          if (response.length > 2000) {
+            const lines = response.split("\n");
+            const linesBlock = lines.reduce(
+              (acc, line) => {
+                const lastBlock = acc[acc.length - 1];
+                if (lastBlock.length + line.length > 2000) {
+                  acc.push(line);
+                } else {
+                  acc[acc.length - 1] += line;
+                }
+                return acc;
+              },
+              [""]
+            );
+            for (const block of linesBlock) {
+              Logger.info("Discord Bot", "Sending message to user", block, tracerId);
+              await message.author.send(block);
+            }
+          } else {
+            Logger.info("Discord Bot", "Sending message to user", response, tracerId);
+            await message.author.send(response);
           }
-        } else {
-          Logger.info("Discord Bot", "Sending message to user", response, tracerId);
-          await message.author.send(response);
-        }
-      });
+        },
+        tracerId
+      );
     });
   }
 

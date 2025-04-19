@@ -31,24 +31,24 @@ export class Logger {
   });
 
   public static info(program: string, message: string, data?: LoggerData, tracerId?: string) {
-    const initialMessage = `[${program}] ${message}`;
-    this.logger.info(initialMessage, {
+    this.logger.info(message, {
+      program,
       data,
       tracerId,
     });
   }
 
   public static error(program: string, message: string, data?: LoggerData, tracerId?: string) {
-    const initialMessage = `[${program}] ${message}`;
-    this.logger.error(initialMessage, {
+    this.logger.info(message, {
+      program,
       data,
       tracerId,
     });
   }
 
   public static warn(program: string, message: string, data?: LoggerData, tracerId?: string) {
-    const initialMessage = `[${program}] ${message}`;
-    this.logger.warn(initialMessage, {
+    this.logger.info(message, {
+      program,
       data,
       tracerId,
     });

@@ -17,6 +17,7 @@ interface WinstonLog {
   timestamp: Date;
   level: string;
   message: string;
+  program: string;
   data: unknown;
   tracerId?: string;
 }
@@ -46,6 +47,7 @@ export class OpenObserveTransport extends Transport {
         message: info.message,
         data: info.data,
         tracerId: info.tracerId,
+        program: info.program,
       },
       {
         headers: {
