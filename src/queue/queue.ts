@@ -1,4 +1,5 @@
 import { openKv } from "@deno/kv";
+import { randomUUIDv7 } from "bun";
 import { Logger } from "../logger/index.ts";
 import { codespacesStart } from "./operations/codespacesStart.ts";
 import { codespacesStop } from "./operations/codespacesStop.ts";
@@ -28,13 +29,44 @@ const opFuncs: Record<Operations, () => Promise<void>> = {
   "update-sensors": updateSensors,
 };
 
-db.listenQueue(async (operation: Operations) => {
-  Logger.info("Queue", "Operation received", operation);
+db.listenQueue(async (operation) => {
+  const tracerId = randomUUIDv7();
+  if (typeof operation !== "string") {
+    Logger.error(
+      "Queue",
+      "Operation is not a string",
+      {
+        operation,
+      },
+      tracerId
+    );
+    return;
+  }
+  if (!(operation in opFuncs)) {
+    Logger.error(
+      "Queue",
+      "Operation is not a valid operation",
+      {
+        operation,
+      },
+      tracerId
+    );
+    return;
+  }
+  Logger.info("Queue", "Operation received", operation, tracerId);
   try {
-    await opFuncs[operation]();
+    await opFuncs[operation as Operations]();
     Logger.info("Queue", "Operation completed", operation);
   } catch (e: unknown) {
-    Logger.error("Queue", "Operation failed", operation, e);
+    Logger.error(
+      "Queue",
+      "Operation failed",
+      {
+        operation,
+        error: e,
+      },
+      tracerId
+    );
   }
 });
 
