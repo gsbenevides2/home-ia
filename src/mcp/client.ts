@@ -163,6 +163,9 @@ export class MCPClient {
     const messages = await ChatbotDatabase.getInstance().getMessagesOldMessages();
     this.messages = messages.reverse();
     const firstMessage = this.messages[0];
+    if (!firstMessage) {
+      return;
+    }
     if (Array.isArray(firstMessage.content)) {
       const includesTool = firstMessage.content.some((el: ContentBlockParam) => el.type.includes("tool"));
       if (includesTool) {
