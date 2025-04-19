@@ -1,16 +1,19 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { ContentBlockParam, ImageBlockParam, MessageParam, TextBlockParam, Tool, ToolResultBlockParam, ToolUseBlockParam } from "@anthropic-ai/sdk/resources/messages/messages.mjs";
-import { OAuthClientMetadata, OAuthClientProvider } from "@modelcontextprotocol/sdk";
+import type { ContentBlockParam, ImageBlockParam, MessageParam, TextBlockParam, Tool, ToolResultBlockParam, ToolUseBlockParam } from "@anthropic-ai/sdk/resources/messages/messages.mjs";
+import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.d.ts";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import { DatabaseClient } from "../clients/Postgres.ts";
+import type { OAuthClientMetadata } from "@modelcontextprotocol/sdk/shared/auth.d.ts";
+import { ChatbotDatabase } from "../clients/database/Chatbot.ts";
 import { Logger } from "../logger/index.ts";
 
-const systemPrompt = await Deno.readTextFile("./src/mcp/systemPrompt.txt");
+const systemPrompt = await Bun.file("./src/mcp/systemPrompt.txt").text();
 
 class EnvironmentOAuthProvider implements OAuthClientProvider {
   redirectUrl = new URL("http://localhost:3000/sse");
-  clientMetadata: OAuthClientMetadata = {};
+  clientMetadata: OAuthClientMetadata = {
+    redirect_uris: [this.redirectUrl.toString()],
+  };
   clientInformation = () => {
     return {
       client_id: "mcp-client-cli",
@@ -21,7 +24,7 @@ class EnvironmentOAuthProvider implements OAuthClientProvider {
   };
   tokens = () => {
     return {
-      access_token: Deno.env.get("AUTH_TOKEN")!,
+      access_token: Bun.env.AUTH_TOKEN!,
       token_type: "Bearer",
     };
   };
@@ -51,7 +54,7 @@ export class MCPClient {
   private messages: MessageParam[] = [];
 
   private constructor() {
-    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    const ANTHROPIC_API_KEY = Bun.env.ANTHROPIC_API_KEY;
     if (!ANTHROPIC_API_KEY) {
       throw new Error("ANTHROPIC_API_KEY is not set");
     }
@@ -64,7 +67,7 @@ export class MCPClient {
 
   async connectToServer() {
     try {
-      const port = Deno.env.get("PORT") || 3000;
+      const port = Bun.env.PORT || 3000;
       this.transport = new SSEClientTransport(new URL(`http://localhost:${port}/sse`), {
         authProvider: new EnvironmentOAuthProvider(),
       });
@@ -150,14 +153,8 @@ export class MCPClient {
   }
 
   async loadOldMessages(): Promise<void> {
-    const client = await DatabaseClient.getConnection();
-    const messages = await client.queryObject<{
-      content: Array<ContentBlockParam>;
-      role: "user" | "assistant";
-    }>('SELECT c.content, c.role FROM chatbot c ORDER BY c."date" DESC LIMIT 10');
-    await client.release();
-
-    this.messages = messages.rows.reverse();
+    const messages = await ChatbotDatabase.getInstance().getMessagesOldMessages();
+    this.messages = messages.reverse();
     const firstMessage = this.messages[0];
     if (Array.isArray(firstMessage.content)) {
       const includesTool = firstMessage.content.some((el: ContentBlockParam) => el.type.includes("tool"));
@@ -211,9 +208,10 @@ export class MCPClient {
       role: role,
       content: message,
     });
-    const client = await DatabaseClient.getConnection();
-    await client.queryArray(`INSERT INTO chatbot (role, content) VALUES ($1, $2)`, [role, JSON.stringify(message)]);
-    await client.release();
+    await ChatbotDatabase.getInstance().saveMessage({
+      content: JSON.stringify(message),
+      role: role,
+    });
   }
 
   async cleanup() {
@@ -222,8 +220,6 @@ export class MCPClient {
 
   async clearMessages() {
     this.messages = [];
-    const client = await DatabaseClient.getConnection();
-    await client.queryArray(`DELETE FROM chatbot`);
-    await client.release();
+    await ChatbotDatabase.getInstance().clearMessages();
   }
 }

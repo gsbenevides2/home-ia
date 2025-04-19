@@ -1,4 +1,5 @@
-import axios, { AxiosInstance } from "npm:axios";
+import type { AxiosInstance } from "axios";
+import axios from "axios";
 
 export abstract class Entity<SensorState, SensorAttributes extends EntityAttributes> {
   private entity_id: string;
@@ -14,7 +15,7 @@ export abstract class Entity<SensorState, SensorAttributes extends EntityAttribu
     this.unique_id = unique_id;
     this.attributes = attributes;
 
-    const host = Deno.env.get("HA_URL");
+    const host = Bun.env.HA_URL;
     if (!host) throw new Error("HA_URL not set");
     const url = new URL(host);
     url.pathname = `/api`;
@@ -23,7 +24,7 @@ export abstract class Entity<SensorState, SensorAttributes extends EntityAttribu
       baseURL: url.toString(),
       headers: {
         "content-type": "application/json",
-        Authorization: `Bearer ${Deno.env.get("HA_TOKEN")}`,
+        Authorization: `Bearer ${Bun.env.HA_TOKEN}`,
       },
     });
   }
@@ -53,6 +54,7 @@ export abstract class Entity<SensorState, SensorAttributes extends EntityAttribu
 export enum SensorType {
   BINARY_SENSOR = "binary_sensor",
   SENSOR = "sensor",
+  SWITCH = "switch",
 }
 
 export interface EntityAttributes {

@@ -6,7 +6,7 @@ authenticationRouter.use((req: Request, res: Response, next: NextFunction) => {
   if (!authorizationHeader) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-  if (authorizationHeader === `Bearer ${Deno.env.get("AUTH_TOKEN")}`) {
+  if (authorizationHeader === `Bearer ${Bun.env.AUTH_TOKEN}`) {
     next();
   } else {
     return res.status(401).json({ message: "Unauthorized" });

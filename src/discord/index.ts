@@ -13,8 +13,8 @@ export class DiscordBot {
   }
 
   private constructor() {
-    const DISCORD_ALLOWED_USER_ID = Deno.env.get("DISCORD_ALLOWED_USER_ID");
-    const DISCORD_BOT_ID = Deno.env.get("DISCORD_BOT_ID");
+    const DISCORD_ALLOWED_USER_ID = Bun.env.DISCORD_ALLOWED_USER_ID;
+    const DISCORD_BOT_ID = Bun.env.DISCORD_BOT_ID;
     if (!DISCORD_ALLOWED_USER_ID) {
       throw new Error("DISCORD_ALLOWED_USER_ID is not set");
     }
@@ -67,7 +67,7 @@ export class DiscordBot {
   }
 
   async connect() {
-    const DISCORD_TOKEN = Deno.env.get("DISCORD_TOKEN");
+    const DISCORD_TOKEN = Bun.env.DISCORD_TOKEN;
     if (!DISCORD_TOKEN) {
       Logger.error("Discord Bot", "DISCORD_TOKEN is not set");
       throw new Error("DISCORD_TOKEN is not set");

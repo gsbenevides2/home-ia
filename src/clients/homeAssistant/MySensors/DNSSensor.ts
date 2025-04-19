@@ -1,15 +1,7 @@
 import { Logger } from "../../../logger/index.ts";
 import { makeDNSTest } from "../../MakeDNSTest.ts";
-import { DatabaseClient } from "../../Postgres.ts";
+import { DNSChecksDatabase, type DNSChecksDatabaseRow } from "../../database/DNSChecks.ts";
 import { BinarySensor, BinarySensorDeviceClass } from "../AbstractEntities/BinarySensor.ts";
-
-interface DbRow {
-  sensor_id: string;
-  sensor_name: string;
-  expected_cname: string;
-  domain: string;
-  nsdomain: string;
-}
 
 export class DNSSensor {
   private static instance: DNSSensor = new DNSSensor();
@@ -19,16 +11,10 @@ export class DNSSensor {
   }
 
   private async getDbDNSServers() {
-    const db = await DatabaseClient.getConnection();
-    const result = await db.queryObject<DbRow>({
-      text: "SELECT sensor_id, sensor_name, expected_cname, domain, nsdomain FROM dns_checks",
-      fields: ["sensor_id", "sensor_name", "expected_cname", "domain", "nsdomain"],
-    });
-    await db.release();
-    return result.rows;
+    return DNSChecksDatabase.getInstance().getChecks();
   }
 
-  private async sendSensor(sensorData: DbRow) {
+  private async sendSensor(sensorData: DNSChecksDatabaseRow) {
     try {
       const testResult = await makeDNSTest(sensorData.domain, sensorData.expected_cname, sensorData.nsdomain);
       const sensor = new BinarySensor(`binary_sensor.${sensorData.sensor_id}`, `binary_sensor.${sensorData.sensor_id}`, {

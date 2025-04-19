@@ -13,7 +13,7 @@ app.use(mcpRouter);
 app.use(express.json());
 app.use(queueRouters);
 
-const port = Deno.env.get("PORT");
+const port = Bun.env.PORT;
 
 if (!port) {
   throw new Error("PORT not set");
@@ -21,7 +21,7 @@ if (!port) {
 app.listen(port, async () => {
   Logger.info("HTTP Server", `API is running on port ${port}`);
   await MCPClient.getInstance().connectToServer();
-  if (Deno.env.get("ENABLE_DISCORD") === "true") {
+  if (Bun.env.ENABLE_DISCORD === "true") {
     await DiscordBot.getInstance().connect();
   }
 });

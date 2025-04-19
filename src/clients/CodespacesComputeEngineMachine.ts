@@ -1,7 +1,7 @@
 import { InstancesClient } from "@google-cloud/compute";
 import { Buffer } from "node:buffer";
-import { GoogleAuth } from "npm:google-auth-library";
 import { Logger } from "../logger/index.ts";
+
 export enum CodespacesInstanceStatus {
   PROVISIONING = "PROVISIONING",
   STAGING = "STAGING",
@@ -28,9 +28,9 @@ export class CodespacesComputeEngineMachine {
 
   private getInstanceClient() {
     if (!this.instanceClient) {
-      const projectId = Deno.env.get("GCP_SERVICE_ACCOUNT_PROJECT_ID");
-      const clientEmail = Deno.env.get("GCP_SERVICE_ACCOUNT_CLIENT_EMAIL");
-      const privateKey = Buffer.from(Deno.env.get("GCP_SERVICE_ACCOUNT_PRIVATE_KEY") ?? "", "base64").toString("ascii");
+      const projectId = Bun.env.GCP_SERVICE_ACCOUNT_PROJECT_ID;
+      const clientEmail = Bun.env.GCP_SERVICE_ACCOUNT_CLIENT_EMAIL;
+      const privateKey = Buffer.from(Bun.env.GCP_SERVICE_ACCOUNT_PRIVATE_KEY ?? "", "base64").toString("ascii");
 
       if (!projectId || !clientEmail || !privateKey) {
         throw new Error("Missing required GCP credentials in environment variables");
@@ -39,22 +39,18 @@ export class CodespacesComputeEngineMachine {
       Logger.info("CodespacesComputeEngineMachine", "Using service account:", clientEmail);
       Logger.info("CodespacesComputeEngineMachine", "Project ID:", projectId);
 
-      const auth = new GoogleAuth({
+      this.instanceClient = new InstancesClient({
         credentials: {
           type: "service_account",
           project_id: projectId,
-          private_key_id: Deno.env.get("GCP_SERVICE_ACCOUNT_PRIVATE_KEY_ID"),
+          private_key_id: Bun.env.GCP_SERVICE_ACCOUNT_PRIVATE_KEY_ID,
           private_key: privateKey,
           client_email: clientEmail,
-          client_id: Deno.env.get("GCP_SERVICE_ACCOUNT_CLIENT_ID"),
-          token_url: Deno.env.get("GCP_SERVICE_ACCOUNT_TOKEN_URL"),
-          universe_domain: Deno.env.get("GCP_SERVICE_ACCOUNT_UNIVERSE_DOMAIN"),
+          client_id: Bun.env.GCP_SERVICE_ACCOUNT_CLIENT_ID,
+          token_url: Bun.env.GCP_SERVICE_ACCOUNT_TOKEN_URL,
+          universe_domain: Bun.env.GCP_SERVICE_ACCOUNT_UNIVERSE_DOMAIN,
         },
         scopes: ["https://www.googleapis.com/auth/cloud-platform"],
-      });
-
-      this.instanceClient = new InstancesClient({
-        auth,
         projectId: projectId,
       });
     }
@@ -62,9 +58,9 @@ export class CodespacesComputeEngineMachine {
   }
 
   private instanceData = {
-    project: Deno.env.get("CODESPACES_INSTANCE_PROJECT_ID"),
-    zone: Deno.env.get("CODESPACES_INSTANCE_ZONE"),
-    instance: Deno.env.get("CODESPACES_INSTANCE_NAME"),
+    project: Bun.env.CODESPACES_INSTANCE_PROJECT_ID,
+    zone: Bun.env.CODESPACES_INSTANCE_ZONE,
+    instance: Bun.env.CODESPACES_INSTANCE_NAME,
   };
 
   async toogleMachine() {
