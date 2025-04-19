@@ -95,6 +95,25 @@ export class MCPClient {
     }
   }
 
+  async clearToolData() {
+    const itens = this.messages
+      .map((message) => {
+        const isContentArray = Array.isArray(message.content);
+        if (!isContentArray) return message;
+        const content = message.content as Array<ContentBlockParam>;
+        const contentWithoutTool = content.filter((el) => {
+          if (el.type === "tool_use" || el.type === "tool_result") {
+            return false;
+          }
+          return true;
+        });
+        return { ...message, content: contentWithoutTool };
+      })
+      .filter((el) => Boolean(el.content) && el.content.length > 0);
+    Logger.info("MCP Client", "Clearing tool data:", itens);
+    this.messages = itens;
+  }
+
   async processQuery(query: string, onMessage: (message: string) => Promise<void>, tracerId?: string) {
     if (!tracerId) {
       tracerId = randomUUIDv7();
@@ -140,28 +159,33 @@ export class MCPClient {
                 content: result.content as Array<TextBlockParam | ImageBlockParam> | string,
               },
             ]);
-            await dispatchMessage();
           }
+        }
+        if (response.stop_reason !== "end_turn") {
+          await dispatchMessage();
         }
       } catch (e: unknown) {
         Logger.error("MCP Client", "Error processing query:", e, tracerId);
-        const isToolUseError = e instanceof Error && e.message.includes("`tool_use` ids were found without `tool_result`");
+        const isToolUseError = e instanceof Error && (e.message.includes("`tool_use` ids were found without `tool_result`") || e.message.includes("`Each `tool_result` block must have a corresponding `tool_use` block in the previous message."));
         Logger.info("MCP Client", "Is tool use error:", isToolUseError, tracerId);
-        if (isToolUseError) {
-          await this.clearMessages();
-          await this.processQuery(query, onMessage);
-        } else {
+        if (!isToolUseError) {
           Logger.error("MCP Client", "Error is not a tool use error, rethrowing", e, tracerId);
           await onMessage("Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde. Tracer ID: " + tracerId);
         }
       }
     };
     await dispatchMessage();
+    await this.clearToolData();
   }
 
   async loadOldMessages(): Promise<void> {
     const messages = await ChatbotDatabase.getInstance().getMessagesOldMessages();
-    this.messages = messages.reverse();
+    this.messages = messages.reverse().map((el) => {
+      return {
+        role: el.role,
+        content: JSON.parse(el.content),
+      };
+    });
     const firstMessage = this.messages[0];
     if (!firstMessage) {
       return;
@@ -172,6 +196,7 @@ export class MCPClient {
         this.removeVeryOldMessages();
       }
     }
+    await this.clearToolData();
   }
 
   fixMessageOrder(message: Array<ContentBlockParam>) {

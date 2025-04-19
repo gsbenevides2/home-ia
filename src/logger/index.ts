@@ -23,11 +23,21 @@ const openObserveTransport = new OpenObserveTransport({
 
 type LoggerData = Object | Array<unknown> | string | unknown | undefined;
 
+const disableOpenObserve = Bun.env.DISABLE_OPEN_OBSERVE;
+
 export class Logger {
   private static logger = winston.createLogger({
     level: "info",
     format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
-    transports: [openObserveTransport, new winston.transports.Console()],
+    transports: disableOpenObserve
+      ? [
+          new winston.transports.Console({
+            log(info, next) {
+              next();
+            },
+          }),
+        ]
+      : [openObserveTransport, new winston.transports.Console()],
   });
 
   public static info(program: string, message: string, data?: LoggerData, tracerId?: string) {
