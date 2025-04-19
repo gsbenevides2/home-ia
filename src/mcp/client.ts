@@ -4,6 +4,7 @@ import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import type { OAuthClientMetadata } from "@modelcontextprotocol/sdk/shared/auth.d.ts";
+import { randomUUIDv7 } from "bun";
 import { ChatbotDatabase } from "../clients/database/Chatbot.ts";
 import { Logger } from "../logger/index.ts";
 
@@ -95,12 +96,16 @@ export class MCPClient {
   }
 
   async processQuery(query: string, onMessage: (message: string) => Promise<void>) {
+    const tracerId = randomUUIDv7();
+
     await this.saveMessage("user", [
       {
         type: "text",
         text: query,
       },
     ]);
+    Logger.info("MCP Client", "Processing query:", query, tracerId);
+
     const dispatchMessage = async () => {
       try {
         const response = await this.anthropic.messages.create({
@@ -114,10 +119,10 @@ export class MCPClient {
         await this.saveMessage("assistant", fixedContent);
         for (const content of fixedContent) {
           if (content.type === "text") {
-            Logger.info("MCP Client", "Text:", content);
+            Logger.info("MCP Client", "Text:", content.text, tracerId);
             await onMessage(content.text);
           } else if (content.type === "tool_use") {
-            Logger.info("MCP Client", "Tool use:", content);
+            Logger.info("MCP Client", "Tool use:", content, tracerId);
             const toolName = content.name;
             const toolUseID = content.id;
             const toolInput = content.input as { [x: string]: unknown } | undefined;
@@ -125,7 +130,7 @@ export class MCPClient {
               name: toolName,
               arguments: toolInput,
             });
-            Logger.info("MCP Client", "Tool result:", result);
+            Logger.info("MCP Client", "Tool result:", result, tracerId);
             await this.saveMessage("user", [
               {
                 type: "tool_result",
@@ -137,15 +142,15 @@ export class MCPClient {
           }
         }
       } catch (e: unknown) {
-        Logger.error("MCP Client", "Error processing query:", e);
+        Logger.error("MCP Client", "Error processing query:", e, tracerId);
         const isToolUseError = e instanceof Error && e.message.includes("`tool_use` ids were found without `tool_result`");
-        Logger.info("MCP Client", "Is tool use error:", isToolUseError);
+        Logger.info("MCP Client", "Is tool use error:", isToolUseError, tracerId);
         if (isToolUseError) {
           await this.clearMessages();
           await this.processQuery(query, onMessage);
         } else {
-          Logger.error("MCP Client", "Error is not a tool use error, rethrowing", e);
-          await onMessage("Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde.");
+          Logger.error("MCP Client", "Error is not a tool use error, rethrowing", e, tracerId);
+          await onMessage("Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde. Tracer ID: " + tracerId);
         }
       }
     };

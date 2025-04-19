@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getTime } from "date-fns";
-import Transport, { TransportStreamOptions } from "winston-transport";
+import type { TransportStreamOptions } from "winston-transport";
+import Transport from "winston-transport";
 
 interface OpenObserveTransportOptions extends TransportStreamOptions {
   endpoint: string;
@@ -17,14 +18,9 @@ interface WinstonLog {
   level: string;
   message: string;
   data: unknown;
+  tracerId?: string;
 }
 
-interface OpenObserveLog {
-  __timestamp: number;
-  level: string;
-  message: string;
-  data: unknown;
-}
 export class OpenObserveTransport extends Transport {
   private readonly endpoint: string;
   private readonly organization: string;
@@ -49,6 +45,7 @@ export class OpenObserveTransport extends Transport {
         level: info.level,
         message: info.message,
         data: info.data,
+        tracerId: info.tracerId,
       },
       {
         headers: {

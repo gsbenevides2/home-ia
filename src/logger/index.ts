@@ -21,6 +21,8 @@ const openObserveTransport = new OpenObserveTransport({
   },
 });
 
+type LoggerData = Object | Array<unknown> | string | unknown | undefined;
+
 export class Logger {
   private static logger = winston.createLogger({
     level: "info",
@@ -28,24 +30,27 @@ export class Logger {
     transports: [openObserveTransport, new winston.transports.Console()],
   });
 
-  public static info(program: string, message: string, ...data: unknown[]) {
+  public static info(program: string, message: string, data?: LoggerData, tracerId?: string) {
     const initialMessage = `[${program}] ${message}`;
     this.logger.info(initialMessage, {
       data,
+      tracerId,
     });
   }
 
-  public static error(program: string, message: string, ...data: unknown[]) {
+  public static error(program: string, message: string, data?: LoggerData, tracerId?: string) {
     const initialMessage = `[${program}] ${message}`;
     this.logger.error(initialMessage, {
       data,
+      tracerId,
     });
   }
 
-  public static warn(program: string, message: string, ...data: unknown[]) {
+  public static warn(program: string, message: string, data?: LoggerData, tracerId?: string) {
     const initialMessage = `[${program}] ${message}`;
     this.logger.warn(initialMessage, {
       data,
+      tracerId,
     });
   }
 }

@@ -1,3 +1,4 @@
+import { randomUUIDv7 } from "bun";
 import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { Logger } from "../logger/index.ts";
 import { MCPClient } from "../mcp/client.ts";
@@ -27,12 +28,14 @@ export class DiscordBot {
     });
 
     this.client.on("ready", () => {
-      Logger.info("Discord Bot", "Bot is connected to Discord");
+      Logger.info("Discord Bot", "Bot is connected to Discord", null);
     });
 
     this.client.on("messageCreate", (message) => {
-      Logger.info("Discord Bot", "Message received", message);
+      const tracerId = randomUUIDv7();
       const authorId = message.author.id;
+      const content = message.content;
+
       if (authorId === DISCORD_BOT_ID) {
         return;
       }
@@ -40,7 +43,15 @@ export class DiscordBot {
         message.reply("Você não tem permissão para usar este bot.");
         return;
       }
-      const content = message.content;
+      Logger.info(
+        "Discord Bot",
+        "Message received from user",
+        {
+          authorId,
+          message,
+        },
+        tracerId
+      );
       MCPClient.getInstance().processQuery(content, async (response) => {
         if (response.length > 2000) {
           const lines = response.split("\n");
@@ -57,9 +68,11 @@ export class DiscordBot {
             [""]
           );
           for (const block of linesBlock) {
+            Logger.info("Discord Bot", "Sending message to user", block, tracerId);
             await message.author.send(block);
           }
         } else {
+          Logger.info("Discord Bot", "Sending message to user", response, tracerId);
           await message.author.send(response);
         }
       });
