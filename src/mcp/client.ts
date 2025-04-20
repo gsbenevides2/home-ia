@@ -8,6 +8,7 @@ import type {
   ToolResultBlockParam,
   ToolUseBlockParam
 } from '@anthropic-ai/sdk/resources/messages/messages.mjs'
+import { APIConnectionError } from '@anthropic-ai/sdk/src/error.js'
 import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.d.ts'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
@@ -202,31 +203,36 @@ export class MCPClient {
       } catch (e: unknown) {
         Logger.error('MCP Client', 'Error processing query:', e, tracerId)
         const isToolUseError =
-          e instanceof Error &&
-          (e.message.includes(
-            '`tool_use` ids were found without `tool_result`'
-          ) ||
-            e.message.includes(
-              '`Each `tool_result` block must have a corresponding `tool_use` block in the previous message.'
-            ))
-        Logger.info(
-          'MCP Client',
-          'Is tool use error:',
-          isToolUseError,
-          tracerId
-        )
-        if (!isToolUseError) {
+          e instanceof Error && e.message.includes('tool_result')
+        const isConnectionRefused =
+          e instanceof APIConnectionError &&
+          JSON.stringify(e.cause).includes('ConnectionRefused')
+
+        if (isToolUseError) {
+          Logger.error('MCP Client', 'Tool use error, skipping', e, tracerId)
+          return
+        }
+        if (isConnectionRefused) {
           Logger.error(
             'MCP Client',
-            'Error is not a tool use error, rethrowing',
+            'Connection refused, skipping',
             e,
             tracerId
           )
-          await onMessage(
-            'Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde. Tracer ID: ' +
-              tracerId
-          )
+          await dispatchMessage()
+          return
         }
+
+        Logger.error(
+          'MCP Client',
+          'Is a unknown error, rethrowing',
+          e,
+          tracerId
+        )
+        await onMessage(
+          'Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde. Tracer ID: ' +
+            tracerId
+        )
       }
     }
     await dispatchMessage()
