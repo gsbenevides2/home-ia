@@ -1,9 +1,9 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { TrainSensors } from '../../clients/homeAssistant/MySensors/TrainSensors.ts'
-import { Logger } from '../../logger/index.ts'
-import { MCPServerTracerID } from '../server.ts'
-import { AbstractTool } from './AbstractTool.ts'
+import { TrainSensors } from '../../../../clients/homeAssistant/MySensors/TrainSensors.ts'
+import { Logger } from '../../../../logger/index.ts'
+import { MCPServerTracerID } from '../../../server.ts'
+import { AbstractTool } from '../../AbstractTool.ts'
 
 export const availableTrainLines = [
   'one',
