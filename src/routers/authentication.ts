@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router } from "express";
+import { type NextFunction, type Request, type Response, Router } from "express";
 const authenticationRouter = Router();
 
 authenticationRouter.use((req: Request, res: Response, next: NextFunction) => {

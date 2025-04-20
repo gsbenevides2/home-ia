@@ -1,4 +1,4 @@
-import { BinarySensor, BinarySensorAttributes, BinarySensorDeviceClass } from "../AbstractEntities/BinarySensor.ts";
+import { BinarySensor, type BinarySensorAttributes, BinarySensorDeviceClass } from "../AbstractEntities/BinarySensor.ts";
 
 export const availableLightsNames = ["Quarto Gui", "Quarto Ana"] as const;
 export type AvailableLightsNames = (typeof availableLightsNames)[number];

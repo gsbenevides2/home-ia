@@ -1,6 +1,5 @@
 import { asyncFind } from "../../../utils/arrays.ts";
-import type { SensorAttributes } from "../AbstractEntities/Switch.ts";
-import { SensorDeviceClass, Switch } from "../AbstractEntities/Switch.ts";
+import { SensorDeviceClass, Switch, type SensorAttributes } from "../AbstractEntities/Switch.ts";
 
 export type FanSensorsRooms = (typeof FanSensors.rooms)[number];
 export type Velocities = Record<string, Switch<SensorAttributes>>;

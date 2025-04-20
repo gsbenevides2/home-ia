@@ -1,5 +1,5 @@
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { Request, Response, Router } from "express";
+import { type Request, type Response, Router } from "express";
 import { mcpServer, transports } from "../mcp/server.ts";
 const mcpRouter = Router();
 

@@ -1,5 +1,5 @@
 import { CodespacesInstanceStatus } from "../../CodespacesComputeEngineMachine.ts";
-import { Sensor, SensorAttributes, SensorDeviceClass } from "../AbstractEntities/Sensor.ts";
+import { Sensor, type SensorAttributes, SensorDeviceClass } from "../AbstractEntities/Sensor.ts";
 
 interface CodespacesAttributes extends SensorAttributes {
   options: CodespacesInstanceStatus[];

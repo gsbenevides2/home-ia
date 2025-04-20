@@ -1,4 +1,4 @@
-import { Entity, EntityAttributes, SensorType } from "./Entity.ts";
+import { Entity, type EntityAttributes, SensorType } from "./Entity.ts";
 
 export class BinarySensor<SensorAttributes extends BinarySensorAttributes> extends Entity<SensorState, SensorAttributes> {
   constructor(entity_id: string, unique_id: string, attributes: SensorAttributes) {

@@ -1,4 +1,4 @@
-import { Entity, EntityAttributes, SensorType } from "./Entity.ts";
+import { Entity, type EntityAttributes, SensorType } from "./Entity.ts";
 
 export class Switch<GenericAttributtes extends SensorAttributes> extends Entity<SensorState, GenericAttributtes> {
   constructor(entity_id: string, unique_id: string, attributes: GenericAttributtes) {

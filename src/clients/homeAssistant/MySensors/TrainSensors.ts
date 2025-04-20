@@ -1,5 +1,5 @@
 import { numberToWords } from "../../../utils/numbersToWords.ts";
-import { TrainStatusReturn } from "../../DiretoDosTres.ts";
+import { type TrainStatusReturn } from "../../DiretoDosTres.ts";
 import { Sensor } from "../AbstractEntities/Sensor.ts";
 
 export class TrainSensors {

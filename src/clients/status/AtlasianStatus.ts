@@ -1,5 +1,5 @@
 import axios from "axios";
-import { StatusReturn } from "./StatusTypes.ts";
+import { type StatusReturn } from "./StatusTypes.ts";
 
 type AtlassianStatusResponse = {
   status: {

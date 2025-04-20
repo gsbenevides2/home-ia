@@ -1,7 +1,6 @@
 import axios from "axios";
 import { getTime } from "date-fns";
-import type { TransportStreamOptions } from "winston-transport";
-import Transport from "winston-transport";
+import Transport, { type TransportStreamOptions } from "winston-transport";
 
 interface OpenObserveTransportOptions extends TransportStreamOptions {
   endpoint: string;
