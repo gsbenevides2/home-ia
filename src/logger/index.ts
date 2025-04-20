@@ -23,7 +23,7 @@ const openObserveTransport = new OpenObserveTransport({
 
 type LoggerData = Object | Array<unknown> | string | unknown | undefined;
 
-const disableOpenObserve = Bun.env.DISABLE_OPEN_OBSERVE;
+const disableOpenObserve = Bun.env.DISABLE_OPEN_OBSERVE === "true";
 
 export class Logger {
   private static logger = winston.createLogger({

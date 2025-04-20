@@ -129,13 +129,20 @@ export class MCPClient {
 
     const dispatchMessage = async () => {
       try {
-        const response = await this.anthropic.messages.create({
-          model: "claude-3-5-sonnet-20241022",
-          max_tokens: 1000,
-          messages: this.messages,
-          system: systemPrompt,
-          tools: this.tools,
-        });
+        const response = await this.anthropic.messages.create(
+          {
+            model: "claude-3-7-sonnet-20250219",
+            max_tokens: 1000,
+            messages: this.messages,
+            system: systemPrompt,
+            tools: this.tools,
+          },
+          {
+            headers: {
+              "anthropic-beta": "token-efficient-tools-2025-02-19",
+            },
+          }
+        );
         const fixedContent = this.fixMessageOrder(response.content);
         await this.saveMessage("assistant", fixedContent);
         for (const content of fixedContent) {

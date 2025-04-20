@@ -1,27 +1,29 @@
+import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { Logger } from "../../../../logger/index.ts";
 import { addToQueue } from "../../../../queue/queue.ts";
-import { AbstractTool, ToolExecuteResult } from "../../AbstractTool.ts";
+import { AbstractTool } from "../../AbstractTool.ts";
 
-export class ChangeCodespacesStatusTool extends AbstractTool {
-  name = "change-codespaces-status";
-  description = "Chnage the status of the Google Cloud virtual machine on Conpute Engine called Codespaces";
-  parameters = {
-    status: z.enum(["start", "stop"]).describe("The status of the codespaces"),
-  };
+const args = {
+  status: z.enum(["start", "stop"]).describe("The desired action to perform on the workspace (start/stop)"),
+} as const;
 
-  async execute(parameters: z.infer<z.ZodType<typeof this.parameters>>): Promise<ToolExecuteResult> {
-    Logger.info("MCP Server - ChangeCodespacesStatusTool", "Changing codespaces status", parameters);
-    const status = parameters.status as unknown as "start" | "stop";
+type Args = typeof args;
+
+export class ChangeCodespacesStatusTool extends AbstractTool<Args> {
+  name = "control-the-codespaces-machine";
+  description = "Control the Google Cloud virtual machine on Conpute Engine called Codespaces to start or stop it";
+  args = args;
+
+  execute: ToolCallback<Args> = async (args) => {
+    const status = args.status;
     addToQueue(status === "start" ? "codespaces-start" : "codespaces-stop");
-
     return {
       content: [
         {
           type: "text",
-          text: `The codespaces machine is being ${parameters.status}ed`,
+          text: `The codespaces machine is being ${status === "start" ? "starting" : "stopping"}`,
         },
       ],
     };
-  }
+  };
 }

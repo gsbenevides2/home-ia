@@ -1,33 +1,39 @@
+import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { AvailableLightsNames, availableLightsNames, TuyaLight } from "../../../../clients/homeAssistant/MySensors/TuyaLight.ts";
+import { availableLightsNames, TuyaLight } from "../../../../clients/homeAssistant/MySensors/TuyaLight.ts";
 import { Logger } from "../../../../logger/index.ts";
-import { AbstractTool, ToolExecuteResult } from "../../AbstractTool.ts";
+import { AbstractTool } from "../../AbstractTool.ts";
 
-export class GetRoomLampTool extends AbstractTool {
-  name = "get-lamp-status";
-  description = "Get the status of the lamp";
-  parameters = {
-    roomName: z.enum(availableLightsNames).describe("The name of the room"),
-  };
+const args = {
+  roomName: z.enum(availableLightsNames).describe("The name of the room where the smart light is installed (e.g., 'bedroom', 'living_room')"),
+} as const;
 
-  async execute(parameters: z.infer<z.ZodType<typeof this.parameters>>): Promise<ToolExecuteResult> {
-    Logger.info("MCP Server - GetRoomLampTool", "Getting lamp status", parameters);
+type Args = typeof args;
+
+export class GetRoomLampTool extends AbstractTool<Args> {
+  name = "get-room-light-status";
+  description = "Retrieves the current on/off status of a specific room's smart light";
+  args = args;
+
+  execute: ToolCallback<Args> = async (args) => {
+    const roomName = args.roomName;
+    Logger.info("MCP Server - GetRoomLampTool", "Getting lamp status", args);
     try {
-      const lightState = await TuyaLight.getLightState(parameters.roomName as unknown as AvailableLightsNames);
+      const lightState = await TuyaLight.getLightState(roomName);
       Logger.info("MCP Server - GetRoomLampTool", "Lamp status retrieved", lightState);
       return {
         content: [
           {
             type: "text",
-            text: `The lamp in the ${parameters.roomName} is ${lightState}`,
+            text: `The light in the ${roomName} is currently ${lightState}`,
           },
         ],
       };
     } catch (error) {
       Logger.error("MCP Server - GetRoomLampTool", "Error getting lamp status", error);
       return {
-        content: [{ type: "text", text: "Has occurred an error while getting the lamp status" }],
+        content: [{ type: "text", text: `An error occurred while getting the light status for ${roomName}.` }],
       };
     }
-  }
+  };
 }

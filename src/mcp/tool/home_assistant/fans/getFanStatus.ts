@@ -1,33 +1,39 @@
+import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { FanSensors, FanSensorsRooms } from "../../../../clients/homeAssistant/MySensors/FanSensors.ts";
+import { FanSensors } from "../../../../clients/homeAssistant/MySensors/FanSensors.ts";
 import { Logger } from "../../../../logger/index.ts";
-import { AbstractTool, ToolExecuteResult } from "../../AbstractTool.ts";
+import { AbstractTool } from "../../AbstractTool.ts";
 
-export class GetRoomFanStatusTool extends AbstractTool {
+const args = {
+  roomName: z.enum(FanSensors.rooms).describe("The name of the room where the smart fan is installed (e.g., 'Quarto Guilherme', 'Sala', 'Cozinha')"),
+} as const;
+
+type Args = typeof args;
+
+export class GetRoomFanStatusTool extends AbstractTool<Args> {
   name = "get-fan-status";
-  description = "Get the status of the lamp";
-  parameters = {
-    roomName: z.enum(FanSensors.rooms).describe("The name of the room"),
-  };
+  description = "Retrieves the current velocity in portuguese of a specific room's smart fan eg: 'Quarto Guilherme': 'Alto/Médio/Baixo/Desligado'";
+  args = args;
 
-  async execute(parameters: z.infer<z.ZodType<typeof this.parameters>>): Promise<ToolExecuteResult> {
-    Logger.info("MCP Server - GetRoomFanStatusTool", "Getting fan status", parameters);
+  execute: ToolCallback<Args> = async (args) => {
+    const roomName = args.roomName;
+    Logger.info("MCP Server - GetRoomFanStatusTool", "Getting fan status", args);
     try {
-      const fanState = await FanSensors.getFanRoom(parameters.roomName as unknown as FanSensorsRooms);
+      const fanState = await FanSensors.getFanRoom(roomName);
       Logger.info("MCP Server - GetRoomFanStatusTool", "Fan status retrieved", fanState);
       return {
         content: [
           {
             type: "text",
-            text: `The fan in the ${parameters.roomName} is ${fanState}`,
+            text: `The fan in the ${roomName} is ${fanState}`,
           },
         ],
       };
     } catch (error) {
-      Logger.error("MCP Server - GetRoomLampTool", "Error getting lamp status", error);
+      Logger.error("MCP Server - GetRoomFanStatusTool", "Error getting fan status", error);
       return {
-        content: [{ type: "text", text: "Has occurred an error while getting the lamp status" }],
+        content: [{ type: "text", text: `An error occurred while getting the fan status for ${roomName}.` }],
       };
     }
-  }
+  };
 }

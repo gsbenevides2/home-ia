@@ -1,5 +1,5 @@
-import { McpServer } from "@modelcontextprotocol/sdk";
-import { z } from "zod";
+import type { McpServer, ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.d.ts";
+import { z, type ZodRawShape } from "zod";
 
 export type Parameters = {
   [key: string]: z.ZodSchema;
@@ -12,15 +12,15 @@ export type ToolExecuteResult = {
   }[];
 };
 
-export abstract class AbstractTool {
+export abstract class AbstractTool<P extends ZodRawShape> {
   abstract name: string;
   abstract description: string;
-  abstract parameters: Parameters;
+  abstract args: P;
 
-  abstract execute(parameters: z.infer<z.ZodType<Parameters>>): Promise<ToolExecuteResult>;
+  abstract execute: ToolCallback<P>;
 
   serverRegister(server: McpServer) {
-    server.tool(this.name, this.description, this.parameters, this.execute);
+    server.tool(this.name, this.description, this.args, this.execute);
     return server;
   }
 }

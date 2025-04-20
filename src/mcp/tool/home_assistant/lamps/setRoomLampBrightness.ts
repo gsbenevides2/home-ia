@@ -1,34 +1,39 @@
+import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { AvailableLightsNames, availableLightsNames, TuyaLight } from "../../../../clients/homeAssistant/MySensors/TuyaLight.ts";
+import { availableLightsNames, TuyaLight, type AvailableLightsNames } from "../../../../clients/homeAssistant/MySensors/TuyaLight.ts";
 import { Logger } from "../../../../logger/index.ts";
-import { AbstractTool, ToolExecuteResult } from "../../AbstractTool.ts";
+import { AbstractTool } from "../../AbstractTool.ts";
 
-export class SetRoomLampBrightnessTool extends AbstractTool {
-  name = "set-lamp-brightness";
-  description = "Set the brightness of the lamp";
-  parameters = {
-    roomName: z.enum(availableLightsNames).describe("The name of the room"),
-    brightness: z.number().describe("The brightness of the lamp (0-100)").min(0).max(100),
-  };
+const args = {
+  roomName: z.enum(availableLightsNames).describe("The name of the room where the smart light is installed (e.g., 'bedroom', 'living_room')"),
+  brightness: z.number().describe("The desired percentage of  brightness of the lamp (0-100)"),
+} as const;
 
-  async execute(parameters: z.infer<z.ZodType<typeof this.parameters>>): Promise<ToolExecuteResult> {
-    Logger.info("MCP Server - SetRoomLampBrightnessTool", "Setting lamp brightness", parameters);
+type Args = typeof args;
+
+export class SetRoomLampBrightnessTool extends AbstractTool<Args> {
+  name = "set-room-light-brightness";
+  description = "Set the brightness of a specific room's smart light";
+  args = args;
+
+  execute: ToolCallback<Args> = async (args) => {
+    Logger.info("MCP Server - SetRoomLampBrightnessTool", "Setting lamp brightness", args);
     try {
-      await TuyaLight.setLightBrightness(parameters.roomName as unknown as AvailableLightsNames, parameters.brightness as unknown as number);
-      Logger.info("MCP Server - SetRoomLampBrightnessTool", "Lamp brightness set", parameters);
+      await TuyaLight.setLightBrightness(args.roomName as unknown as AvailableLightsNames, args.brightness as unknown as number);
+      Logger.info("MCP Server - SetRoomLampBrightnessTool", "Lamp brightness set", args);
       return {
         content: [
           {
             type: "text",
-            text: `The lamp in the ${parameters.roomName} the brightness is ${parameters.brightness}`,
+            text: `The light in the ${args.roomName} has ${args.brightness}% brightness`,
           },
         ],
       };
     } catch (error) {
       Logger.error("MCP Server - SetRoomLampBrightnessTool", "Error setting lamp brightness", error);
       return {
-        content: [{ type: "text", text: "Has occurred an error while setting the lamp brightness" }],
+        content: [{ type: "text", text: `An error occurred while setting the light brightness for ${args.roomName}.` }],
       };
     }
-  }
+  };
 }

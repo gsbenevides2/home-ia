@@ -1,14 +1,18 @@
-import { z } from "zod";
+import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CodespacesSensor } from "../../../../clients/homeAssistant/MySensors/CodespacesSensor.ts";
 import { Logger } from "../../../../logger/index.ts";
-import { AbstractTool, ToolExecuteResult } from "../../AbstractTool.ts";
+import { AbstractTool } from "../../AbstractTool.ts";
 
-export class GetCodespacesStatusTool extends AbstractTool {
-  name = "get-codespaces-status";
-  description = "Get the status of the Google Cloud virtual machine on Conpute Engine called Codespaces";
-  parameters = {};
+const args = {} as const;
 
-  async execute(_: z.infer<z.ZodType<typeof this.parameters>>): Promise<ToolExecuteResult> {
+type Args = typeof args;
+
+export class GetCodespacesStatusTool extends AbstractTool<Args> {
+  name = "get-the-codespaces-machine";
+  description = "Get the status of the Google Cloud virtual machine on Conpute Engine called Codespaces to check if it is running or not";
+  args = {};
+
+  execute: ToolCallback<Args> = async () => {
     Logger.info("MCP Server - GetCodespacesStatusTool", "Getting codespaces status");
     try {
       const codespacesStatus = await CodespacesSensor.getInstance().getCodespacesStatus();
@@ -27,5 +31,5 @@ export class GetCodespacesStatusTool extends AbstractTool {
         content: [{ type: "text", text: "Has occurred an error while getting the codespaces status" }],
       };
     }
-  }
+  };
 }
