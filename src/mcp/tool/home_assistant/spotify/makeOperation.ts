@@ -45,6 +45,7 @@ export class MakeSpotifyOperation extends AbstractTool<Args> {
     } else if (args.operation === 'setVolume') {
       await sensor.setVolume(args.volume ?? 0)
     }
+    await new Promise(resolve => setTimeout(resolve, 1000))
     const content: { type: 'text'; text: string }[] = [
       {
         type: 'text',
