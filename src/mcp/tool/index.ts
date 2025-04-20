@@ -8,8 +8,10 @@ import { GetRoomLampTool } from "./home_assistant/lamps/getRoomLamp.ts";
 import { GetRoomLampBrightnessTool } from "./home_assistant/lamps/getRoomLampBrightness.ts";
 import { SetRoomLampTool } from "./home_assistant/lamps/setRoomLamp.ts";
 import { SetRoomLampBrightnessTool } from "./home_assistant/lamps/setRoomLampBrightness.ts";
+import { GetPiholeStatusTool } from "./home_assistant/pihole/getStatus.ts";
+import { SetPiholeStatusTool } from "./home_assistant/pihole/setStatus.ts";
 
-export const toolList = [new GetRoomLampTool(), new SetRoomLampTool(), new GetTrainStatus(), new GetCodespacesStatusTool(), new ChangeCodespacesStatusTool(), new SetRoomLampBrightnessTool(), new GetRoomLampBrightnessTool(), new GetRoomFanStatusTool(), new ChangeFanStatusTool()];
+export const toolList = [new GetRoomLampTool(), new SetRoomLampTool(), new GetTrainStatus(), new GetCodespacesStatusTool(), new ChangeCodespacesStatusTool(), new SetRoomLampBrightnessTool(), new GetRoomLampBrightnessTool(), new GetRoomFanStatusTool(), new ChangeFanStatusTool(), new GetPiholeStatusTool(), new SetPiholeStatusTool()];
 
 export function registerTools(server: McpServer) {
   toolList.forEach((tool) => {
