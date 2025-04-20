@@ -12,6 +12,8 @@ import { GetPiholeStatusTool } from './home_assistant/pihole/getStatus.ts'
 import { SetPiholeStatusTool } from './home_assistant/pihole/setStatus.ts'
 import { GetIdOfPlataformsTool } from './home_assistant/platform_status/getIdOfPlataforms.ts'
 import { GetPlatformStatusTool } from './home_assistant/platform_status/getStatus.ts'
+import { GetSpotifyData } from './home_assistant/spotify/getData.ts'
+import { MakeSpotifyOperation } from './home_assistant/spotify/makeOperation.ts'
 import { GetTrainStatus } from './home_assistant/train/getStatus.ts'
 import { GetStreamerStatusTool } from './home_assistant/twicth/getStatus.ts'
 import { GetStreamerIdsTool } from './home_assistant/twicth/getStreamerIds.ts'
@@ -34,7 +36,9 @@ export const toolList = [
   new GetStreamerStatusTool(),
   new GetPlatformStatusTool(),
   new GetIdOfPlataformsTool(),
-  new StartDeviceTool()
+  new StartDeviceTool(),
+  new GetSpotifyData(),
+  new MakeSpotifyOperation()
 ]
 
 export function registerTools(server: McpServer) {

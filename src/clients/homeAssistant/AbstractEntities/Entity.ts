@@ -82,7 +82,8 @@ export enum SensorType {
   BINARY_SENSOR = 'binary_sensor',
   SENSOR = 'sensor',
   SWITCH = 'switch',
-  BUTTON = 'button'
+  BUTTON = 'button',
+  MEDIA_PLAYER = 'media_player'
 }
 
 export interface EntityAttributes {
