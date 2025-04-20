@@ -147,7 +147,7 @@ export class MCPClient {
       try {
         const response = await this.anthropic.messages.create(
           {
-            model: 'claude-3-7-sonnet-20250219',
+            model: 'claude-3-5-haiku-20241022',
             max_tokens: 1000,
             messages: this.messages,
             system: systemPrompt,
@@ -155,7 +155,7 @@ export class MCPClient {
           },
           {
             headers: {
-              'anthropic-beta': 'token-efficient-tools-2025-02-19'
+              //'anthropic-beta': 'token-efficient-tools-2025-02-19'
             }
           }
         )

@@ -1,6 +1,8 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { SpotifyAPIWrapper } from '../../../../clients/spotify'
+import { Logger } from '../../../../logger'
+import { MCPServerTracerID } from '../../../server'
 import { AbstractTool } from '../../AbstractTool'
 
 const args = {
@@ -16,7 +18,25 @@ export class SearchSong extends AbstractTool<Args> {
   args = args
 
   execute: ToolCallback<Args> = async args => {
+    console.log('Searching for a song on Spotify', args)
+    Logger.info(
+      'MCP Server - SearchSong',
+      'Searching for a song on Spotify',
+      args,
+      MCPServerTracerID.getTracerId()
+    )
     const songs = await SpotifyAPIWrapper.search(args.query)
+    Logger.info(
+      'MCP Server - SearchSong',
+      'Songs found',
+      songs.map(song => ({
+        name: song.name,
+        artist: song.artists[0].name,
+        album: song.album.name,
+        uri: song.uri
+      })),
+      MCPServerTracerID.getTracerId()
+    )
     if (songs.length === 0) {
       return {
         content: [{ type: 'text', text: 'No songs found' }]
