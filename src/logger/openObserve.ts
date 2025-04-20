@@ -1,40 +1,40 @@
-import axios from "axios";
-import { getTime } from "date-fns";
-import Transport, { type TransportStreamOptions } from "winston-transport";
+import axios from 'axios'
+import { getTime } from 'date-fns'
+import Transport, { type TransportStreamOptions } from 'winston-transport'
 
 interface OpenObserveTransportOptions extends TransportStreamOptions {
-  endpoint: string;
-  organization: string;
-  stream: string;
+  endpoint: string
+  organization: string
+  stream: string
   auth: {
-    username: string;
-    password: string;
-  };
+    username: string
+    password: string
+  }
 }
 
 interface WinstonLog {
-  timestamp: Date;
-  level: string;
-  message: string;
-  program: string;
-  data: unknown;
-  tracerId?: string;
+  timestamp: Date
+  level: string
+  message: string
+  program: string
+  data: unknown
+  tracerId?: string
 }
 
 export class OpenObserveTransport extends Transport {
-  private readonly endpoint: string;
-  private readonly organization: string;
-  private readonly stream: string;
+  private readonly endpoint: string
+  private readonly organization: string
+  private readonly stream: string
   private readonly auth: {
-    username: string;
-    password: string;
-  };
+    username: string
+    password: string
+  }
   constructor(options: OpenObserveTransportOptions) {
-    super(options);
-    this.endpoint = options.endpoint;
-    this.organization = options.organization;
-    this.stream = options.stream;
-    this.auth = options.auth;
+    super(options)
+    this.endpoint = options.endpoint
+    this.organization = options.organization
+    this.stream = options.stream
+    this.auth = options.auth
   }
 
   public override log(info: WinstonLog, next: () => void) {
@@ -50,11 +50,11 @@ export class OpenObserveTransport extends Transport {
       },
       {
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Basic ${btoa(`${this.auth.username}:${this.auth.password}`)}`,
         },
-      },
-    );
-    next();
+      }
+    )
+    next()
   }
 }
