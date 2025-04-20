@@ -1,7 +1,9 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { Spotify } from '../../../../clients/homeAssistant/MySensors/Spotify'
+import { wait } from '../../../../utils/wait'
 import { AbstractTool } from '../../AbstractTool'
+import { GetSpotifyData } from './getData'
 
 const operations = ['play', 'pause', 'next', 'previous', 'setVolume'] as const
 const operationsResult = {
@@ -32,7 +34,7 @@ export class MakeSpotifyOperation extends AbstractTool<Args> {
   description = 'Make an operation on Spotify'
   args = args
 
-  execute: ToolCallback<Args> = async args => {
+  execute: ToolCallback<Args> = async (args, extra) => {
     const sensor = Spotify.getSensor(args.account)
     if (args.operation === 'play') {
       await sensor.play()
@@ -45,13 +47,22 @@ export class MakeSpotifyOperation extends AbstractTool<Args> {
     } else if (args.operation === 'setVolume') {
       await sensor.setVolume(args.volume ?? 0)
     }
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    const content: { type: 'text'; text: string }[] = [
+    await wait(1000)
+    const getSpotifyData = new GetSpotifyData()
+    const response = await getSpotifyData.execute(
       {
-        type: 'text',
-        text: `${operationsResult[args.operation]}`
-      }
-    ]
-    return { content }
+        account: args.account
+      },
+      extra
+    )
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `${operationsResult[args.operation]}`
+        },
+        ...response.content
+      ]
+    }
   }
 }
