@@ -1,5 +1,6 @@
 import { asyncFind } from "../../../utils/arrays.ts";
-import { SensorAttributes, SensorDeviceClass, Switch } from "../AbstractEntities/Switch.ts";
+import type { SensorAttributes } from "../AbstractEntities/Switch.ts";
+import { SensorDeviceClass, Switch } from "../AbstractEntities/Switch.ts";
 
 export type FanSensorsRooms = (typeof FanSensors.rooms)[number];
 export type Velocities = Record<string, Switch<SensorAttributes>>;
@@ -22,6 +23,7 @@ export const FanSensors = {
       }),
     } as Velocities,
   },
+  velocities: ["alta", "media", "baixa", "desligado"] as const,
   async getFanRoom(room: (typeof this.rooms)[number]) {
     const roomData = this.switches[room];
     const velocities = Object.keys(roomData) as (keyof typeof roomData)[];
@@ -30,5 +32,16 @@ export const FanSensors = {
       return state.state === "on";
     });
     return states ?? "off";
+  },
+
+  async setFanRoom(room: (typeof this.rooms)[number], velocity: (typeof this.velocities)[number]) {
+    const roomData = this.switches[room];
+    if (velocity === "desligado") {
+      const switches = Object.values(roomData);
+      await Promise.all(switches.map((swt) => swt.updateService("switch", "turn_off")));
+      return;
+    }
+    const velocityData = roomData[velocity];
+    await velocityData.updateService("switch", "turn_on");
   },
 };
