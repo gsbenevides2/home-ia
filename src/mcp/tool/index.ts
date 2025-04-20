@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { GetTrainStatus } from './GetTrainStatus.ts'
+import { MovimentDetectionTool } from './home_assistant/camera/movimentDetection.ts'
 import { ChangeCodespacesStatusTool } from './home_assistant/codespaces/changeStatus.ts'
 import { GetCodespacesStatusTool } from './home_assistant/codespaces/getStatus.ts'
 import { GetRoomFanStatusTool } from './home_assistant/fans/getFanStatus.ts'
@@ -22,7 +23,8 @@ export const toolList = [
   new GetRoomFanStatusTool(),
   new ChangeFanStatusTool(),
   new GetPiholeStatusTool(),
-  new SetPiholeStatusTool()
+  new SetPiholeStatusTool(),
+  new MovimentDetectionTool()
 ]
 
 export function registerTools(server: McpServer) {
