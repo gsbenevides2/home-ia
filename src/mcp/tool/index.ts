@@ -11,6 +11,11 @@ import { SetRoomLampTool } from './home_assistant/lamps/setRoomLamp.ts'
 import { SetRoomLampBrightnessTool } from './home_assistant/lamps/setRoomLampBrightness.ts'
 import { GetPiholeStatusTool } from './home_assistant/pihole/getStatus.ts'
 import { SetPiholeStatusTool } from './home_assistant/pihole/setStatus.ts'
+import { GetIdOfPlataformsTool } from './home_assistant/platform_status/getIdOfPlataforms.ts'
+import { GetPlatformStatusTool } from './home_assistant/platform_status/getStatus.ts'
+import { GetStreamerStatusTool } from './home_assistant/twicth/getStatus.ts'
+import { GetStreamerIdsTool } from './home_assistant/twicth/getStreamerIds.ts'
+import { StartDeviceTool } from './home_assistant/wakeOnLan/startDevice.ts'
 
 export const toolList = [
   new GetRoomLampTool(),
@@ -24,7 +29,12 @@ export const toolList = [
   new ChangeFanStatusTool(),
   new GetPiholeStatusTool(),
   new SetPiholeStatusTool(),
-  new MovimentDetectionTool()
+  new MovimentDetectionTool(),
+  new GetStreamerIdsTool(),
+  new GetStreamerStatusTool(),
+  new GetPlatformStatusTool(),
+  new GetIdOfPlataformsTool(),
+  new StartDeviceTool()
 ]
 
 export function registerTools(server: McpServer) {
