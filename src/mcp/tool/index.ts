@@ -14,6 +14,8 @@ import { GetIdOfPlataformsTool } from './home_assistant/platform_status/getIdOfP
 import { GetPlatformStatusTool } from './home_assistant/platform_status/getStatus.ts'
 import { GetSpotifyData } from './home_assistant/spotify/getData.ts'
 import { MakeSpotifyOperation } from './home_assistant/spotify/makeOperation.ts'
+import { PlaySong } from './home_assistant/spotify/playSong.ts'
+import { SearchSong } from './home_assistant/spotify/searchSong.ts'
 import { GetTrainStatus } from './home_assistant/train/getStatus.ts'
 import { GetStreamerStatusTool } from './home_assistant/twicth/getStatus.ts'
 import { GetStreamerIdsTool } from './home_assistant/twicth/getStreamerIds.ts'
@@ -38,7 +40,9 @@ export const toolList = [
   new GetIdOfPlataformsTool(),
   new StartDeviceTool(),
   new GetSpotifyData(),
-  new MakeSpotifyOperation()
+  new MakeSpotifyOperation(),
+  new SearchSong(),
+  new PlaySong()
 ]
 
 export function registerTools(server: McpServer) {

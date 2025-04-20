@@ -69,4 +69,12 @@ export class MediaPlayer extends Entity<
       volume_level: volume
     })
   }
+
+  async playSong(uri: string, media_content_type: string) {
+    console.log('Playing song', uri, media_content_type)
+    await this.updateService('media_player', 'play_media', {
+      media_content_id: uri,
+      media_content_type: media_content_type
+    })
+  }
 }

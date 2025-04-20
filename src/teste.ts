@@ -1,3 +1,3 @@
-import { Twitch } from './clients/homeAssistant/MySensors/Twitch'
+import { SpotifyAPIWrapper } from './clients/spotify'
 
-console.log(await Twitch.getStreamerStatus('KuroiTheBunny'))
+console.log(await SpotifyAPIWrapper.search('Tropykália'))
