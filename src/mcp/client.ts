@@ -6,12 +6,13 @@ import type {
   TextBlockParam,
   Tool,
   ToolResultBlockParam,
-  ToolUseBlockParam,
+  ToolUseBlockParam
 } from '@anthropic-ai/sdk/resources/messages/messages.mjs'
 import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.d.ts'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
 import type { OAuthClientMetadata } from '@modelcontextprotocol/sdk/shared/auth.d.ts'
+import { DEFAULT_REQUEST_TIMEOUT_MSEC } from '@modelcontextprotocol/sdk/shared/protocol.js'
 import { randomUUIDv7 } from 'bun'
 import { ChatbotDatabase } from '../clients/database/Chatbot.ts'
 import { Logger } from '../logger/index.ts'
@@ -21,20 +22,20 @@ const systemPrompt = await Bun.file('./src/mcp/systemPrompt.txt').text()
 class EnvironmentOAuthProvider implements OAuthClientProvider {
   redirectUrl = new URL('http://localhost:3000/sse')
   clientMetadata: OAuthClientMetadata = {
-    redirect_uris: [this.redirectUrl.toString()],
+    redirect_uris: [this.redirectUrl.toString()]
   }
   clientInformation = () => {
     return {
       client_id: 'mcp-client-cli',
       client_secret: 'mcp-client-cli-secret',
       client_id_issued_at: Date.now(),
-      client_secret_expires_at: Date.now() + 1000 * 60 * 60 * 24 * 30,
+      client_secret_expires_at: Date.now() + 1000 * 60 * 60 * 24 * 30
     }
   }
   tokens = () => {
     return {
       access_token: Bun.env.AUTH_TOKEN!,
-      token_type: 'Bearer',
+      token_type: 'Bearer'
     }
   }
   saveTokens = () => {}
@@ -68,7 +69,7 @@ export class MCPClient {
       throw new Error('ANTHROPIC_API_KEY is not set')
     }
     this.anthropic = new Anthropic({
-      apiKey: ANTHROPIC_API_KEY,
+      apiKey: ANTHROPIC_API_KEY
     })
     this.mcp = new Client({ name: 'mcp-client-cli', version: '1.0.0' })
   }
@@ -77,17 +78,20 @@ export class MCPClient {
   async connectToServer() {
     try {
       const port = Bun.env.PORT || 3000
-      this.transport = new SSEClientTransport(new URL(`http://localhost:${port}/sse`), {
-        authProvider: new EnvironmentOAuthProvider(),
-      })
+      this.transport = new SSEClientTransport(
+        new URL(`http://localhost:${port}/sse`),
+        {
+          authProvider: new EnvironmentOAuthProvider()
+        }
+      )
       await this.mcp.connect(this.transport)
 
       const toolsResult = await this.mcp.listTools()
-      this.tools = toolsResult.tools.map((tool) => {
+      this.tools = toolsResult.tools.map(tool => {
         return {
           name: tool.name,
           description: tool.description,
-          input_schema: tool.inputSchema,
+          input_schema: tool.inputSchema
         }
       })
       Logger.info(
@@ -105,11 +109,11 @@ export class MCPClient {
 
   async clearToolData() {
     const itens = this.messages
-      .map((message) => {
+      .map(message => {
         const isContentArray = Array.isArray(message.content)
         if (!isContentArray) return message
         const content = message.content as Array<ContentBlockParam>
-        const contentWithoutTool = content.filter((el) => {
+        const contentWithoutTool = content.filter(el => {
           if (el.type === 'tool_use' || el.type === 'tool_result') {
             return false
           }
@@ -117,12 +121,16 @@ export class MCPClient {
         })
         return { ...message, content: contentWithoutTool }
       })
-      .filter((el) => Boolean(el.content) && el.content.length > 0)
+      .filter(el => Boolean(el.content) && el.content.length > 0)
     Logger.info('MCP Client', 'Clearing tool data:', itens)
     this.messages = itens
   }
 
-  async processQuery(query: string, onMessage: (message: string) => Promise<void>, tracerId?: string) {
+  async processQuery(
+    query: string,
+    onMessage: (message: string) => Promise<void>,
+    tracerId?: string
+  ) {
     if (!tracerId) {
       tracerId = randomUUIDv7()
     }
@@ -130,8 +138,8 @@ export class MCPClient {
     await this.saveMessage('user', [
       {
         type: 'text',
-        text: query,
-      },
+        text: query
+      }
     ])
     Logger.info('MCP Client', 'Processing query:', query, tracerId)
 
@@ -143,12 +151,12 @@ export class MCPClient {
             max_tokens: 1000,
             messages: this.messages,
             system: systemPrompt,
-            tools: this.tools,
+            tools: this.tools
           },
           {
             headers: {
-              'anthropic-beta': 'token-efficient-tools-2025-02-19',
-            },
+              'anthropic-beta': 'token-efficient-tools-2025-02-19'
+            }
           }
         )
         const fixedContent = this.fixMessageOrder(response.content)
@@ -161,18 +169,28 @@ export class MCPClient {
             Logger.info('MCP Client', 'Tool use:', content, tracerId)
             const toolName = content.name
             const toolUseID = content.id
-            const toolInput = content.input as { [x: string]: unknown } | undefined
-            const result = await this.mcp.callTool({
-              name: toolName,
-              arguments: toolInput,
-            })
+            const toolInput = content.input as
+              | { [x: string]: unknown }
+              | undefined
+            const result = await this.mcp.callTool(
+              {
+                name: toolName,
+                arguments: toolInput
+              },
+              undefined,
+              {
+                timeout: DEFAULT_REQUEST_TIMEOUT_MSEC * 2
+              }
+            )
             Logger.info('MCP Client', 'Tool result:', result, tracerId)
             await this.saveMessage('user', [
               {
                 type: 'tool_result',
                 tool_use_id: toolUseID,
-                content: result.content as Array<TextBlockParam | ImageBlockParam> | string,
-              },
+                content: result.content as
+                  | Array<TextBlockParam | ImageBlockParam>
+                  | string
+              }
             ])
           }
         }
@@ -183,13 +201,25 @@ export class MCPClient {
         Logger.error('MCP Client', 'Error processing query:', e, tracerId)
         const isToolUseError =
           e instanceof Error &&
-          (e.message.includes('`tool_use` ids were found without `tool_result`') ||
+          (e.message.includes(
+            '`tool_use` ids were found without `tool_result`'
+          ) ||
             e.message.includes(
               '`Each `tool_result` block must have a corresponding `tool_use` block in the previous message.'
             ))
-        Logger.info('MCP Client', 'Is tool use error:', isToolUseError, tracerId)
+        Logger.info(
+          'MCP Client',
+          'Is tool use error:',
+          isToolUseError,
+          tracerId
+        )
         if (!isToolUseError) {
-          Logger.error('MCP Client', 'Error is not a tool use error, rethrowing', e, tracerId)
+          Logger.error(
+            'MCP Client',
+            'Error is not a tool use error, rethrowing',
+            e,
+            tracerId
+          )
           await onMessage(
             'Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde. Tracer ID: ' +
               tracerId
@@ -202,11 +232,12 @@ export class MCPClient {
   }
 
   async loadOldMessages(): Promise<void> {
-    const messages = await ChatbotDatabase.getInstance().getMessagesOldMessages()
-    this.messages = messages.reverse().map((el) => {
+    const messages =
+      await ChatbotDatabase.getInstance().getMessagesOldMessages()
+    this.messages = messages.reverse().map(el => {
       return {
         role: el.role,
-        content: JSON.parse(el.content),
+        content: JSON.parse(el.content)
       }
     })
     const firstMessage = this.messages[0]
@@ -214,7 +245,9 @@ export class MCPClient {
       return
     }
     if (Array.isArray(firstMessage.content)) {
-      const includesTool = firstMessage.content.some((el: ContentBlockParam) => el.type.includes('tool'))
+      const includesTool = firstMessage.content.some((el: ContentBlockParam) =>
+        el.type.includes('tool')
+      )
       if (includesTool) {
         this.removeVeryOldMessages()
       }
@@ -237,21 +270,25 @@ export class MCPClient {
   removeVeryOldMessages() {
     const firstMessage = this.messages[0]
     if (Array.isArray(firstMessage.content)) {
-      const includesTool = firstMessage.content.find((el: ContentBlockParam) => el.type.includes('tool_use')) as
-        | ToolUseBlockParam
-        | undefined
+      const includesTool = firstMessage.content.find((el: ContentBlockParam) =>
+        el.type.includes('tool_use')
+      ) as ToolUseBlockParam | undefined
       if (includesTool) {
-        const correspondingToolResult = this.messages.findIndex((el) => {
+        const correspondingToolResult = this.messages.findIndex(el => {
           if (Array.isArray(el.content)) {
             return el.content.find(
               (el2: ContentBlockParam) =>
-                el2.type.includes('tool_result') && (el2 as ToolResultBlockParam).tool_use_id === includesTool.id
+                el2.type.includes('tool_result') &&
+                (el2 as ToolResultBlockParam).tool_use_id === includesTool.id
             )
           }
           return false
         })
         if (correspondingToolResult) {
-          const removedMessage = this.messages.splice(0, correspondingToolResult + 1)
+          const removedMessage = this.messages.splice(
+            0,
+            correspondingToolResult + 1
+          )
           Logger.info('MCP Client', 'Removed message:', removedMessage)
         }
       } else {
@@ -262,18 +299,21 @@ export class MCPClient {
     }
   }
 
-  async saveMessage(role: 'user' | 'assistant', message: Array<ContentBlockParam>) {
+  async saveMessage(
+    role: 'user' | 'assistant',
+    message: Array<ContentBlockParam>
+  ) {
     if (this.messages.length > 10) {
       this.removeVeryOldMessages()
     }
 
     this.messages.push({
       role: role,
-      content: message,
+      content: message
     })
     await ChatbotDatabase.getInstance().saveMessage({
       content: JSON.stringify(message),
-      role: role,
+      role: role
     })
   }
 
