@@ -16,6 +16,7 @@ import { DEFAULT_REQUEST_TIMEOUT_MSEC } from '@modelcontextprotocol/sdk/shared/p
 import { randomUUIDv7 } from 'bun'
 import { ChatbotDatabase } from '../clients/database/Chatbot.ts'
 import { Logger } from '../logger/index.ts'
+import { MCPServerTracerID } from './server.ts'
 
 const systemPrompt = await Bun.file('./src/mcp/systemPrompt.txt').text()
 
@@ -85,7 +86,6 @@ export class MCPClient {
         }
       )
       await this.mcp.connect(this.transport)
-
       const toolsResult = await this.mcp.listTools()
       this.tools = toolsResult.tools.map(tool => {
         return {
@@ -172,6 +172,7 @@ export class MCPClient {
             const toolInput = content.input as
               | { [x: string]: unknown }
               | undefined
+            MCPServerTracerID.setTracerId(tracerId)
             const result = await this.mcp.callTool(
               {
                 name: toolName,

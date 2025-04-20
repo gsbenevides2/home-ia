@@ -1,52 +1,57 @@
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { CodespacesSensor } from "../../../../clients/homeAssistant/MySensors/CodespacesSensor.ts";
-import { Logger } from "../../../../logger/index.ts";
-import { AbstractTool } from "../../AbstractTool.ts";
+import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { CodespacesSensor } from '../../../../clients/homeAssistant/MySensors/CodespacesSensor.ts'
+import { Logger } from '../../../../logger/index.ts'
+import { MCPServerTracerID } from '../../../server.ts'
+import { AbstractTool } from '../../AbstractTool.ts'
 
-const args = {} as const;
-type Args = typeof args;
+const args = {} as const
+type Args = typeof args
 
 export class GetCodespacesStatusTool extends AbstractTool<Args> {
-  name = "get-the-codespaces-machine";
+  name = 'get-the-codespaces-machine'
   description =
-    "Get the status of the Google Cloud virtual machine on Conpute Engine called Codespaces to check if it is running or not";
-  args = args;
+    'Get the status of the Google Cloud virtual machine on Conpute Engine called Codespaces to check if it is running or not'
+  args = args
 
   execute: ToolCallback<Args> = async () => {
     Logger.info(
-      "MCP Server - GetCodespacesStatusTool",
-      "Getting codespaces status",
-    );
+      'MCP Server - GetCodespacesStatusTool',
+      'Getting codespaces status',
+      undefined,
+      MCPServerTracerID.getTracerId()
+    )
     try {
       const codespacesStatus =
-        await CodespacesSensor.getInstance().getCodespacesStatus();
+        await CodespacesSensor.getInstance().getCodespacesStatus()
       Logger.info(
-        "MCP Server - GetCodespacesStatusTool",
-        "Codespaces status retrieved",
+        'MCP Server - GetCodespacesStatusTool',
+        'Codespaces status retrieved',
         codespacesStatus,
-      );
+        MCPServerTracerID.getTracerId()
+      )
       return {
         content: [
           {
-            type: "text",
-            text: `The codespaces status is ${codespacesStatus}`,
-          },
-        ],
-      };
+            type: 'text',
+            text: `The codespaces status is ${codespacesStatus}`
+          }
+        ]
+      }
     } catch (error) {
       Logger.error(
-        "MCP Server - GetCodespacesStatusTool",
-        "Error getting codespaces status",
+        'MCP Server - GetCodespacesStatusTool',
+        'Error getting codespaces status',
         error,
-      );
+        MCPServerTracerID.getTracerId()
+      )
       return {
         content: [
           {
-            type: "text",
-            text: "Has occurred an error while getting the codespaces status",
-          },
-        ],
-      };
+            type: 'text',
+            text: 'Has occurred an error while getting the codespaces status'
+          }
+        ]
+      }
     }
-  };
+  }
 }
