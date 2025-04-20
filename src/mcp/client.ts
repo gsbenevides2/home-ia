@@ -159,6 +159,7 @@ export class MCPClient {
             }
           }
         )
+        Logger.info('MCP Client', 'Anthropic Response:', response, tracerId)
         const fixedContent = this.fixMessageOrder(response.content)
         await this.saveMessage('assistant', fixedContent)
         for (const content of fixedContent) {
@@ -195,7 +196,7 @@ export class MCPClient {
             ])
           }
         }
-        if (response.stop_reason !== 'end_turn') {
+        if (response.stop_reason === 'tool_use') {
           await dispatchMessage()
         }
       } catch (e: unknown) {
