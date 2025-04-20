@@ -53,7 +53,7 @@ export class OpenObserveTransport extends Transport {
           "Content-Type": "application/json",
           Authorization: `Basic ${btoa(`${this.auth.username}:${this.auth.password}`)}`,
         },
-      }
+      },
     );
     next();
   }

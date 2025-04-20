@@ -14,11 +14,16 @@ export enum CodespacesInstanceStatus {
   REPAIRING = "REPAIRING",
 }
 
-const StatesToStart = [CodespacesInstanceStatus.STOPPED, CodespacesInstanceStatus.TERMINATED, CodespacesInstanceStatus.SUSPENDED];
+const StatesToStart = [
+  CodespacesInstanceStatus.STOPPED,
+  CodespacesInstanceStatus.TERMINATED,
+  CodespacesInstanceStatus.SUSPENDED,
+];
 
 const StatesToStop = [CodespacesInstanceStatus.RUNNING];
 export class CodespacesComputeEngineMachine {
-  private static instance: CodespacesComputeEngineMachine = new CodespacesComputeEngineMachine();
+  private static instance: CodespacesComputeEngineMachine =
+    new CodespacesComputeEngineMachine();
   private constructor() {}
   static getInstance() {
     return this.instance;
@@ -30,13 +35,22 @@ export class CodespacesComputeEngineMachine {
     if (!this.instanceClient) {
       const projectId = Bun.env.GCP_SERVICE_ACCOUNT_PROJECT_ID;
       const clientEmail = Bun.env.GCP_SERVICE_ACCOUNT_CLIENT_EMAIL;
-      const privateKey = Buffer.from(Bun.env.GCP_SERVICE_ACCOUNT_PRIVATE_KEY ?? "", "base64").toString("ascii");
+      const privateKey = Buffer.from(
+        Bun.env.GCP_SERVICE_ACCOUNT_PRIVATE_KEY ?? "",
+        "base64",
+      ).toString("ascii");
 
       if (!projectId || !clientEmail || !privateKey) {
-        throw new Error("Missing required GCP credentials in environment variables");
+        throw new Error(
+          "Missing required GCP credentials in environment variables",
+        );
       }
 
-      Logger.info("CodespacesComputeEngineMachine", "Using service account:", clientEmail);
+      Logger.info(
+        "CodespacesComputeEngineMachine",
+        "Using service account:",
+        clientEmail,
+      );
       Logger.info("CodespacesComputeEngineMachine", "Project ID:", projectId);
 
       this.instanceClient = new InstancesClient({
@@ -83,7 +97,9 @@ export class CodespacesComputeEngineMachine {
   }
 
   async getMachineStatus() {
-    const [instanceGetResult] = await this.getInstanceClient().get(this.instanceData);
+    const [instanceGetResult] = await this.getInstanceClient().get(
+      this.instanceData,
+    );
     const status = instanceGetResult.status as CodespacesInstanceStatus;
     return status;
   }

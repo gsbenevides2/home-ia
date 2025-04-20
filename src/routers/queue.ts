@@ -22,7 +22,7 @@ queueRouters.post(
       addToQueue(operation);
     });
     res.status(200).json({ message: "Operations received" });
-  }
+  },
 );
 
 export default queueRouters;

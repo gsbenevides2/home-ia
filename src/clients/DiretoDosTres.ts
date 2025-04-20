@@ -41,19 +41,31 @@ export class DiretoDosTrens {
   private getStatus(situation: string) {
     const lowerSituation = situation.toLowerCase();
     if (lowerSituation.includes("normal")) return "OK";
-    const warningStatus = ["atividade programada", "circulação de trens", "impacto pontual", "diferenciada", "especial", "parcial", "velocidade reduzida"];
-    if (warningStatus.some((status) => lowerSituation.includes(status))) return "WARNING";
+    const warningStatus = [
+      "atividade programada",
+      "circulação de trens",
+      "impacto pontual",
+      "diferenciada",
+      "especial",
+      "parcial",
+      "velocidade reduzida",
+    ];
+    if (warningStatus.some((status) => lowerSituation.includes(status)))
+      return "WARNING";
     if (lowerSituation.includes("paralisada")) return "CRITICAL";
     if (lowerSituation.includes("encerrada")) return "UNKNOWN";
     return "UNKNOWN";
   }
 
   async getLines(): Promise<TrainStatusReturn[]> {
-    const lineResponse = await axios.get<StatusReturn[]>("https://www.diretodostrens.com.br/api/status", {
-      headers: {
-        "User-Agent": "Mozilla/5.0",
+    const lineResponse = await axios.get<StatusReturn[]>(
+      "https://www.diretodostrens.com.br/api/status",
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+        },
       },
-    });
+    );
     Logger.info("DiretoDosTrens", "Line response", lineResponse.data);
 
     return lineResponse.data.map((line) => {

@@ -17,7 +17,9 @@ function nodeSpawn(command: string) {
 }
 async function runDigCommand(domain: string, ns: string, tracerId: string) {
   try {
-    const result = await nodeSpawn(`/usr/bin/dig ${domain} @${ns} +short CNAME`);
+    const result = await nodeSpawn(
+      `/usr/bin/dig ${domain} @${ns} +short CNAME`,
+    );
 
     return result.split("\n")[0];
   } catch (error) {
@@ -31,7 +33,11 @@ async function getNSRecords(domain: string) {
   return result.split("\n").filter((line) => line.trim() !== "");
 }
 
-export async function makeDNSTest(domain: string, expectedCname: string, nsDomain: string): Promise<boolean> {
+export async function makeDNSTest(
+  domain: string,
+  expectedCname: string,
+  nsDomain: string,
+): Promise<boolean> {
   let testResult = false;
   const tracerId = randomUUIDv7();
   const nsRecords = await getNSRecords(nsDomain);
@@ -43,7 +49,7 @@ export async function makeDNSTest(domain: string, expectedCname: string, nsDomai
         domain,
         ns,
       },
-      tracerId
+      tracerId,
     );
     const cname = await runDigCommand(domain, ns, tracerId);
     if (cname === null) {
@@ -54,7 +60,7 @@ export async function makeDNSTest(domain: string, expectedCname: string, nsDomai
           domain,
           ns,
         },
-        tracerId
+        tracerId,
       );
       return false;
     }
@@ -66,7 +72,7 @@ export async function makeDNSTest(domain: string, expectedCname: string, nsDomai
           domain,
           ns,
         },
-        tracerId
+        tracerId,
       );
       testResult = true;
       break;
@@ -79,7 +85,7 @@ export async function makeDNSTest(domain: string, expectedCname: string, nsDomai
       {
         domain,
       },
-      tracerId
+      tracerId,
     );
   }
   return testResult;

@@ -12,7 +12,16 @@ import { updateTrainSensors } from "./operations/updateTrainSensors.ts";
 
 export const db = await openKv();
 
-export const publicOperations = ["codespaces-start", "codespaces-stop", "codespaces-toggle", "update-train-sensors", "update-codespaces-sensor", "update-page-status-sensors", "update-dns-sensors", "update-sensors"] as const;
+export const publicOperations = [
+  "codespaces-start",
+  "codespaces-stop",
+  "codespaces-toggle",
+  "update-train-sensors",
+  "update-codespaces-sensor",
+  "update-page-status-sensors",
+  "update-dns-sensors",
+  "update-sensors",
+] as const;
 
 export type PublicOperations = (typeof publicOperations)[number];
 
@@ -38,7 +47,7 @@ db.listenQueue(async (operation) => {
       {
         operation,
       },
-      tracerId
+      tracerId,
     );
     return;
   }
@@ -49,7 +58,7 @@ db.listenQueue(async (operation) => {
       {
         operation,
       },
-      tracerId
+      tracerId,
     );
     return;
   }
@@ -65,7 +74,7 @@ db.listenQueue(async (operation) => {
         operation,
         error: e,
       },
-      tracerId
+      tracerId,
     );
   }
 });

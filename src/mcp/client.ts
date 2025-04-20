@@ -1,5 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { ContentBlockParam, ImageBlockParam, MessageParam, TextBlockParam, Tool, ToolResultBlockParam, ToolUseBlockParam } from "@anthropic-ai/sdk/resources/messages/messages.mjs";
+import type {
+  ContentBlockParam,
+  ImageBlockParam,
+  MessageParam,
+  TextBlockParam,
+  Tool,
+  ToolResultBlockParam,
+  ToolUseBlockParam,
+} from "@anthropic-ai/sdk/resources/messages/messages.mjs";
 import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.d.ts";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
@@ -69,9 +77,12 @@ export class MCPClient {
   async connectToServer() {
     try {
       const port = Bun.env.PORT || 3000;
-      this.transport = new SSEClientTransport(new URL(`http://localhost:${port}/sse`), {
-        authProvider: new EnvironmentOAuthProvider(),
-      });
+      this.transport = new SSEClientTransport(
+        new URL(`http://localhost:${port}/sse`),
+        {
+          authProvider: new EnvironmentOAuthProvider(),
+        },
+      );
       await this.mcp.connect(this.transport);
 
       const toolsResult = await this.mcp.listTools();
@@ -85,7 +96,7 @@ export class MCPClient {
       Logger.info(
         "MCP Client",
         "Connected to MCP server with tools:",
-        this.tools.map(({ name }) => name)
+        this.tools.map(({ name }) => name),
       );
       await this.loadOldMessages();
       Logger.info("MCP Client", "Loaded old messages:", this.messages);
@@ -114,7 +125,11 @@ export class MCPClient {
     this.messages = itens;
   }
 
-  async processQuery(query: string, onMessage: (message: string) => Promise<void>, tracerId?: string) {
+  async processQuery(
+    query: string,
+    onMessage: (message: string) => Promise<void>,
+    tracerId?: string,
+  ) {
     if (!tracerId) {
       tracerId = randomUUIDv7();
     }
@@ -141,7 +156,7 @@ export class MCPClient {
             headers: {
               "anthropic-beta": "token-efficient-tools-2025-02-19",
             },
-          }
+          },
         );
         const fixedContent = this.fixMessageOrder(response.content);
         await this.saveMessage("assistant", fixedContent);
@@ -153,7 +168,9 @@ export class MCPClient {
             Logger.info("MCP Client", "Tool use:", content, tracerId);
             const toolName = content.name;
             const toolUseID = content.id;
-            const toolInput = content.input as { [x: string]: unknown } | undefined;
+            const toolInput = content.input as
+              | { [x: string]: unknown }
+              | undefined;
             const result = await this.mcp.callTool({
               name: toolName,
               arguments: toolInput,
@@ -163,7 +180,9 @@ export class MCPClient {
               {
                 type: "tool_result",
                 tool_use_id: toolUseID,
-                content: result.content as Array<TextBlockParam | ImageBlockParam> | string,
+                content: result.content as
+                  | Array<TextBlockParam | ImageBlockParam>
+                  | string,
               },
             ]);
           }
@@ -173,11 +192,31 @@ export class MCPClient {
         }
       } catch (e: unknown) {
         Logger.error("MCP Client", "Error processing query:", e, tracerId);
-        const isToolUseError = e instanceof Error && (e.message.includes("`tool_use` ids were found without `tool_result`") || e.message.includes("`Each `tool_result` block must have a corresponding `tool_use` block in the previous message."));
-        Logger.info("MCP Client", "Is tool use error:", isToolUseError, tracerId);
+        const isToolUseError =
+          e instanceof Error &&
+          (e.message.includes(
+            "`tool_use` ids were found without `tool_result`",
+          ) ||
+            e.message.includes(
+              "`Each `tool_result` block must have a corresponding `tool_use` block in the previous message.",
+            ));
+        Logger.info(
+          "MCP Client",
+          "Is tool use error:",
+          isToolUseError,
+          tracerId,
+        );
         if (!isToolUseError) {
-          Logger.error("MCP Client", "Error is not a tool use error, rethrowing", e, tracerId);
-          await onMessage("Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde. Tracer ID: " + tracerId);
+          Logger.error(
+            "MCP Client",
+            "Error is not a tool use error, rethrowing",
+            e,
+            tracerId,
+          );
+          await onMessage(
+            "Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde. Tracer ID: " +
+              tracerId,
+          );
         }
       }
     };
@@ -186,7 +225,8 @@ export class MCPClient {
   }
 
   async loadOldMessages(): Promise<void> {
-    const messages = await ChatbotDatabase.getInstance().getMessagesOldMessages();
+    const messages =
+      await ChatbotDatabase.getInstance().getMessagesOldMessages();
     this.messages = messages.reverse().map((el) => {
       return {
         role: el.role,
@@ -198,7 +238,9 @@ export class MCPClient {
       return;
     }
     if (Array.isArray(firstMessage.content)) {
-      const includesTool = firstMessage.content.some((el: ContentBlockParam) => el.type.includes("tool"));
+      const includesTool = firstMessage.content.some((el: ContentBlockParam) =>
+        el.type.includes("tool"),
+      );
       if (includesTool) {
         this.removeVeryOldMessages();
       }
@@ -221,16 +263,25 @@ export class MCPClient {
   removeVeryOldMessages() {
     const firstMessage = this.messages[0];
     if (Array.isArray(firstMessage.content)) {
-      const includesTool = firstMessage.content.find((el: ContentBlockParam) => el.type.includes("tool_use")) as ToolUseBlockParam | undefined;
+      const includesTool = firstMessage.content.find((el: ContentBlockParam) =>
+        el.type.includes("tool_use"),
+      ) as ToolUseBlockParam | undefined;
       if (includesTool) {
         const correspondingToolResult = this.messages.findIndex((el) => {
           if (Array.isArray(el.content)) {
-            return el.content.find((el2: ContentBlockParam) => el2.type.includes("tool_result") && (el2 as ToolResultBlockParam).tool_use_id === includesTool.id);
+            return el.content.find(
+              (el2: ContentBlockParam) =>
+                el2.type.includes("tool_result") &&
+                (el2 as ToolResultBlockParam).tool_use_id === includesTool.id,
+            );
           }
           return false;
         });
         if (correspondingToolResult) {
-          const removedMessage = this.messages.splice(0, correspondingToolResult + 1);
+          const removedMessage = this.messages.splice(
+            0,
+            correspondingToolResult + 1,
+          );
           Logger.info("MCP Client", "Removed message:", removedMessage);
         }
       } else {
@@ -241,7 +292,10 @@ export class MCPClient {
     }
   }
 
-  async saveMessage(role: "user" | "assistant", message: Array<ContentBlockParam>) {
+  async saveMessage(
+    role: "user" | "assistant",
+    message: Array<ContentBlockParam>,
+  ) {
     if (this.messages.length > 10) {
       this.removeVeryOldMessages();
     }

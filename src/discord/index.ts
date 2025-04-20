@@ -23,7 +23,10 @@ export class DiscordBot {
       throw new Error("DISCORD_BOT_ID is not set");
     }
     this.client = new Client({
-      intents: [GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages],
+      intents: [
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.DirectMessages,
+      ],
       partials: [Partials.Channel, Partials.Message],
     });
 
@@ -50,7 +53,7 @@ export class DiscordBot {
           authorId,
           message,
         },
-        tracerId
+        tracerId,
       );
       MCPClient.getInstance().processQuery(
         content,
@@ -67,18 +70,28 @@ export class DiscordBot {
                 }
                 return acc;
               },
-              [""]
+              [""],
             );
             for (const block of linesBlock) {
-              Logger.info("Discord Bot", "Sending message to user", block, tracerId);
+              Logger.info(
+                "Discord Bot",
+                "Sending message to user",
+                block,
+                tracerId,
+              );
               await message.author.send(block);
             }
           } else {
-            Logger.info("Discord Bot", "Sending message to user", response, tracerId);
+            Logger.info(
+              "Discord Bot",
+              "Sending message to user",
+              response,
+              tracerId,
+            );
             await message.author.send(response);
           }
         },
-        tracerId
+        tracerId,
       );
     });
   }

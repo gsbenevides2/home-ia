@@ -11,7 +11,19 @@ import { SetRoomLampBrightnessTool } from "./home_assistant/lamps/setRoomLampBri
 import { GetPiholeStatusTool } from "./home_assistant/pihole/getStatus.ts";
 import { SetPiholeStatusTool } from "./home_assistant/pihole/setStatus.ts";
 
-export const toolList = [new GetRoomLampTool(), new SetRoomLampTool(), new GetTrainStatus(), new GetCodespacesStatusTool(), new ChangeCodespacesStatusTool(), new SetRoomLampBrightnessTool(), new GetRoomLampBrightnessTool(), new GetRoomFanStatusTool(), new ChangeFanStatusTool(), new GetPiholeStatusTool(), new SetPiholeStatusTool()];
+export const toolList = [
+  new GetRoomLampTool(),
+  new SetRoomLampTool(),
+  new GetTrainStatus(),
+  new GetCodespacesStatusTool(),
+  new ChangeCodespacesStatusTool(),
+  new SetRoomLampBrightnessTool(),
+  new GetRoomLampBrightnessTool(),
+  new GetRoomFanStatusTool(),
+  new ChangeFanStatusTool(),
+  new GetPiholeStatusTool(),
+  new SetPiholeStatusTool(),
+];
 
 export function registerTools(server: McpServer) {
   toolList.forEach((tool) => {
