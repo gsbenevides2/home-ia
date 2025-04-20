@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
+import Anthropic, { APIConnectionError } from '@anthropic-ai/sdk'
 import type {
   ContentBlockParam,
   ImageBlockParam,
@@ -8,7 +8,6 @@ import type {
   ToolResultBlockParam,
   ToolUseBlockParam
 } from '@anthropic-ai/sdk/resources/messages/messages.mjs'
-import { APIConnectionError } from '@anthropic-ai/sdk/src/error.js'
 import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.d.ts'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
