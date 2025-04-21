@@ -51,38 +51,47 @@ export class DiscordBot {
         authorId,
         message
       })
-      chatbot.processQuery(
-        content,
-        async response => {
-          if (response.length > 2000) {
-            const lines = response.split('\n')
-            const linesBlock = lines.reduce(
-              (acc, line) => {
-                const lastBlock = acc[acc.length - 1]
-                if (lastBlock.length + line.length > 2000) {
-                  acc.push(line)
-                } else {
-                  acc[acc.length - 1] += line
-                }
-                return acc
-              },
-              ['']
-            )
-            for (const block of linesBlock) {
+      chatbot
+        .processQuery(
+          content,
+          async response => {
+            if (response.length > 2000) {
+              const lines = response.split('\n')
+              const linesBlock = lines.reduce(
+                (acc, line) => {
+                  const lastBlock = acc[acc.length - 1]
+                  if (lastBlock.length + line.length > 2000) {
+                    acc.push(line)
+                  } else {
+                    acc[acc.length - 1] += line
+                  }
+                  return acc
+                },
+                ['']
+              )
+              for (const block of linesBlock) {
+                tracer.info('Sending message to user', {
+                  message: block
+                })
+                await message.author.send(block)
+              }
+            } else {
               tracer.info('Sending message to user', {
-                message: block
+                message: response
               })
-              await message.author.send(block)
+              await message.author.send(response)
             }
-          } else {
-            tracer.info('Sending message to user', {
-              message: response
-            })
-            await message.author.send(response)
-          }
-        },
-        tracer
-      )
+          },
+          tracer
+        )
+        .catch(error => {
+          tracer.error('Error processing query', {
+            error
+          })
+          message.reply(
+            'Ocorreu um erro ao processar a consulta. Por favor, tente novamente mais tarde.'
+          )
+        })
     })
   }
 
@@ -106,5 +115,9 @@ export class DiscordBot {
       throw new Error('DISCORD_ALLOWED_USER_ID is not set')
     }
     await user.send(message)
+  }
+
+  async disconnect() {
+    await this.client.destroy()
   }
 }

@@ -33,10 +33,6 @@ export class Scheduller {
         `Retrived from DB Job ${id} scheduled at ${time} next invocation at ${next?.toISOString()}`
       )
     }
-    process.on('SIGINT', async () => {
-      Logger.info('Scheduller', 'SIGINT received, shutting down...')
-      await this.gracefulShutdown()
-    })
   }
 
   public static async scheduleJob(data: Omit<JobData, 'id'>) {
