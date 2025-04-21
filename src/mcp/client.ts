@@ -99,7 +99,7 @@ export class MCPClient {
         'Connected to MCP server with tools:',
         this.tools.map(({ name }) => name)
       )
-      await this.loadOldMessages()
+      //await this.loadOldMessages()
       Logger.info('MCP Client', 'Loaded old messages:', this.messages)
     } catch (e) {
       Logger.error('MCP Client', 'Failed to connect to MCP server: ', e)
@@ -134,7 +134,6 @@ export class MCPClient {
     if (!tracerId) {
       tracerId = randomUUIDv7()
     }
-
     await this.saveMessage('user', [
       {
         type: 'text',
@@ -150,7 +149,13 @@ export class MCPClient {
             model: 'claude-3-5-haiku-20241022',
             max_tokens: 1000,
             messages: this.messages,
-            system: systemPrompt,
+            system: [
+              {
+                type: 'text',
+                text: systemPrompt,
+                cache_control: { type: 'ephemeral' }
+              }
+            ],
             tools: this.tools
           },
           {
@@ -310,15 +315,29 @@ export class MCPClient {
     role: 'user' | 'assistant',
     message: Array<ContentBlockParam>
   ) {
-    if (this.messages.length > 10) {
+    if (this.messages.length > 5) {
       this.removeVeryOldMessages()
     }
+    this.messages.map(el => {
+      let content = el.content
+      if (content instanceof Array) {
+        content = content.map(el2 => ({
+          ...el2,
+          cache_control: { type: 'ephemeral' }
+        }))
+      }
+      return {
+        ...el,
+        content
+      }
+    })
 
     this.messages.push({
       role: role,
       content: message
     })
-    await ChatbotDatabase.getInstance().saveMessage({
+
+    ChatbotDatabase.getInstance().saveMessage({
       content: JSON.stringify(message),
       role: role
     })
