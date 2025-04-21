@@ -92,4 +92,16 @@ export class DiscordBot {
     Logger.info('Discord Bot', 'Logging in to Discord')
     await this.client.login(DISCORD_TOKEN)
   }
+
+  async sendMessage(message: string) {
+    const DISCORD_ALLOWED_USER_ID = Bun.env.DISCORD_ALLOWED_USER_ID
+    if (!DISCORD_ALLOWED_USER_ID) {
+      throw new Error('DISCORD_ALLOWED_USER_ID is not set')
+    }
+    const user = await this.client.users.fetch(DISCORD_ALLOWED_USER_ID)
+    if (!user) {
+      throw new Error('DISCORD_ALLOWED_USER_ID is not set')
+    }
+    await user.send(message)
+  }
 }

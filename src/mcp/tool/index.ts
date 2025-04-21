@@ -20,6 +20,7 @@ import { GetTrainStatus } from './home_assistant/train/getStatus.ts'
 import { GetStreamerStatusTool } from './home_assistant/twicth/getStatus.ts'
 import { GetStreamerIdsTool } from './home_assistant/twicth/getStreamerIds.ts'
 import { StartDeviceTool } from './home_assistant/wakeOnLan/startDevice.ts'
+import { SendDiscordMessageTool } from './discord/sendMessage.ts'
 
 export const toolList = [
   new GetRoomLampTool(),
@@ -42,7 +43,8 @@ export const toolList = [
   new GetSpotifyData(),
   new MakeSpotifyOperation(),
   new SearchSong(),
-  new PlaySong()
+  new PlaySong(),
+  new SendDiscordMessageTool()
 ]
 
 export function registerTools(server: McpServer) {
