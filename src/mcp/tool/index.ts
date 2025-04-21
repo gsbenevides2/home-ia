@@ -1,4 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { SendDiscordMessageTool } from './discord/sendMessage.ts'
 import { MovimentDetectionTool } from './home_assistant/camera/movimentDetection.ts'
 import { ChangeCodespacesStatusTool } from './home_assistant/codespaces/changeStatus.ts'
 import { GetCodespacesStatusTool } from './home_assistant/codespaces/getStatus.ts'
@@ -20,7 +21,9 @@ import { GetTrainStatus } from './home_assistant/train/getStatus.ts'
 import { GetStreamerStatusTool } from './home_assistant/twicth/getStatus.ts'
 import { GetStreamerIdsTool } from './home_assistant/twicth/getStreamerIds.ts'
 import { StartDeviceTool } from './home_assistant/wakeOnLan/startDevice.ts'
-import { SendDiscordMessageTool } from './discord/sendMessage.ts'
+import { CreateJobTool } from './scheduller/createJob.ts'
+import { DeleteJobTool } from './scheduller/deleteJob.ts'
+import { ListJobTool } from './scheduller/listJob.ts'
 
 export const toolList = [
   new GetRoomLampTool(),
@@ -44,7 +47,10 @@ export const toolList = [
   new MakeSpotifyOperation(),
   new SearchSong(),
   new PlaySong(),
-  new SendDiscordMessageTool()
+  new SendDiscordMessageTool(),
+  new CreateJobTool(),
+  new ListJobTool(),
+  new DeleteJobTool()
 ]
 
 export function registerTools(server: McpServer) {

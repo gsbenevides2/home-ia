@@ -128,7 +128,7 @@ export class MCPClient {
 
   async processQuery(
     query: string,
-    onMessage: (message: string) => Promise<void>,
+    onMessage?: (message: string) => Promise<void>,
     tracerId?: string
   ) {
     if (!tracerId) {
@@ -170,7 +170,9 @@ export class MCPClient {
         for (const content of fixedContent) {
           if (content.type === 'text') {
             Logger.info('MCP Client', 'Text:', content.text, tracerId)
-            await onMessage(content.text)
+            if (onMessage) {
+              await onMessage(content.text)
+            }
           } else if (content.type === 'tool_use') {
             Logger.info('MCP Client', 'Tool use:', content, tracerId)
             const toolName = content.name
@@ -233,10 +235,12 @@ export class MCPClient {
           e,
           tracerId
         )
-        await onMessage(
-          'Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde. Tracer ID: ' +
-            tracerId
-        )
+        if (onMessage) {
+          await onMessage(
+            'Ocorreu um erro ao processar a sua solicitação. Por favor, tente novamente mais tarde. Tracer ID: ' +
+              tracerId
+          )
+        }
       }
     }
     await dispatchMessage()
