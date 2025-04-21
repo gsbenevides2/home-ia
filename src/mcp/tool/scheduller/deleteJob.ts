@@ -1,9 +1,7 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { Logger } from '../../../logger'
 import { Scheduller } from '../../../scheduller'
-import { MCPServerTracerID } from '../../server'
-import { AbstractTool } from '../AbstractTool'
+import { AbstractTool, type OnErrorToolCallback } from '../AbstractTool'
 
 const args = {
   jobId: z
@@ -22,11 +20,15 @@ export class DeleteJobTool extends AbstractTool<Args> {
 
   execute: ToolCallback<Args> = async args => {
     const { jobId } = args
-    const tracerId = MCPServerTracerID.getTracerId()
-    Logger.info('DeleteJobTool', 'Deleting job', { jobId }, tracerId)
     await Scheduller.deleteJob(jobId)
     return {
       content: [{ type: 'text', text: `Job ${jobId} deleted` }]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [{ type: 'text', text: 'Error deleting job' }]
     }
   }
 }

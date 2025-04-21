@@ -4,9 +4,7 @@ import {
   availableLightsNames,
   TuyaLight
 } from '../../../../clients/homeAssistant/MySensors/TuyaLight.ts'
-import { Logger } from '../../../../logger/index.ts'
-import { MCPServerTracerID } from '../../../server.ts'
-import { AbstractTool } from '../../AbstractTool.ts'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool.ts'
 
 const args = {
   roomName: z
@@ -26,43 +24,25 @@ export class GetRoomLampTool extends AbstractTool<Args> {
 
   execute: ToolCallback<Args> = async args => {
     const roomName = args.roomName
-    Logger.info(
-      'MCP Server - GetRoomLampTool',
-      'Getting lamp status',
-      args,
-      MCPServerTracerID.getTracerId()
-    )
-    try {
-      const lightState = await TuyaLight.getLightState(roomName)
-      Logger.info(
-        'MCP Server - GetRoomLampTool',
-        'Lamp status retrieved',
-        lightState,
-        MCPServerTracerID.getTracerId()
-      )
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `The light in the ${roomName} is currently ${lightState}`
-          }
-        ]
-      }
-    } catch (error) {
-      Logger.error(
-        'MCP Server - GetRoomLampTool',
-        'Error getting lamp status',
-        error,
-        MCPServerTracerID.getTracerId()
-      )
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `An error occurred while getting the light status for ${roomName}.`
-          }
-        ]
-      }
+    const lightState = await TuyaLight.getLightState(roomName)
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `The light in the ${roomName} is currently ${lightState}`
+        }
+      ]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = (_error, args) => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `An error occurred while getting the light status for ${args.roomName}.`
+        }
+      ]
     }
   }
 }

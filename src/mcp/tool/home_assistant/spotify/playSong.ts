@@ -1,7 +1,7 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { Spotify } from '../../../../clients/homeAssistant/MySensors/Spotify'
-import { AbstractTool } from '../../AbstractTool'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool'
 
 const args = {
   account: z.enum(Spotify.accounts).describe('The account to play the song on'),
@@ -19,6 +19,14 @@ export class PlaySong extends AbstractTool<Args> {
     await Spotify.playSong(args.account, args.uri)
     return {
       content: [{ type: 'text', text: 'Song played' }]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [
+        { type: 'text', text: 'An error occurred while playing the song' }
+      ]
     }
   }
 }

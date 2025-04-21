@@ -1,9 +1,7 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { Twitch } from '../../../../clients/homeAssistant/MySensors/Twitch'
-import { Logger } from '../../../../logger'
-import { MCPServerTracerID } from '../../../server'
-import { AbstractTool } from '../../AbstractTool'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool'
 
 const args = {
   streamerId: z
@@ -21,12 +19,6 @@ export class GetStreamerStatusTool extends AbstractTool<Args> {
   args = args
 
   execute: ToolCallback<Args> = async args => {
-    Logger.info(
-      'MCP Server - GetStreamerStatusTool',
-      'Getting streamer status',
-      args,
-      MCPServerTracerID.getTracerId()
-    )
     const status = await Twitch.getStreamerStatus(args.streamerId)
     return {
       content: [
@@ -69,6 +61,17 @@ export class GetStreamerStatusTool extends AbstractTool<Args> {
         {
           type: 'text',
           text: `You are following this streamer since ${status.attributes.following_since}`
+        }
+      ]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'An error occurred while getting the streamer status'
         }
       ]
     }

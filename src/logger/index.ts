@@ -25,50 +25,68 @@ const openObserveTransport = new OpenObserveTransport({
   stream: OPEN_OBSERVE_STREAM,
   auth: {
     username: OPEN_OBSERVE_USERNAME,
-    password: OPEN_OBSERVE_PASSWORD,
-  },
+    password: OPEN_OBSERVE_PASSWORD
+  }
 })
 
-type LoggerData = object | Array<unknown> | string | unknown | undefined
+export type LoggerData = object | Array<unknown> | string | unknown | undefined
 
 const disableOpenObserve = Bun.env.DISABLE_OPEN_OBSERVE === 'true'
 
 export class Logger {
   private static logger = winston.createLogger({
     level: 'info',
-    format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.json()
+    ),
     transports: disableOpenObserve
       ? [
           new winston.transports.Console({
             log(info, next) {
               next()
-            },
-          }),
+            }
+          })
         ]
-      : [openObserveTransport, new winston.transports.Console()],
+      : [openObserveTransport, new winston.transports.Console()]
   })
 
-  public static info(program: string, message: string, data?: LoggerData, tracerId?: string) {
+  public static info(
+    program: string,
+    message: string,
+    data?: LoggerData,
+    tracerId?: string
+  ) {
     this.logger.info(message, {
       program,
       data,
-      tracerId,
+      tracerId
     })
   }
 
-  public static error(program: string, message: string, data?: LoggerData, tracerId?: string) {
+  public static error(
+    program: string,
+    message: string,
+    data?: LoggerData,
+    tracerId?: string
+  ) {
     this.logger.info(message, {
       program,
       data,
-      tracerId,
+      tracerId
     })
   }
 
-  public static warn(program: string, message: string, data?: LoggerData, tracerId?: string) {
+  public static warn(
+    program: string,
+    message: string,
+    data?: LoggerData,
+    tracerId?: string
+  ) {
     this.logger.info(message, {
       program,
       data,
-      tracerId,
+      tracerId
     })
   }
 }

@@ -2,9 +2,7 @@ import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { MediaPlayerStates } from '../../../../clients/homeAssistant/AbstractEntities/MediaPlayer'
 import { Spotify } from '../../../../clients/homeAssistant/MySensors/Spotify'
-import { Logger } from '../../../../logger'
-import { MCPServerTracerID } from '../../../server'
-import { AbstractTool } from '../../AbstractTool'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool'
 
 const args = {
   account: z.enum(Spotify.accounts).describe('The account to get data from')
@@ -19,21 +17,8 @@ export class GetSpotifyData extends AbstractTool<Args> {
   args = args
 
   execute: ToolCallback<Args> = async args => {
-    Logger.info(
-      'MCP Server - GetSpotifyData',
-      'Getting Spotify data',
-      args,
-      MCPServerTracerID.getTracerId()
-    )
     const sensor = Spotify.getSensor(args.account)
     const data = await sensor.getData()
-    console.log(data)
-    Logger.info(
-      'MCP Server - GetSpotifyData',
-      'Getting Spotify data',
-      data,
-      MCPServerTracerID.getTracerId()
-    )
     const content: { type: 'text'; text: string }[] = [
       {
         type: 'text',
@@ -79,6 +64,17 @@ export class GetSpotifyData extends AbstractTool<Args> {
 
     return {
       content
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'An error occurred while getting the Spotify data'
+        }
+      ]
     }
   }
 }

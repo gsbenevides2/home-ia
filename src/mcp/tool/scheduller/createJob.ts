@@ -1,9 +1,7 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { Logger } from '../../../logger'
 import { Scheduller } from '../../../scheduller'
-import { MCPServerTracerID } from '../../server'
-import { AbstractTool } from '../AbstractTool'
+import { AbstractTool, type OnErrorToolCallback } from '../AbstractTool'
 const args = {
   type: z
     .enum(['cron', 'date'])
@@ -37,24 +35,22 @@ export class CreateJobTool extends AbstractTool<Args> {
 
   execute: ToolCallback<Args> = async args => {
     const { type, time, llm, exclude } = args
-    const tracerId = MCPServerTracerID.getTracerId()
-    try {
-      Logger.info('CreateJobTool', 'Scheduling job', args, tracerId)
-      const jobId = await Scheduller.scheduleJob({ type, time, llm, exclude })
-      Logger.info('CreateJobTool', 'Job created', { jobId }, tracerId)
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Job created with id ${jobId} and will be executed at ${time}`
-          }
-        ]
-      }
-    } catch (error) {
-      Logger.error('CreateJobTool', 'Error creating job', { error }, tracerId)
-      return {
-        content: [{ type: 'text', text: 'Error creating job' }]
-      }
+
+    const jobId = await Scheduller.scheduleJob({ type, time, llm, exclude })
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Job created with id ${jobId} and will be executed at ${time}`
+        }
+      ]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [{ type: 'text', text: 'Error creating job' }]
     }
   }
 }

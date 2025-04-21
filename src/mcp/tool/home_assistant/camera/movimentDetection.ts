@@ -1,9 +1,7 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { Camera } from '../../../../clients/homeAssistant/MySensors/Camera'
-import { Logger } from '../../../../logger'
-import { MCPServerTracerID } from '../../../server'
-import { AbstractTool } from '../../AbstractTool'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool'
 
 const args = {
   area: z
@@ -19,45 +17,27 @@ export class MovimentDetectionTool extends AbstractTool<Args> {
   args = args
 
   execute: ToolCallback<Args> = async args => {
-    Logger.info(
-      'MCP Server - MovimentDetectionTool',
-      'Checking if there is movement in the area',
-      args,
-      MCPServerTracerID.getTracerId()
-    )
-    try {
-      const isMovement = await Camera.getMotionDetectionSensor(args.area)
-      Logger.info(
-        'MCP Server - MovimentDetectionTool',
-        'Movement detection result',
-        isMovement,
-        MCPServerTracerID.getTracerId()
-      )
-      return {
-        content: [
-          {
-            type: 'text',
-            text: isMovement
-              ? 'There is movement in the area'
-              : 'There is no movement in the area'
-          }
-        ]
-      }
-    } catch (error) {
-      Logger.error(
-        'MCP Server - MovimentDetectionTool',
-        'Error checking movement detection',
-        error,
-        MCPServerTracerID.getTracerId()
-      )
-      return {
-        content: [
-          {
-            type: 'text',
-            text: 'An error occurred while checking movement detection'
-          }
-        ]
-      }
+    const isMovement = await Camera.getMotionDetectionSensor(args.area)
+    return {
+      content: [
+        {
+          type: 'text',
+          text: isMovement
+            ? 'There is movement in the area'
+            : 'There is no movement in the area'
+        }
+      ]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'An error occurred while checking movement detection'
+        }
+      ]
     }
   }
 }

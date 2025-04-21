@@ -1,7 +1,7 @@
-import { randomUUIDv7 } from 'bun'
 import { Client, GatewayIntentBits, Partials } from 'discord.js'
 import { Logger } from '../logger/index.ts'
-import { MCPClient } from '../mcp/client.ts'
+import { Tracer } from '../logger/Tracer.ts'
+import { DiscordChatbot } from '../mcp/Chatbot.ts'
 export class DiscordBot {
   private client: Client
   private static instance: DiscordBot
@@ -23,19 +23,23 @@ export class DiscordBot {
       throw new Error('DISCORD_BOT_ID is not set')
     }
     this.client = new Client({
-      intents: [GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages],
-      partials: [Partials.Channel, Partials.Message],
+      intents: [
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.DirectMessages
+      ],
+      partials: [Partials.Channel, Partials.Message]
     })
 
     this.client.on('ready', () => {
       Logger.info('Discord Bot', 'Bot is connected to Discord', null)
     })
 
-    this.client.on('messageCreate', (message) => {
-      const tracerId = randomUUIDv7()
+    this.client.on('messageCreate', async message => {
+      const chatbot = await DiscordChatbot.getInstance()
+      const tracer = new Tracer()
+      tracer.setProgram('Discord Bot')
       const authorId = message.author.id
       const content = message.content
-
       if (authorId === DISCORD_BOT_ID) {
         return
       }
@@ -43,18 +47,13 @@ export class DiscordBot {
         message.reply('Você não tem permissão para usar este bot.')
         return
       }
-      Logger.info(
-        'Discord Bot',
-        'Message received from user',
-        {
-          authorId,
-          message,
-        },
-        tracerId
-      )
-      MCPClient.getInstance().processQuery(
+      tracer.info('Message received from user', {
+        authorId,
+        message
+      })
+      chatbot.processQuery(
         content,
-        async (response) => {
+        async response => {
           if (response.length > 2000) {
             const lines = response.split('\n')
             const linesBlock = lines.reduce(
@@ -70,15 +69,19 @@ export class DiscordBot {
               ['']
             )
             for (const block of linesBlock) {
-              Logger.info('Discord Bot', 'Sending message to user', block, tracerId)
+              tracer.info('Sending message to user', {
+                message: block
+              })
               await message.author.send(block)
             }
           } else {
-            Logger.info('Discord Bot', 'Sending message to user', response, tracerId)
+            tracer.info('Sending message to user', {
+              message: response
+            })
             await message.author.send(response)
           }
         },
-        tracerId
+        tracer
       )
     })
   }

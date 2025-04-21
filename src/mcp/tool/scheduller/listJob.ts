@@ -1,8 +1,6 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { Logger } from '../../../logger'
 import { Scheduller } from '../../../scheduller'
-import { MCPServerTracerID } from '../../server'
-import { AbstractTool } from '../AbstractTool'
+import { AbstractTool, type OnErrorToolCallback } from '../AbstractTool'
 
 const args = {} as const
 
@@ -14,12 +12,16 @@ export class ListJobTool extends AbstractTool<Args> {
   args = args
 
   execute: ToolCallback<Args> = async () => {
-    const tracerId = MCPServerTracerID.getTracerId()
     const jobs = await Scheduller.getJobs()
 
-    Logger.info('ListJobTool', 'Listing jobs', { jobs }, tracerId)
     return {
       content: [{ type: 'text', text: `Jobs: ${JSON.stringify(jobs)}` }]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [{ type: 'text', text: 'Error listing jobs' }]
     }
   }
 }

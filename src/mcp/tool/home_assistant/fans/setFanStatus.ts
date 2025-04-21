@@ -29,21 +29,8 @@ export class ChangeFanStatusTool extends AbstractTool<Args> {
   execute: ToolCallback<Args> = async args => {
     const roomName = args.roomName
     const velocity = args.velocity
-    Logger.info(
-      'MCP Server - ChangeFanStatusTool',
-      'Changing fan status',
-      args,
-      MCPServerTracerID.getTracerId()
-    )
-
     try {
       await FanSensors.setFanRoom(roomName, velocity)
-      Logger.info(
-        'MCP Server - ChangeFanStatusTool',
-        'Fan status changed',
-        velocity,
-        MCPServerTracerID.getTracerId()
-      )
       return {
         content: [
           {

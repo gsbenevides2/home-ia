@@ -1,8 +1,6 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { CodespacesSensor } from '../../../../clients/homeAssistant/MySensors/CodespacesSensor.ts'
-import { Logger } from '../../../../logger/index.ts'
-import { MCPServerTracerID } from '../../../server.ts'
-import { AbstractTool } from '../../AbstractTool.ts'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool.ts'
 
 const args = {} as const
 type Args = typeof args
@@ -14,44 +12,26 @@ export class GetCodespacesStatusTool extends AbstractTool<Args> {
   args = args
 
   execute: ToolCallback<Args> = async () => {
-    Logger.info(
-      'MCP Server - GetCodespacesStatusTool',
-      'Getting codespaces status',
-      undefined,
-      MCPServerTracerID.getTracerId()
-    )
-    try {
-      const codespacesStatus =
-        await CodespacesSensor.getInstance().getCodespacesStatus()
-      Logger.info(
-        'MCP Server - GetCodespacesStatusTool',
-        'Codespaces status retrieved',
-        codespacesStatus,
-        MCPServerTracerID.getTracerId()
-      )
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `The codespaces status is ${codespacesStatus}`
-          }
-        ]
-      }
-    } catch (error) {
-      Logger.error(
-        'MCP Server - GetCodespacesStatusTool',
-        'Error getting codespaces status',
-        error,
-        MCPServerTracerID.getTracerId()
-      )
-      return {
-        content: [
-          {
-            type: 'text',
-            text: 'Has occurred an error while getting the codespaces status'
-          }
-        ]
-      }
+    const codespacesStatus =
+      await CodespacesSensor.getInstance().getCodespacesStatus()
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `The codespaces status is ${codespacesStatus}`
+        }
+      ]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'An error occurred while getting the codespaces status'
+        }
+      ]
     }
   }
 }

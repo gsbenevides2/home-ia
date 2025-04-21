@@ -5,9 +5,7 @@ import {
   TuyaLight,
   type AvailableLightsNames
 } from '../../../../clients/homeAssistant/MySensors/TuyaLight.ts'
-import { Logger } from '../../../../logger/index.ts'
-import { MCPServerTracerID } from '../../../server.ts'
-import { AbstractTool } from '../../AbstractTool.ts'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool.ts'
 
 const args = {
   roomName: z
@@ -28,40 +26,28 @@ export class SetRoomLampBrightnessTool extends AbstractTool<Args> {
   args = args
 
   execute: ToolCallback<Args> = async args => {
-    Logger.info(
-      'MCP Server - SetRoomLampBrightnessTool',
-      'Setting lamp brightness',
-      args,
-      MCPServerTracerID.getTracerId()
+    await TuyaLight.setLightBrightness(
+      args.roomName as unknown as AvailableLightsNames,
+      args.brightness as unknown as number
     )
-    try {
-      await TuyaLight.setLightBrightness(
-        args.roomName as unknown as AvailableLightsNames,
-        args.brightness as unknown as number
-      )
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `The light in the ${args.roomName} has ${args.brightness}% brightness`
-          }
-        ]
-      }
-    } catch (error) {
-      Logger.error(
-        'MCP Server - SetRoomLampBrightnessTool',
-        'Error setting lamp brightness',
-        error,
-        MCPServerTracerID.getTracerId()
-      )
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `An error occurred while setting the light brightness for ${args.roomName}.`
-          }
-        ]
-      }
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `The light in the ${args.roomName} has ${args.brightness}% brightness`
+        }
+      ]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = (_error, args) => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `An error occurred while setting the light brightness for ${args.roomName}.`
+        }
+      ]
     }
   }
 }

@@ -1,9 +1,7 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { StatusSensors } from '../../../../clients/homeAssistant/MySensors/StatusSensors'
-import { Logger } from '../../../../logger'
-import { MCPServerTracerID } from '../../../server'
-import { AbstractTool } from '../../AbstractTool'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool'
 
 const args = {
   plataform_id: z
@@ -21,12 +19,6 @@ export class GetPlatformStatusTool extends AbstractTool<Args> {
   args = args
 
   execute: ToolCallback<Args> = async args => {
-    Logger.info(
-      'MCP Server - GetPlatformStatusTool',
-      'Getting platform status',
-      args,
-      MCPServerTracerID.getTracerId()
-    )
     const status = await StatusSensors.getInstance().getStatus(
       args.plataform_id
     )
@@ -35,6 +27,17 @@ export class GetPlatformStatusTool extends AbstractTool<Args> {
         {
           type: 'text',
           text: `The status of the platform ${args.plataform_id} is ${status}`
+        }
+      ]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'An error occurred while getting the platform status'
         }
       ]
     }

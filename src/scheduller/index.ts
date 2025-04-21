@@ -1,8 +1,8 @@
-import { randomUUIDv7 } from 'bun'
-import nodeSchedule, { Job, type Spec } from 'node-schedule'
+import { Cron, scheduledJobs } from 'croner'
 import { JobDatabase } from '../clients/database/Jobs'
 import { Logger } from '../logger'
-import { MCPClient } from '../mcp/client'
+import { Tracer } from '../logger/Tracer'
+import { Chatbot } from '../mcp/Chatbot'
 
 export interface JobData {
   id: string
@@ -13,26 +13,29 @@ export interface JobData {
 }
 
 export class Scheduller {
-  private static jobs: Map<string, Job> = new Map()
-
   public static async init() {
     const dbJobs = await this.getJobs()
     for (const dbJob of dbJobs) {
-      const { id, type, time } = dbJob
-      const spec: Spec = type === 'cron' ? time : new Date(time)
-      const job = nodeSchedule.scheduleJob(spec, () => {
-        this.callback(id)
-      })
-      this.jobs.set(id, job)
+      const { id, time } = dbJob
+      const cron = new Cron(
+        time,
+        {
+          name: id,
+          timezone: 'America/Sao_Paulo'
+        },
+        () => {
+          this.callback(id)
+        }
+      )
+      const next = cron.nextRun()
       Logger.info(
         'Scheduller',
-        `Retrived from DB Job ${id} scheduled at ${time}`
+        `Retrived from DB Job ${id} scheduled at ${time} next invocation at ${next?.toISOString()}`
       )
     }
     process.on('SIGINT', async () => {
       Logger.info('Scheduller', 'SIGINT received, shutting down...')
       await this.gracefulShutdown()
-      process.exit(0)
     })
   }
 
@@ -44,19 +47,28 @@ export class Scheduller {
       llm,
       exclude
     })
-    const spec: Spec = type === 'cron' ? time : new Date(time)
-    const job = nodeSchedule.scheduleJob(spec, () => {
-      this.callback(id)
-    })
-    this.jobs.set(id, job)
-    Logger.info('Scheduller', `Job ${id} scheduled at ${time}`)
+    const cron = new Cron(
+      time,
+      {
+        name: id,
+        timezone: 'America/Sao_Paulo'
+      },
+      () => {
+        this.callback(id)
+      }
+    )
+    const next = cron.currentRun()
+    Logger.info(
+      'Scheduller',
+      `Job ${id} scheduled at ${time} next invocation at ${next?.toISOString()}`
+    )
     return id
   }
 
   public static cancelJob(name: string) {
-    const job = this.jobs.get(name)
+    const job = scheduledJobs.find(job => job.name === name)
     if (job) {
-      job.cancel()
+      job.stop()
     }
   }
 
@@ -76,17 +88,20 @@ export class Scheduller {
   private static async callback(id: string) {
     const job = await JobDatabase.getInstance().getJob(id)
     if (!job) return
-    const tracerId = randomUUIDv7()
-    Logger.info('Scheduller', `Processing job ${id}`, { job }, tracerId)
-    await MCPClient.getInstance().processQuery(job.llm)
+    const tracer = new Tracer()
+    tracer.setProgram('Scheduller')
+    tracer.info('Processing job', { job })
+    const chatbot = new Chatbot(false)
+    await chatbot.init()
+    await chatbot.processQuery(job.llm, undefined, tracer)
     if (!job.exclude) return
     this.cancelJob(id)
     await JobDatabase.getInstance().deleteJob(id)
   }
 
   public static gracefulShutdown() {
-    for (const job of this.jobs.values()) {
-      job.cancel()
-    }
+    scheduledJobs.forEach(job => {
+      job.stop()
+    })
   }
 }

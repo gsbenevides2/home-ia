@@ -1,9 +1,7 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { Logger } from '../../../../logger/index.ts'
 import { addToQueue } from '../../../../queue/queue.ts'
-import { MCPServerTracerID } from '../../../server.ts'
-import { AbstractTool } from '../../AbstractTool.ts'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool.ts'
 
 const args = {
   status: z
@@ -21,18 +19,23 @@ export class ChangeCodespacesStatusTool extends AbstractTool<Args> {
 
   execute: ToolCallback<Args> = async args => {
     const status = args.status
-    Logger.info(
-      'MCP Server - ChangeCodespacesStatusTool',
-      'Changing codespaces status',
-      status,
-      MCPServerTracerID.getTracerId()
-    )
     addToQueue(status === 'start' ? 'codespaces-start' : 'codespaces-stop')
     return {
       content: [
         {
           type: 'text',
           text: `The codespaces machine is being ${status === 'start' ? 'starting' : 'stopping'}`
+        }
+      ]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'An error occurred while changing the codespaces status'
         }
       ]
     }

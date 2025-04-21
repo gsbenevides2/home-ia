@@ -4,9 +4,7 @@ import {
   availableLightsNames,
   TuyaLight
 } from '../../../../clients/homeAssistant/MySensors/TuyaLight.ts'
-import { Logger } from '../../../../logger/index.ts'
-import { MCPServerTracerID } from '../../../server.ts'
-import { AbstractTool } from '../../AbstractTool.ts'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool.ts'
 
 const args = {
   roomName: z
@@ -26,43 +24,25 @@ export class GetRoomLampBrightnessTool extends AbstractTool<Args> {
 
   execute: ToolCallback<Args> = async args => {
     const roomName = args.roomName
-    Logger.info(
-      'MCP Server - GetRoomLampBrightnessTool',
-      'Getting lamp brightness',
-      args,
-      MCPServerTracerID.getTracerId()
-    )
-    try {
-      const lightBrightness = await TuyaLight.getLightBrightness(roomName)
-      Logger.info(
-        'MCP Server - GetRoomLampBrightnessTool',
-        'Lamp brightness retrieved',
-        lightBrightness,
-        MCPServerTracerID.getTracerId()
-      )
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `The light in the ${roomName} is has ${lightBrightness}% brightness`
-          }
-        ]
-      }
-    } catch (error) {
-      Logger.error(
-        'MCP Server - GetRoomLampBrightnessTool',
-        'Error getting lamp brightness',
-        error,
-        MCPServerTracerID.getTracerId()
-      )
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `An error occurred while getting the light brightness for ${roomName}.`
-          }
-        ]
-      }
+    const lightBrightness = await TuyaLight.getLightBrightness(roomName)
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `The light in the ${roomName} is has ${lightBrightness}% brightness`
+        }
+      ]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = (_error, args) => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `An error occurred while getting the light brightness for ${args.roomName}.`
+        }
+      ]
     }
   }
 }

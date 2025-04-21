@@ -2,7 +2,7 @@ import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { Spotify } from '../../../../clients/homeAssistant/MySensors/Spotify'
 import { wait } from '../../../../utils/wait'
-import { AbstractTool } from '../../AbstractTool'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool'
 import { GetSpotifyData } from './getData'
 
 const operations = ['play', 'pause', 'next', 'previous', 'setVolume'] as const
@@ -62,6 +62,17 @@ export class MakeSpotifyOperation extends AbstractTool<Args> {
           text: `${operationsResult[args.operation]}`
         },
         ...response.content
+      ]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'An error occurred while making the Spotify operation'
+        }
       ]
     }
   }

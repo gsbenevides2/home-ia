@@ -1,6 +1,6 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StatusSensors } from '../../../../clients/homeAssistant/MySensors/StatusSensors'
-import { AbstractTool } from '../../AbstractTool'
+import { AbstractTool, type OnErrorToolCallback } from '../../AbstractTool'
 
 const args = {} as const
 
@@ -18,6 +18,17 @@ export class GetIdOfPlataformsTool extends AbstractTool<Args> {
         type: 'text',
         text: `The ID of the platform ${status.sensor_name} is ${status.sensor_id}`
       }))
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'An error occurred while getting the ID of the platform'
+        }
+      ]
     }
   }
 }
