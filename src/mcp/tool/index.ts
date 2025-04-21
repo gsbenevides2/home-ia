@@ -21,7 +21,9 @@ import { GetTrainStatus } from './home_assistant/train/getStatus.ts'
 import { GetStreamerStatusTool } from './home_assistant/twicth/getStatus.ts'
 import { GetStreamerIdsTool } from './home_assistant/twicth/getStreamerIds.ts'
 import { StartDeviceTool } from './home_assistant/wakeOnLan/startDevice.ts'
+import { ChangeJobTool } from './scheduller/changeJob.ts'
 import { CreateJobTool } from './scheduller/createJob.ts'
+import { CurrentTimeTool } from './scheduller/currentTime.ts'
 import { DeleteJobTool } from './scheduller/deleteJob.ts'
 import { ListJobTool } from './scheduller/listJob.ts'
 
@@ -49,8 +51,10 @@ export const toolList = [
   new PlaySong(),
   new SendDiscordMessageTool(),
   new CreateJobTool(),
+  new ChangeJobTool(),
   new ListJobTool(),
-  new DeleteJobTool()
+  new DeleteJobTool(),
+  new CurrentTimeTool()
 ]
 
 export function registerTools(server: McpServer) {

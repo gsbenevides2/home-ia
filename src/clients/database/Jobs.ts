@@ -49,4 +49,13 @@ export class JobDatabase {
     await db`DELETE FROM jobs WHERE id = ${id}`
     await db.release()
   }
+
+  public async updateJob(
+    id: string,
+    job: Omit<JobDatabaseRow, 'id'>
+  ): Promise<void> {
+    const db = await DatabaseClient.getInstance().getConnection()
+    await db`UPDATE jobs SET type = ${job.type}, time = ${job.time}, llm = ${job.llm}, exclude = ${job.exclude} WHERE id = ${id}`
+    await db.release()
+  }
 }

@@ -95,6 +95,41 @@ export class Scheduller {
     await JobDatabase.getInstance().deleteJob(id)
   }
 
+  public static async changeJob(
+    id: string,
+    data: Partial<Omit<JobData, 'id'>>
+  ) {
+    const job = await JobDatabase.getInstance().getJob(id)
+    if (!job) return
+
+    const { type, time, llm, exclude } = data
+    const timeToUpdate = time ?? job.time
+    await JobDatabase.getInstance().updateJob(id, {
+      type: type ?? job.type,
+      time: timeToUpdate,
+      llm: llm ?? job.llm,
+      exclude: exclude ?? job.exclude
+    })
+    this.cancelJob(id)
+    const cron = new Cron(
+      timeToUpdate,
+      { name: id, timezone: 'America/Sao_Paulo' },
+      () => this.callback(id)
+    )
+    const next = cron.currentRun()
+    Logger.info(
+      'Scheduller',
+      `Job ${id} scheduled at ${time} next invocation at ${next?.toISOString()}`
+    )
+    return {
+      id,
+      type: type ?? job.type,
+      time: timeToUpdate,
+      llm: llm ?? job.llm,
+      exclude: exclude ?? job.exclude
+    }
+  }
+
   public static gracefulShutdown() {
     scheduledJobs.forEach(job => {
       job.stop()
