@@ -4,4 +4,5 @@ RUN apt-get update && apt-get install -y dnsutils curl wget && rm -rf /var/lib/a
 
 COPY . .
 RUN bun install
+RUN bun run build
 CMD ["bun", "run", "start"]
