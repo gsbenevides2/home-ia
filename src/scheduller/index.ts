@@ -32,6 +32,7 @@ export class Scheduller {
     process.on('SIGINT', async () => {
       Logger.info('Scheduller', 'SIGINT received, shutting down...')
       await this.gracefulShutdown()
+      process.exit(0)
     })
   }
 
