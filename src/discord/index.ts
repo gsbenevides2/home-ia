@@ -89,7 +89,9 @@ export class DiscordBot {
             error
           })
           message.reply(
-            'Ocorreu um erro ao processar a consulta. Por favor, tente novamente mais tarde.'
+            'Ocorreu um erro ao processar a consulta. Por favor, tente novamente mais tarde. Seu ID de Rastreio é:\n```' +
+              tracer.getID() +
+              '```'
           )
         })
     })

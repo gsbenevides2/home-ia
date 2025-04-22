@@ -37,4 +37,8 @@ export class Tracer {
   public unsetGlobalTracerID() {
     Tracer.globalTracerID = undefined
   }
+
+  public getID() {
+    return this.id
+  }
 }

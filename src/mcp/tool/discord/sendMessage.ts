@@ -1,7 +1,7 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { DiscordBot } from '../../../discord'
-import { AbstractTool } from '../AbstractTool'
+import { AbstractTool, type OnErrorToolCallback } from '../AbstractTool'
 
 const args = {
   message: z.string().describe('The message will be sended')
@@ -22,6 +22,17 @@ export class SendDiscordMessageTool extends AbstractTool<Args> {
         {
           type: 'text',
           text: 'Message sent'
+        }
+      ]
+    }
+  }
+
+  onError: OnErrorToolCallback<Args> = () => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: 'Error sending message'
         }
       ]
     }
