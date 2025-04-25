@@ -26,6 +26,7 @@ import { CreateJobTool } from './scheduller/createJob.ts'
 import { CurrentTimeTool } from './scheduller/currentTime.ts'
 import { DeleteJobTool } from './scheduller/deleteJob.ts'
 import { ListJobTool } from './scheduller/listJob.ts'
+import { MarkdownfyWebpage } from './markdownfy/webpage.ts'
 
 export const toolList = [
   new GetRoomLampTool(),
@@ -54,7 +55,8 @@ export const toolList = [
   new ChangeJobTool(),
   new ListJobTool(),
   new DeleteJobTool(),
-  new CurrentTimeTool()
+  new CurrentTimeTool(),
+  new MarkdownfyWebpage()
 ]
 
 export function registerTools(server: McpServer) {
