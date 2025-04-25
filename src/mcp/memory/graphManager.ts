@@ -2,11 +2,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 
 // Define memory file path using environment variable with fallback
-const defaultMemoryPath = path.join(
-  path.dirname(process.cwd()),
-  'data',
-  'memory.json'
-)
+const defaultMemoryPath = path.join(process.cwd(), 'data', 'memory.json')
 
 // We are storing our memory using entities, relations, and observations in a graph structure
 interface Entity {
