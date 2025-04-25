@@ -21,12 +21,22 @@ import { GetTrainStatus } from './home_assistant/train/getStatus.ts'
 import { GetStreamerStatusTool } from './home_assistant/twicth/getStatus.ts'
 import { GetStreamerIdsTool } from './home_assistant/twicth/getStreamerIds.ts'
 import { StartDeviceTool } from './home_assistant/wakeOnLan/startDevice.ts'
+import { MarkdownfyWebpage } from './markdownfy/webpage.ts'
+
+import { AddObservationsTool } from './memory/addObservations.ts'
+import { CreateEntitiesTool } from './memory/createEntities.ts'
+import { CreateRelationsTool } from './memory/createRelations.ts'
+import { DeleteEntitiesTool } from './memory/deleteEntities.ts'
+import { DeleteObservationsTool } from './memory/deleteObservations.ts'
+import { DeleteRelationsTool } from './memory/deleteRelations.ts'
+import { OpenNodesTool } from './memory/openNodes.ts'
+import { ReadGraphTool } from './memory/readGraph.ts'
+import { SearchNodesTool } from './memory/searchNodes.ts'
 import { ChangeJobTool } from './scheduller/changeJob.ts'
 import { CreateJobTool } from './scheduller/createJob.ts'
 import { CurrentTimeTool } from './scheduller/currentTime.ts'
 import { DeleteJobTool } from './scheduller/deleteJob.ts'
 import { ListJobTool } from './scheduller/listJob.ts'
-import { MarkdownfyWebpage } from './markdownfy/webpage.ts'
 
 export const toolList = [
   new GetRoomLampTool(),
@@ -56,7 +66,16 @@ export const toolList = [
   new ListJobTool(),
   new DeleteJobTool(),
   new CurrentTimeTool(),
-  new MarkdownfyWebpage()
+  new MarkdownfyWebpage(),
+  new CreateEntitiesTool(),
+  new CreateRelationsTool(),
+  new AddObservationsTool(),
+  new DeleteEntitiesTool(),
+  new DeleteObservationsTool(),
+  new DeleteRelationsTool(),
+  new ReadGraphTool(),
+  new SearchNodesTool(),
+  new OpenNodesTool()
 ]
 
 export function registerTools(server: McpServer) {
