@@ -23,6 +23,7 @@ import { GetStreamerIdsTool } from './home_assistant/twicth/getStreamerIds.ts'
 import { StartDeviceTool } from './home_assistant/wakeOnLan/startDevice.ts'
 import { MarkdownfyWebpage } from './markdownfy/webpage.ts'
 
+import { SendEmailTool } from './email/sendEmail.ts'
 import { AddObservationsTool } from './memory/addObservations.ts'
 import { CreateEntitiesTool } from './memory/createEntities.ts'
 import { CreateRelationsTool } from './memory/createRelations.ts'
@@ -75,7 +76,8 @@ export const toolList = [
   new DeleteRelationsTool(),
   new ReadGraphTool(),
   new SearchNodesTool(),
-  new OpenNodesTool()
+  new OpenNodesTool(),
+  new SendEmailTool()
 ]
 
 export function registerTools(server: McpServer) {

@@ -64,6 +64,7 @@ export abstract class AbstractTool<P extends ZodRawShape> {
       })
       return result
     } catch (error) {
+      console.error(error)
       tracer.error('Tool execution failed', {
         toolName: this.name,
         error: error instanceof Error ? error.message : String(error)
