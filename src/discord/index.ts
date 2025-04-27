@@ -1,7 +1,9 @@
 import { Client, GatewayIntentBits, Message, Partials } from 'discord.js'
+import { GoogleSpeachToText } from '../clients/google/GoogleSpeachToText.ts'
 import { Logger } from '../logger/index.ts'
 import { Tracer } from '../logger/Tracer.ts'
 import { DiscordChatbot } from '../mcp/Chatbot.ts'
+import { downloadAudioInBase64 } from './downloadAudioInBase64.ts'
 import { splitDiscordMessage } from './messageSplitter.ts'
 export class DiscordBot {
   private client: Client
@@ -40,7 +42,8 @@ export class DiscordBot {
       const tracer = new Tracer()
       tracer.setProgram('Discord Bot')
       const authorId = message.author.id
-      const content = message.content
+      let content = message.content
+
       if (authorId === DISCORD_BOT_ID) {
         return
       }
@@ -52,6 +55,23 @@ export class DiscordBot {
         authorId,
         message
       })
+
+      const isAudio = message.attachments.some(attachment =>
+        attachment.contentType?.startsWith('audio/ogg')
+      )
+      const audioAttachment = message.attachments.first()
+      console.log(isAudio)
+      if (isAudio && audioAttachment) {
+        const { proxyURL } = audioAttachment
+        const responseAudio = await downloadAudioInBase64(proxyURL)
+        const transcribedText =
+          await GoogleSpeachToText.getInstance().transcribeAudio(
+            responseAudio.buffer,
+            responseAudio.encoding,
+            responseAudio.sampleRateHertz
+          )
+        content = transcribedText
+      }
 
       async function getMessageSender(initialMessage: string) {
         const responseMessage = message.author.send(initialMessage)
