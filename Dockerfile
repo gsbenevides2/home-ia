@@ -7,4 +7,4 @@ RUN bun install
 RUN bun run build
 ENV DATA_PATH=/app/data
 RUN mkdir -p $DATA_PATH
-CMD ["bun", "run", "start"]
+CMD ["bun", "run", "start-non-prod"]
