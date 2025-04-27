@@ -1,12 +1,23 @@
+import { eq, sql } from 'drizzle-orm'
+import { boolean, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 import { DatabaseClient } from './client'
 
-export interface JobDatabaseRow {
-  id: string
-  type: 'cron' | 'date'
-  time: string
-  llm: string
-  exclude: boolean
-}
+const table = pgTable('jobs', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  type: text('type').notNull(),
+  time: text('time').notNull(),
+  llm: text('llm').notNull(),
+  exclude: boolean('exclude').notNull().default(true),
+  created_at: timestamp('created_at', {
+    withTimezone: true
+  })
+    .notNull()
+    .default(sql`now()`)
+})
+
+type JobDatabaseRow = typeof table.$inferSelect
 
 export class JobDatabase {
   private static instance: JobDatabase
@@ -21,41 +32,48 @@ export class JobDatabase {
   }
 
   public async getJobs(): Promise<JobDatabaseRow[]> {
-    const db = await DatabaseClient.getInstance().getConnection()
-    const result =
-      await db`SELECT id, type, time, llm, exclude FROM jobs`.simple()
-    await db.release()
-    return result as JobDatabaseRow[]
+    const { connection, drizzleClient } =
+      await DatabaseClient.getInstance().getConnection()
+    const result = await drizzleClient.select().from(table)
+    await connection.release()
+    return result
   }
 
   public async getJob(id: string): Promise<JobDatabaseRow | null> {
-    const db = await DatabaseClient.getInstance().getConnection()
-    const result =
-      await db`SELECT id, type, time, llm, exclude FROM jobs WHERE id = ${id}`
-    await db.release()
+    const { connection, drizzleClient } =
+      await DatabaseClient.getInstance().getConnection()
+    const result = await drizzleClient
+      .select()
+      .from(table)
+      .where(eq(table.id, id))
+    await connection.release()
     return result[0] as JobDatabaseRow | null
   }
 
-  public async createJob(job: Omit<JobDatabaseRow, 'id'>): Promise<string> {
-    const db = await DatabaseClient.getInstance().getConnection()
-    const result =
-      await db`INSERT INTO jobs (type, time, llm, exclude) VALUES (${job.type}, ${job.time}, ${job.llm}, ${job.exclude}) RETURNING id`
-    await db.release()
+  public async createJob(
+    job: Omit<JobDatabaseRow, 'id' | 'created_at'>
+  ): Promise<string> {
+    const { connection, drizzleClient } =
+      await DatabaseClient.getInstance().getConnection()
+    const result = await drizzleClient.insert(table).values(job).returning()
+    await connection.release()
     return result[0].id
   }
 
   public async deleteJob(id: string): Promise<void> {
-    const db = await DatabaseClient.getInstance().getConnection()
-    await db`DELETE FROM jobs WHERE id = ${id}`
-    await db.release()
+    const { connection, drizzleClient } =
+      await DatabaseClient.getInstance().getConnection()
+    await drizzleClient.delete(table).where(eq(table.id, id))
+    await connection.release()
   }
 
   public async updateJob(
     id: string,
-    job: Omit<JobDatabaseRow, 'id'>
+    job: Omit<JobDatabaseRow, 'id' | 'created_at'>
   ): Promise<void> {
-    const db = await DatabaseClient.getInstance().getConnection()
-    await db`UPDATE jobs SET type = ${job.type}, time = ${job.time}, llm = ${job.llm}, exclude = ${job.exclude} WHERE id = ${id}`
-    await db.release()
+    const { connection, drizzleClient } =
+      await DatabaseClient.getInstance().getConnection()
+    await drizzleClient.update(table).set(job).where(eq(table.id, id))
+    await connection.release()
   }
 }

@@ -2,7 +2,7 @@ import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { FanSensors } from '../../../../clients/homeAssistant/MySensors/FanSensors.ts'
 import { Logger } from '../../../../logger/index.ts'
-import { MCPServerTracerID } from '../../../server.ts'
+import { MCPServer } from '../../../server/index.ts'
 import { AbstractTool } from '../../AbstractTool.ts'
 
 const args = {
@@ -44,7 +44,7 @@ export class ChangeFanStatusTool extends AbstractTool<Args> {
         'MCP Server - ChangeFanStatusTool',
         'Error changing fan status',
         error,
-        MCPServerTracerID.getTracerId()
+        MCPServer.getTracerId()
       )
       return {
         content: [

@@ -1,28 +1,32 @@
-import { DatabaseClient } from "./client";
+import { pgTable, text } from 'drizzle-orm/pg-core'
+import { DatabaseClient } from './client'
 
-export interface StatusPageDatabaseRow {
-  sensor_id: string;
-  sensor_name: string;
-  status_platform: string;
-  status_url: string;
-}
+const table = pgTable('status_pages', {
+  sensor_id: text('sensor_id').notNull(),
+  sensor_name: text('sensor_name').notNull(),
+  status_platform: text('status_platform').notNull(),
+  status_url: text('status_url').notNull()
+})
+
+export type StatusPageDatabaseRow = typeof table.$inferSelect
 
 export class StatusPageDatabase {
-  private static instance: StatusPageDatabase;
+  private static instance: StatusPageDatabase
 
   public static getInstance() {
     if (!this.instance) {
-      this.instance = new StatusPageDatabase();
+      this.instance = new StatusPageDatabase()
     }
-    return this.instance;
+    return this.instance
   }
 
   private constructor() {}
 
   public async getChecks() {
-    const db = await DatabaseClient.getInstance().getConnection();
-    const result = await db`SELECT sensor_id, sensor_name, status_platform, status_url FROM status_pages`.simple();
-    await db.release();
-    return result as StatusPageDatabaseRow[];
+    const { connection, drizzleClient } =
+      await DatabaseClient.getInstance().getConnection()
+    const result = await drizzleClient.select().from(table)
+    await connection.release()
+    return result as StatusPageDatabaseRow[]
   }
 }

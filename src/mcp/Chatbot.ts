@@ -10,7 +10,7 @@ import { prepareImageToSendToAnthropic } from '../clients/Anthropic/prepareImage
 import { ChatbotDatabase } from '../clients/database/Chatbot'
 import { GoogleCloudStorage } from '../clients/google/CloudStorage'
 import type { Tracer } from '../logger/Tracer'
-import { MCPClientSingleton } from './client'
+import { MCPStreamableClientSingleton } from './client/streamable'
 
 type MessageSender = (message: string) => Promise<void>
 
@@ -42,7 +42,7 @@ export class Chatbot {
     if (this.useDatabase) {
       await ChatbotDatabase.getInstance().saveMessage({
         role: message.role,
-        content: JSON.stringify(message.content),
+        content: message.content as ContentBlockParam[],
         interactionId: message.interactionId
       })
     }
@@ -59,7 +59,7 @@ export class Chatbot {
     tracer?.setProgram('chatbot')
     const anthropic = await AnthropicSingleton.getInstance()
     const { client: mcpClient, tools: mcpTools } =
-      await MCPClientSingleton.getInstance()
+      await MCPStreamableClientSingleton.getInstance()
 
     const anthropicTools = mcpTools.map(tool => ({
       name: tool.name,
@@ -132,8 +132,8 @@ export class Chatbot {
           },
           undefined,
           {
-            maxTotalTimeout: MCPClientSingleton.timeout,
-            timeout: MCPClientSingleton.timeout
+            maxTotalTimeout: MCPStreamableClientSingleton.timeout,
+            timeout: MCPStreamableClientSingleton.timeout
           }
         )
         tracer?.unsetGlobalTracerID()
@@ -169,9 +169,10 @@ export class Chatbot {
   ) {
     const interactionId = paramInteractionId ?? randomUUIDv7()
     tracer?.setProgram('chatbot')
+
     const anthropic = await AnthropicSingleton.getInstance()
     const { client: mcpClient, tools: mcpTools } =
-      await MCPClientSingleton.getInstance()
+      await MCPStreamableClientSingleton.getInstance()
 
     const messageSender = getMessageSender
       ? await getMessageSender('Processando...')
@@ -277,10 +278,17 @@ export class Chatbot {
           const toolInput = tool.input as { [x: string]: unknown } | undefined
           tracer?.info('Calling tool', { toolName, toolUseID, toolInput })
           tracer?.setGlobalTracerID()
-          const toolResult = await mcpClient.callTool({
-            name: toolName,
-            arguments: toolInput
-          })
+          const toolResult = await mcpClient.callTool(
+            {
+              name: toolName,
+              arguments: toolInput
+            },
+            undefined,
+            {
+              maxTotalTimeout: MCPStreamableClientSingleton.timeout,
+              timeout: MCPStreamableClientSingleton.timeout
+            }
+          )
           tracer?.unsetGlobalTracerID()
           tracer?.info('Tool result', { toolResult })
           const toolResultContent = toolResult.content as
@@ -323,7 +331,7 @@ export class Chatbot {
       await ChatbotDatabase.getInstance().getMessagesOldMessages()
     this.messages = messages.reverse().map(message => ({
       role: message.role,
-      content: JSON.parse(message.content),
+      content: message.content,
       interactionId: message.interactionId
     }))
   }

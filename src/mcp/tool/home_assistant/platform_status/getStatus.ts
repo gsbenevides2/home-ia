@@ -26,7 +26,7 @@ export class GetPlatformStatusTool extends AbstractTool<Args> {
     const content: { type: 'text'; text: string }[] = [
       {
         type: 'text',
-        text: `The status of the platform ${args.plataform_id} is ${status.state}`
+        text: `The status of the platform ${args.plataform_id} is ${status.state === "off" ? "down" : "up"}`
       }
     ]
 

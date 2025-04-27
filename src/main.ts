@@ -1,17 +1,16 @@
 import express from 'express'
 import { DiscordBot } from './discord/index.ts'
 import { Logger } from './logger/index.ts'
-import { MCPClientSingleton } from './mcp/client.ts'
+import { MCPSSEClientSingleton } from './mcp/client/sse.ts'
 import authenticationRouter from './routers/authentication.ts'
 import mcpRouter from './routers/mcp.ts'
 import queueRouters from './routers/queue.ts'
 import { Scheduller } from './scheduller/index.ts'
 
 const app = express()
-
+app.use(express.json())
 app.use(authenticationRouter)
 app.use(mcpRouter)
-app.use(express.json())
 app.use(queueRouters)
 
 const port = Bun.env.PORT
@@ -30,7 +29,7 @@ const server = app.listen(port, async () => {
 process.on('SIGINT', async () => {
   await DiscordBot.getInstance().disconnect()
   await Scheduller.gracefulShutdown()
-  await (await MCPClientSingleton.getInstance()).client.close()
+  await (await MCPSSEClientSingleton.getInstance()).client.close()
   server.close()
   process.exit(0)
 })

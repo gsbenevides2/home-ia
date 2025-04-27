@@ -1,29 +1,33 @@
-import { DatabaseClient } from "./client";
+import { pgTable, text } from 'drizzle-orm/pg-core'
+import { DatabaseClient } from './client'
 
-export interface DNSChecksDatabaseRow {
-  sensor_id: string;
-  sensor_name: string;
-  expected_cname: string;
-  domain: string;
-  nsdomain: string;
-}
+const table = pgTable('dns_checks', {
+  sensor_id: text('sensor_id').notNull(),
+  sensor_name: text('sensor_name').notNull(),
+  expected_cname: text('expected_cname').notNull(),
+  domain: text('domain').notNull(),
+  nsdomain: text('nsdomain').notNull()
+})
+
+export type DNSChecksDatabaseRow = typeof table.$inferSelect
 
 export class DNSChecksDatabase {
-  private static instance: DNSChecksDatabase;
+  private static instance: DNSChecksDatabase
 
   public static getInstance() {
     if (!this.instance) {
-      this.instance = new DNSChecksDatabase();
+      this.instance = new DNSChecksDatabase()
     }
-    return this.instance;
+    return this.instance
   }
 
   private constructor() {}
 
   public async getChecks() {
-    const db = await DatabaseClient.getInstance().getConnection();
-    const result = await db`SELECT sensor_id, sensor_name, expected_cname, domain, nsdomain FROM dns_checks`.simple();
-    await db.release();
-    return result as DNSChecksDatabaseRow[];
+    const { connection, drizzleClient } =
+      await DatabaseClient.getInstance().getConnection()
+    const result = await drizzleClient.select().from(table)
+    await connection.release()
+    return result
   }
 }
