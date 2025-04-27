@@ -1,7 +1,8 @@
-import { Client, GatewayIntentBits, Partials } from 'discord.js'
+import { Client, GatewayIntentBits, Message, Partials } from 'discord.js'
 import { Logger } from '../logger/index.ts'
 import { Tracer } from '../logger/Tracer.ts'
 import { DiscordChatbot } from '../mcp/Chatbot.ts'
+import { splitDiscordMessage } from './messageSplitter.ts'
 export class DiscordBot {
   private client: Client
   private static instance: DiscordBot
@@ -51,39 +52,60 @@ export class DiscordBot {
         authorId,
         message
       })
-      chatbot
-        .processQuery(
-          content,
-          async response => {
-            if (response.length > 2000) {
-              const lines = response.split('\n')
-              const linesBlock = lines.reduce(
-                (acc, line) => {
-                  const lastBlock = acc[acc.length - 1]
-                  if (lastBlock.length + line.length > 2000) {
-                    acc.push(line)
-                  } else {
-                    acc[acc.length - 1] += line
+
+      async function getMessageSender(initialMessage: string) {
+        const responseMessage = message.author.send(initialMessage)
+        let pendingEdit: NodeJS.Timeout | null = null
+        const messagesParts: Promise<Message>[] = [responseMessage]
+
+        async function sendPartialMessage(messageContent: string) {
+          return await new Promise<void>(resolve => {
+            if (pendingEdit) clearTimeout(pendingEdit)
+            pendingEdit = setTimeout(async () => {
+              try {
+                const chunks = splitDiscordMessage(messageContent)
+                for (let i = 0; i < chunks.length; i++) {
+                  const chunk = chunks[i]
+                  const messagePart = messagesParts[i]
+                  const hasMessagePart = messagePart !== undefined
+                  if (!hasMessagePart) {
+                    messagesParts.push(message.author.send(chunk))
+                    return
                   }
-                  return acc
-                },
-                ['']
-              )
-              for (const block of linesBlock) {
-                tracer.info('Sending message to user', {
-                  message: block
-                })
-                await message.author.send(block)
+                  const messagePartResolved = await messagePart
+                  if (messagePartResolved.content !== chunk) {
+                    messagesParts[i] = messagePartResolved.edit(chunk)
+                  }
+                }
+
+                resolve()
+              } catch (err) {
+                console.error('Erro ao editar mensagem parcial:', err)
+              } finally {
+                pendingEdit = null
               }
-            } else {
-              tracer.info('Sending message to user', {
-                message: response
-              })
-              await message.author.send(response)
-            }
-          },
-          tracer
-        )
+            }, 100)
+          })
+        }
+
+        async function sendFinalMessage(messageContent: string) {
+          await sendPartialMessage(messageContent)
+          if (pendingEdit) clearTimeout(pendingEdit)
+        }
+
+        function cleanup() {
+          if (pendingEdit) clearTimeout(pendingEdit)
+        }
+
+        return {
+          sendPartialMessage,
+          sendFinalMessage,
+          cleanup
+        }
+      }
+
+      chatbot
+        .processQueryWithStream(content, getMessageSender, tracer)
         .catch(error => {
           tracer.error('Error processing query', {
             error
