@@ -26,7 +26,6 @@ export class ChatbotDatabase {
     const lastInteractionResult =
       await db`SELECT c."interactionId" FROM chatbot c ORDER BY c."date" DESC LIMIT 1`.simple()
     if (!lastInteractionResult.length) return []
-    console.log(lastInteractionResult)
     const lastInteractionId = lastInteractionResult[0].interactionId
 
     const result =

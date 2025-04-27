@@ -16,7 +16,6 @@ authenticationRouter.use((req: Request, res: Response, next: NextFunction) => {
     return
   }
 
-  console.log(req.query)
   if (token === Bun.env.AUTH_TOKEN) {
     next()
     return
