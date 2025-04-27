@@ -1,8 +1,10 @@
 import type {
+  ContentBlockParam,
   ImageBlockParam,
   MessageParam,
   TextBlockParam
 } from '@anthropic-ai/sdk/resources/index.mjs'
+import { randomUUIDv7 } from 'bun'
 import { AnthropicSingleton } from '../clients/AnthropicSingleton'
 import { ChatbotDatabase } from '../clients/database/Chatbot'
 import type { Tracer } from '../logger/Tracer'
@@ -16,8 +18,14 @@ type MessageSenderFactory = (initialMessage: string) => Promise<{
   cleanup: () => void
 }>
 
+export interface ChatbotMessage {
+  role: MessageParam['role']
+  content: MessageParam['content']
+  interactionId: string
+}
+
 export class Chatbot {
-  private messages: MessageParam[] = []
+  private messages: ChatbotMessage[] = []
 
   constructor(private readonly useDatabase: boolean = false) {}
 
@@ -27,12 +35,13 @@ export class Chatbot {
     }
   }
 
-  async saveMessage(message: MessageParam) {
+  async saveMessage(message: ChatbotMessage) {
     this.messages.push(message)
     if (this.useDatabase) {
       await ChatbotDatabase.getInstance().saveMessage({
         role: message.role,
-        content: JSON.stringify(message.content)
+        content: JSON.stringify(message.content),
+        interactionId: message.interactionId
       })
     }
   }
@@ -40,8 +49,11 @@ export class Chatbot {
   async processQuery(
     query?: string,
     onMessage?: (message: string) => Promise<void>,
-    tracer?: Tracer
+    tracer?: Tracer,
+    paramInteractionId?: string,
+    continueFromPreviousInteraction?: boolean
   ) {
+    const interactionId = paramInteractionId ?? randomUUIDv7()
     tracer?.setProgram('chatbot')
     const anthropic = await AnthropicSingleton.getInstance()
     const { client: mcpClient, tools: mcpTools } =
@@ -55,7 +67,8 @@ export class Chatbot {
     if (query) {
       await this.saveMessage({
         role: 'user',
-        content: [{ type: 'text', text: query }]
+        content: [{ type: 'text', text: query }],
+        interactionId
       })
     }
     tracer?.info('Sending messages to Anthropic', {
@@ -63,7 +76,7 @@ export class Chatbot {
     })
     const response = await anthropic.messages.create({
       model: AnthropicSingleton.model,
-      messages: this.messages,
+      messages: this.remakeMessagesListToAnthropicFormat(),
       max_tokens: AnthropicSingleton.maxTokens,
       system: AnthropicSingleton.systemPrompt,
       tools: anthropicTools
@@ -73,8 +86,16 @@ export class Chatbot {
     })
     await this.saveMessage({
       role: response.role,
-      content: response.content
+      content: response.content,
+      interactionId
     })
+
+    const endProcess = async () => {
+      if (!continueFromPreviousInteraction) {
+        await this.cleanUpProcess()
+      }
+    }
+
     const textMessages = response.content.filter(
       content => content.type === 'text'
     )
@@ -87,56 +108,63 @@ export class Chatbot {
         await onMessage(content.text)
       }
     }
-    for (const content of toolMessages) {
-      const toolName = content.name
-      const toolUseID = content.id
-      const toolInput = content.input as { [x: string]: unknown } | undefined
-      tracer?.info('Calling tool', { toolName, toolUseID, toolInput })
-      tracer?.setGlobalTracerID()
-      const toolResult = await mcpClient.callTool(
-        {
-          name: toolName,
-          arguments: toolInput
-        },
-        undefined,
-        {
-          maxTotalTimeout: MCPClientSingleton.timeout,
-          timeout: MCPClientSingleton.timeout
-        }
-      )
-      tracer?.unsetGlobalTracerID()
-      tracer?.info('Tool result', { toolResult })
-      const toolResultContent = toolResult.content as
-        | Array<TextBlockParam | ImageBlockParam>
-        | string
-      tracer?.info('Saving tool result', { toolResultContent })
-      await this.saveMessage({
-        role: 'user',
-        content: [
-          {
-            type: 'tool_result',
-            tool_use_id: toolUseID,
-            content: toolResultContent
-          }
-        ]
-      })
+    const stopReason = response.stop_reason
+
+    if (stopReason === 'max_tokens') {
+      if (onMessage) await onMessage('Quantidade máxima de tokens atingida')
+      return await endProcess()
     }
 
-    if (response.stop_reason === 'tool_use') {
-      await this.processQuery(undefined, onMessage)
-      tracer?.info('Cleaning up process')
-      await this.cleanUpProcess()
-    } else {
-      tracer?.info('Cleaning up process')
-      await this.cleanUpProcess()
+    if (stopReason === 'tool_use') {
+      const toolResults: ContentBlockParam[] = []
+      for (const content of toolMessages) {
+        const toolName = content.name
+        const toolUseID = content.id
+        const toolInput = content.input as { [x: string]: unknown } | undefined
+        tracer?.info('Calling tool', { toolName, toolUseID, toolInput })
+        tracer?.setGlobalTracerID()
+        const toolResult = await mcpClient.callTool(
+          {
+            name: toolName,
+            arguments: toolInput
+          },
+          undefined,
+          {
+            maxTotalTimeout: MCPClientSingleton.timeout,
+            timeout: MCPClientSingleton.timeout
+          }
+        )
+        tracer?.unsetGlobalTracerID()
+        tracer?.info('Tool result', { toolResult })
+        const toolResultContent = toolResult.content as
+          | Array<TextBlockParam | ImageBlockParam>
+          | string
+        tracer?.info('Saving tool result', { toolResultContent })
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolUseID,
+          content: toolResultContent
+        })
+      }
+      await this.saveMessage({
+        role: 'user',
+        content: toolResults,
+        interactionId
+      })
+      await this.processQuery(undefined, onMessage, tracer, interactionId, true)
+      return await endProcess()
     }
+    return await endProcess()
   }
 
   async processQueryWithStream(
     query?: string,
     getMessageSender?: MessageSenderFactory,
-    tracer?: Tracer
+    tracer?: Tracer,
+    paramInteractionId?: string,
+    continueFromPreviousInteraction?: boolean
   ) {
+    const interactionId = paramInteractionId ?? randomUUIDv7()
     tracer?.setProgram('chatbot')
     const anthropic = await AnthropicSingleton.getInstance()
     const { client: mcpClient, tools: mcpTools } =
@@ -154,7 +182,8 @@ export class Chatbot {
     if (query) {
       await this.saveMessage({
         role: 'user',
-        content: [{ type: 'text', text: query }]
+        content: [{ type: 'text', text: query }],
+        interactionId
       })
     }
     tracer?.info('Sending messages to Anthropic', {
@@ -162,7 +191,7 @@ export class Chatbot {
     })
 
     const stream = anthropic.messages.stream({
-      messages: this.messages,
+      messages: this.remakeMessagesListToAnthropicFormat(),
       model: AnthropicSingleton.model,
       max_tokens: AnthropicSingleton.maxTokens,
       system: AnthropicSingleton.systemPrompt,
@@ -175,7 +204,9 @@ export class Chatbot {
     })
 
     const endProcess = async () => {
-      await this.cleanUpProcess()
+      if (!continueFromPreviousInteraction) {
+        await this.cleanUpProcess()
+      }
       await stream.done()
     }
 
@@ -189,7 +220,8 @@ export class Chatbot {
       }
       await this.saveMessage({
         role: message.role,
-        content: message.content
+        content: message.content,
+        interactionId
       })
       const stopReason = message.stop_reason
 
@@ -208,6 +240,7 @@ export class Chatbot {
         const tools = message.content.filter(
           content => content.type === 'tool_use'
         )
+        const toolResults: ContentBlockParam[] = []
         for (const tool of tools) {
           const toolName = tool.name
           const toolUseID = tool.id
@@ -224,60 +257,50 @@ export class Chatbot {
             | Array<TextBlockParam | ImageBlockParam>
             | string
           tracer?.info('Saving tool result', { toolResultContent })
-          await this.saveMessage({
-            role: 'user',
-            content: [
-              {
-                type: 'tool_result',
-                tool_use_id: toolUseID,
-                content: toolResultContent
-              }
-            ]
+
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: toolUseID,
+            content: toolResultContent
           })
         }
-        await this.processQueryWithStream(undefined, getMessageSender)
+        await this.saveMessage({
+          role: 'user',
+          content: toolResults,
+          interactionId
+        })
+        await this.processQueryWithStream(
+          undefined,
+          getMessageSender,
+          tracer,
+          interactionId,
+          true
+        )
         return await endProcess()
       }
     })
   }
 
-  private removeToolBlocks() {
-    this.messages = this.messages
-      .map(message => {
-        let content = message.content
-        if (content instanceof Array) {
-          content = content.filter(
-            content =>
-              content.type !== 'tool_use' && content.type !== 'tool_result'
-          ) as Array<TextBlockParam | ImageBlockParam>
-        }
-        return {
-          ...message,
-          content
-        }
-      })
-      .filter(message => message.content.length > 0)
+  remakeMessagesListToAnthropicFormat(): MessageParam[] {
+    return this.messages.map(message => ({
+      role: message.role,
+      content: message.content
+    }))
   }
 
   private async readMessagesFromDatabase() {
     const messages =
       await ChatbotDatabase.getInstance().getMessagesOldMessages()
-    this.messages = messages.map(message => ({
+    this.messages = messages.reverse().map(message => ({
       role: message.role,
-      content: JSON.parse(message.content)
+      content: JSON.parse(message.content),
+      interactionId: message.interactionId
     }))
-    this.removeToolBlocks()
-  }
-
-  private removeOldMessages() {
-    if (this.messages.length > 5) {
-      this.messages = this.messages.slice(this.messages.length - 5)
-    }
   }
 
   async cleanUpProcess() {
-    this.removeToolBlocks()
-    this.removeOldMessages()
+    this.messages = []
+    await this.readMessagesFromDatabase()
   }
 }
 

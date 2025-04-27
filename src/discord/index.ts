@@ -59,6 +59,7 @@ export class DiscordBot {
         const messagesParts: Promise<Message>[] = [responseMessage]
 
         async function sendPartialMessage(messageContent: string) {
+          if (messageContent.length === 0) return
           return await new Promise<void>(resolve => {
             if (pendingEdit) clearTimeout(pendingEdit)
             pendingEdit = setTimeout(async () => {
