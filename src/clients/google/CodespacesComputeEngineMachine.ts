@@ -46,7 +46,8 @@ export class CodespacesComputeEngineMachine {
       this.instanceClient = new InstancesClient({
         credentials,
         scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-        projectId: projectId
+        projectId: projectId,
+        fallback: 'rest'
       })
     }
     return this.instanceClient

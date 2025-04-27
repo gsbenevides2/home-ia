@@ -25,7 +25,8 @@ export class GoogleSpeachToText {
     const client = new SpeechClient({
       credentials,
       projectId,
-      scopes: ['https://www.googleapis.com/auth/cloud-platform']
+      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+      fallback: 'rest'
     })
     const [response] = await client.recognize({
       audio: {
