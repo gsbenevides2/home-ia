@@ -22,13 +22,30 @@ export class GetPlatformStatusTool extends AbstractTool<Args> {
     const status = await StatusSensors.getInstance().getStatus(
       args.plataform_id
     )
+
+    const content: { type: 'text'; text: string }[] = [
+      {
+        type: 'text',
+        text: `The status of the platform ${args.plataform_id} is ${status.state}`
+      }
+    ]
+
+    if (status.attributes.problem_description) {
+      content.push({
+        type: 'text',
+        text: `The problem description of the platform ${args.plataform_id} is ${status.attributes.problem_description}`
+      })
+    }
+
+    if (status.attributes.status_url) {
+      content.push({
+        type: 'text',
+        text: `The status page url of the platform ${args.plataform_id} is ${status.attributes.status_url}`
+      })
+    }
+
     return {
-      content: [
-        {
-          type: 'text',
-          text: `The status of the platform ${args.plataform_id} is ${status}`
-        }
-      ]
+      content: content
     }
   }
 

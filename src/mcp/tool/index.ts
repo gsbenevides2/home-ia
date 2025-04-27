@@ -24,6 +24,7 @@ import { StartDeviceTool } from './home_assistant/wakeOnLan/startDevice.ts'
 import { MarkdownfyWebpage } from './markdownfy/webpage.ts'
 
 import { SendEmailTool } from './email/sendEmail.ts'
+import { GetMultiplePlatformStatusTool } from './home_assistant/platform_status/getMultipleStatus.ts'
 import { AddObservationsTool } from './memory/addObservations.ts'
 import { CreateEntitiesTool } from './memory/createEntities.ts'
 import { CreateRelationsTool } from './memory/createRelations.ts'
@@ -56,6 +57,7 @@ export const toolList = [
   new GetStreamerStatusTool(),
   new GetPlatformStatusTool(),
   new GetIdOfPlataformsTool(),
+  new GetMultiplePlatformStatusTool(),
   new StartDeviceTool(),
   new GetSpotifyData(),
   new MakeSpotifyOperation(),

@@ -7,13 +7,19 @@ import { fetchFromIncidentIoStatus } from '../../status/IncidentStatus.ts'
 import { fetchFromInstatusStatuspage } from '../../status/InStatusStatus.ts'
 import {
   BinarySensor,
-  BinarySensorDeviceClass
+  BinarySensorDeviceClass,
+  type BinarySensorAttributes
 } from '../AbstractEntities/BinarySensor.ts'
 
 const platforms = {
   incident_io: fetchFromIncidentIoStatus,
   atlassian: fetchFromAtlassianStatuspage,
   instatus: fetchFromInstatusStatuspage
+}
+
+interface StatusSensorAttributes extends BinarySensorAttributes {
+  status_url: string
+  problem_description?: string
 }
 
 export class StatusSensors {
@@ -28,18 +34,23 @@ export class StatusSensors {
   }
 
   public async sendSensor(sensorData: StatusPageDatabaseRow) {
-    const status = await platforms[
+    const response = await platforms[
       sensorData.status_platform as keyof typeof platforms
     ](sensorData.status_url)
-    const sensor = new BinarySensor(
+    const problem_description =
+      response.status === 'DOWN' ? response.problemDescription : undefined
+    const status = response.status === 'DOWN' ? 'on' : 'off'
+    const sensor = new BinarySensor<StatusSensorAttributes>(
       `binary_sensor.${sensorData.sensor_id}`,
       `binary_sensor.${sensorData.sensor_id}`,
       {
         friendly_name: sensorData.sensor_name,
-        device_class: BinarySensorDeviceClass.PROBLEM
+        device_class: BinarySensorDeviceClass.PROBLEM,
+        status_url: sensorData.status_url,
+        problem_description: problem_description
       }
     )
-    await sensor.sendData(status === 'DOWN' ? 'on' : 'off')
+    await sensor.sendData(status)
   }
   public async sendAllStatus() {
     const statusPages = await this.getDbStatusPages()
@@ -47,15 +58,17 @@ export class StatusSensors {
   }
 
   public async getStatus(sensorId: string) {
-    const sensor = new BinarySensor(
+    const sensor = new BinarySensor<StatusSensorAttributes>(
       `binary_sensor.${sensorId}`,
       `binary_sensor.${sensorId}`,
       {
         friendly_name: sensorId,
-        device_class: BinarySensorDeviceClass.PROBLEM
+        device_class: BinarySensorDeviceClass.PROBLEM,
+        status_url: '',
+        problem_description: ''
       }
     )
     const sensorData = await sensor.getData()
-    return sensorData.state === 'on' ? 'DOWN' : 'UP'
+    return sensorData
   }
 }
