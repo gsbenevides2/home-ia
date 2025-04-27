@@ -9,6 +9,8 @@ export interface CahtbotDatabaseRow {
   interactionId: string
 }
 
+const MAX_INTERACTIONS = 1
+
 export class ChatbotDatabase {
   private static instance: ChatbotDatabase
 
@@ -24,12 +26,12 @@ export class ChatbotDatabase {
   public async getMessagesOldMessages() {
     const db = await DatabaseClient.getInstance().getConnection()
     const lastInteractionResult =
-      await db`SELECT c."interactionId" FROM chatbot c ORDER BY c."date" DESC LIMIT 1`.simple()
+      await db`SELECT c."interactionId" FROM chatbot c ORDER BY c."date" DESC LIMIT ${MAX_INTERACTIONS}`
     if (!lastInteractionResult.length) return []
-    const lastInteractionId = lastInteractionResult[0].interactionId
 
     const result =
-      await db`SELECT c.content, c.role, c."interactionId", c."date" FROM chatbot c WHERE c."interactionId" = ${lastInteractionId} ORDER BY c."date" DESC`
+      await db`SELECT c.content, c.role, c."interactionId", c."date" FROM chatbot c WHERE c."interactionId" IN ${sql(lastInteractionResult, 'interactionId')} ORDER BY c."date" DESC`
+
     await db.release()
     return result as Pick<
       CahtbotDatabaseRow,

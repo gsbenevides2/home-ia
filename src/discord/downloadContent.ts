@@ -10,3 +10,9 @@ export async function downloadAudioInBase64(audioUrl: string): Promise<{
   const sampleRateHertz = 48000 as const
   return { buffer, encoding, sampleRateHertz }
 }
+
+export async function downloadImageInBase64(imageUrl: string): Promise<string> {
+  const response = await fetch(imageUrl)
+  const arrayBuffer = await response.arrayBuffer()
+  return Buffer.from(arrayBuffer).toString('base64')
+}

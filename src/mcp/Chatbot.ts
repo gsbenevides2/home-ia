@@ -5,8 +5,10 @@ import type {
   TextBlockParam
 } from '@anthropic-ai/sdk/resources/index.mjs'
 import { randomUUIDv7 } from 'bun'
-import { AnthropicSingleton } from '../clients/AnthropicSingleton'
+import { AnthropicSingleton } from '../clients/Anthropic/AnthropicSingleton'
+import { prepareImageToSendToAnthropic } from '../clients/Anthropic/prepareImageToSendToAnthropic'
 import { ChatbotDatabase } from '../clients/database/Chatbot'
+import { GoogleCloudStorage } from '../clients/google/CloudStorage'
 import type { Tracer } from '../logger/Tracer'
 import { MCPClientSingleton } from './client'
 
@@ -162,7 +164,8 @@ export class Chatbot {
     getMessageSender?: MessageSenderFactory,
     tracer?: Tracer,
     paramInteractionId?: string,
-    continueFromPreviousInteraction?: boolean
+    continueFromPreviousInteraction?: boolean,
+    imagesUrls?: string[]
   ) {
     const interactionId = paramInteractionId ?? randomUUIDv7()
     tracer?.setProgram('chatbot')
@@ -180,16 +183,43 @@ export class Chatbot {
       input_schema: tool.inputSchema
     }))
     if (query) {
+      const content: ContentBlockParam[] = [
+        {
+          type: 'text',
+          text: query
+        }
+      ]
+      if (imagesUrls && imagesUrls.length > 0) {
+        messageSender?.sendPartialMessage('Otimizando imagens...')
+        const imageBlocks: ContentBlockParam[] = await Promise.all(
+          imagesUrls.map(async url => {
+            const { data } = await prepareImageToSendToAnthropic(url)
+            const imageUrl = await GoogleCloudStorage.getInstance().uploadFile(
+              data,
+              `ai/${randomUUIDv7()}.jpeg`,
+              'gui-dev-br.appspot.com'
+            )
+            return {
+              type: 'image',
+              source: {
+                type: 'url',
+                url: imageUrl
+              }
+            }
+          })
+        )
+        content.push(...imageBlocks)
+      }
       await this.saveMessage({
         role: 'user',
-        content: [{ type: 'text', text: query }],
+        content,
         interactionId
       })
     }
     tracer?.info('Sending messages to Anthropic', {
       messages: JSON.stringify(this.messages)
     })
-
+    messageSender?.sendPartialMessage('Pensando...')
     const stream = anthropic.messages.stream({
       messages: this.remakeMessagesListToAnthropicFormat(),
       model: AnthropicSingleton.model,

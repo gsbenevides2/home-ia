@@ -3,7 +3,7 @@ import { GoogleSpeachToText } from '../clients/google/GoogleSpeachToText.ts'
 import { Logger } from '../logger/index.ts'
 import { Tracer } from '../logger/Tracer.ts'
 import { DiscordChatbot } from '../mcp/Chatbot.ts'
-import { downloadAudioInBase64 } from './downloadAudioInBase64.ts'
+import { downloadAudioInBase64 } from './downloadContent.ts'
 import { splitDiscordMessage } from './messageSplitter.ts'
 export class DiscordBot {
   private client: Client
@@ -43,6 +43,9 @@ export class DiscordBot {
       tracer.setProgram('Discord Bot')
       const authorId = message.author.id
       let content = message.content
+      const imagesUrls: string[] = message.attachments
+        .filter(attachment => attachment.contentType?.startsWith('image/'))
+        .map(attachment => attachment.url)
 
       if (authorId === DISCORD_BOT_ID) {
         return
@@ -60,7 +63,6 @@ export class DiscordBot {
         attachment.contentType?.startsWith('audio/ogg')
       )
       const audioAttachment = message.attachments.first()
-      console.log(isAudio)
       if (isAudio && audioAttachment) {
         const { proxyURL } = audioAttachment
         const responseAudio = await downloadAudioInBase64(proxyURL)
@@ -126,8 +128,16 @@ export class DiscordBot {
       }
 
       chatbot
-        .processQueryWithStream(content, getMessageSender, tracer)
+        .processQueryWithStream(
+          content,
+          getMessageSender,
+          tracer,
+          undefined,
+          undefined,
+          imagesUrls
+        )
         .catch(error => {
+          console.error(error)
           tracer.error('Error processing query', {
             error
           })
