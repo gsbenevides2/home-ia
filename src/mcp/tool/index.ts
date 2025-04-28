@@ -24,6 +24,8 @@ import { StartDeviceTool } from './home_assistant/wakeOnLan/startDevice.ts'
 import { MarkdownfyWebpage } from './markdownfy/webpage.ts'
 
 import { SendEmailTool } from './email/sendEmail.ts'
+import { ListCalendars } from './google/calendar/listCalendars.ts'
+import { ListEvents } from './google/calendar/listEvents.ts'
 import { GetMultiplePlatformStatusTool } from './home_assistant/platform_status/getMultipleStatus.ts'
 import { AddObservationsTool } from './memory/addObservations.ts'
 import { CreateEntitiesTool } from './memory/createEntities.ts'
@@ -79,7 +81,9 @@ export const toolList = [
   new ReadGraphTool(),
   new SearchNodesTool(),
   new OpenNodesTool(),
-  new SendEmailTool()
+  new SendEmailTool(),
+  new ListCalendars(),
+  new ListEvents()
 ]
 
 export function registerTools(server: McpServer) {

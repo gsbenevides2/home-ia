@@ -3,6 +3,7 @@ import { DiscordBot } from './discord/index.ts'
 import { Logger } from './logger/index.ts'
 import { MCPSSEClientSingleton } from './mcp/client/sse.ts'
 import authenticationRouter from './routers/authentication.ts'
+import googleOauthRouter from './routers/googleOauth.ts'
 import mcpRouter from './routers/mcp.ts'
 import queueRouters from './routers/queue.ts'
 import { Scheduller } from './scheduller/index.ts'
@@ -10,6 +11,7 @@ import { Scheduller } from './scheduller/index.ts'
 const app = express()
 app.use(express.json())
 app.use(authenticationRouter)
+app.use(googleOauthRouter)
 app.use(mcpRouter)
 app.use(queueRouters)
 
