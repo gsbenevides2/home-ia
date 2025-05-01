@@ -1,3 +1,4 @@
+process.env.TZ = 'America/Sao_Paulo'
 import express from 'express'
 import { DiscordBot } from './discord/index.ts'
 import { Logger } from './logger/index.ts'

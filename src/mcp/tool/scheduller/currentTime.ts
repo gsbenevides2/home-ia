@@ -13,7 +13,7 @@ export class CurrentTimeTool extends AbstractTool<Args> {
 
   execute: ToolCallback<Args> = async () => {
     return {
-      content: [{ type: 'text', text: new Date().toISOString() }]
+      content: [{ type: 'text', text: new Date().toLocaleString() }]
     }
   }
 

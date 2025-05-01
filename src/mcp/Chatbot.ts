@@ -1,3 +1,5 @@
+import type { AnthropicError } from '@anthropic-ai/sdk'
+import type { MessageStream } from '@anthropic-ai/sdk/lib/MessageStream.mjs'
 import type {
   ContentBlockParam,
   ImageBlockParam,
@@ -10,6 +12,7 @@ import { prepareImageToSendToAnthropic } from '../clients/Anthropic/prepareImage
 import { ChatbotDatabase } from '../clients/database/Chatbot'
 import { GoogleCloudStorage } from '../clients/google/CloudStorage'
 import type { Tracer } from '../logger/Tracer'
+import { cathable } from '../utils/cathable'
 import { MCPStreamableClientSingleton } from './client/streamable'
 
 type MessageSender = (message: string) => Promise<void>
@@ -221,27 +224,16 @@ export class Chatbot {
       messages: JSON.stringify(this.messages)
     })
     messageSender?.sendPartialMessage('Pensando...')
-    const stream = anthropic.messages.stream({
-      messages: this.remakeMessagesListToAnthropicFormat(),
-      model: AnthropicSingleton.model,
-      max_tokens: AnthropicSingleton.maxTokens,
-      system: AnthropicSingleton.systemPrompt,
-      tools: anthropicTools
-    })
-    stream.on('text', (_, textSnapshot) => {
-      if (messageSender) {
-        messageSender.sendPartialMessage(textSnapshot)
-      }
-    })
 
-    const endProcess = async () => {
+    const endProcess = async (stream: MessageStream | null) => {
       if (!continueFromPreviousInteraction) {
         await this.cleanUpProcess()
       }
-      await stream.done()
+      if (stream) {
+        await stream.done()
+      }
     }
-
-    stream.on('error', async error => {
+    const errorHandler = (error: AnthropicError | Error) => {
       if (error.name === 'overloaded_error') {
         messageSender?.sendFinalMessage(
           'A API do Anthropic está sobrecarregada, por favor, tente novamente mais tarde. TracerId: ' +
@@ -259,9 +251,29 @@ export class Chatbot {
             tracer?.getID()
         )
       }
-      return await endProcess()
-    })
+    }
+    const stream = await cathable(() =>
+      anthropic.messages.stream({
+        messages: this.remakeMessagesListToAnthropicFormat(),
+        model: AnthropicSingleton.model,
+        max_tokens: AnthropicSingleton.maxTokens,
+        system: AnthropicSingleton.systemPrompt,
+        tools: anthropicTools
+      })
+    ).catch(errorHandler)
+    if (!stream) {
+      return await endProcess(null)
+    }
 
+    stream.on('error', async error => {
+      errorHandler(error)
+      return await endProcess(stream)
+    })
+    stream.on('text', (_, textSnapshot) => {
+      if (messageSender) {
+        messageSender.sendPartialMessage(textSnapshot)
+      }
+    })
     stream.on('finalMessage', async message => {
       const textMessages = message.content.filter(
         content => content.type === 'text'
@@ -278,17 +290,17 @@ export class Chatbot {
       const stopReason = message.stop_reason
 
       if (stopReason === 'max_tokens') {
-        if (!getMessageSender) return await endProcess()
+        if (!getMessageSender) return await endProcess(stream)
         const messageSender = await getMessageSender(
           'Quantidade máxima de tokens atingida'
         )
         await messageSender.sendFinalMessage(
           'Quantidade máxima de tokens atingida'
         )
-        return await endProcess()
+        return await endProcess(stream)
       }
       if (stopReason === 'tool_use') {
-        if (!getMessageSender) return await endProcess()
+        if (!getMessageSender) return await endProcess(stream)
         const tools = message.content.filter(
           content => content.type === 'tool_use'
         )
@@ -335,12 +347,8 @@ export class Chatbot {
           interactionId,
           true
         )
-        return await endProcess()
+        return await endProcess(stream)
       }
-    })
-
-    stream.on('error', error => {
-      console.log('Error', error)
     })
   }
 
