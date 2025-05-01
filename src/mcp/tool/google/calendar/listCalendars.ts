@@ -19,14 +19,18 @@ export class ListCalendars extends AbstractTool<Args> {
 
   execute: ToolCallback<Args> = async () => {
     const calendars = await GoogleCalendar.getInstance().listCalendars()
-    const content = calendars
-      .map(
-        cal =>
-          `Calendar Name: ${cal?.summary || 'Untitled'} - Calendar Id: ${cal?.id || 'no-id'} - Owner Email: ${cal?.owner_email || 'no-owner'} IsDefault: ${cal?.primary ? 'yes' : 'no'}`
-      )
-      .join('\n')
-    return {
-      content: [{ type: 'text', text: content }]
+    if (calendars) {
+      const content = calendars.map(cal => ({
+        type: 'text',
+        text: `Calendar Name: ${cal?.summary || 'Untitled'} - Calendar Id: ${cal?.id || 'no-id'} - Owner Email: ${cal?.owner_email || 'no-owner'} IsDefault: ${cal?.primary ? 'yes' : 'no'}`
+      })) as { type: 'text'; text: string }[]
+      return {
+        content: content
+      }
+    } else {
+      return {
+        content: [{ type: 'text', text: 'No calendars found' }]
+      }
     }
   }
 }

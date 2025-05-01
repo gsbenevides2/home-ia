@@ -36,7 +36,13 @@ export class GoogleTokensDatabase {
   public async saveTokens(email: string, tokens: Credentials) {
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
-    await drizzleClient.insert(table).values({ email, tokens })
+    await drizzleClient
+      .insert(table)
+      .values({ email, tokens })
+      .onConflictDoUpdate({
+        target: [table.email],
+        set: { tokens }
+      })
     await connection.release()
   }
 

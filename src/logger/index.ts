@@ -1,4 +1,5 @@
 import winston from 'winston'
+import { LogIOTransport } from './LogIO.ts'
 import { OpenObserveTransport } from './openObserve.ts'
 
 const OPEN_OBSERVE_ENDPOINT = Bun.env.OPEN_OBSERVE_ENDPOINT
@@ -33,6 +34,25 @@ export type LoggerData = object | Array<unknown> | string | unknown | undefined
 
 const disableOpenObserve = Bun.env.DISABLE_OPEN_OBSERVE === 'true'
 
+const transports: winston.transport[] = [new winston.transports.Console()]
+
+if (!disableOpenObserve) {
+  transports.push(openObserveTransport)
+}
+
+const enableLogIO = Bun.env.ENABLE_LOG_IO_TRANSPORT === 'true'
+
+if (enableLogIO) {
+  transports.push(
+    new LogIOTransport({
+      host: 'localhost',
+      port: 6689,
+      source: 'home-gcp',
+      stream: 'home-gcp'
+    })
+  )
+}
+
 export class Logger {
   private static logger = winston.createLogger({
     level: 'info',
@@ -40,15 +60,7 @@ export class Logger {
       winston.format.timestamp(),
       winston.format.json()
     ),
-    transports: disableOpenObserve
-      ? [
-          new winston.transports.Console({
-            log(info, next) {
-              next()
-            }
-          })
-        ]
-      : [openObserveTransport, new winston.transports.Console()]
+    transports
   })
 
   public static info(

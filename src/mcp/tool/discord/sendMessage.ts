@@ -11,7 +11,7 @@ type Args = typeof args
 
 export class SendDiscordMessageTool extends AbstractTool<Args> {
   name = 'send-discord-message'
-  description = 'Send a message to a my discord chat'
+  description = "Send a message to a Guilherme's discord chat"
   args = args
 
   execute: ToolCallback<Args> = async args => {

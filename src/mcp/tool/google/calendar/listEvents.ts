@@ -46,6 +46,13 @@ const args = {
     .describe(
       'The order of the events returned in the result. Optional. The default is an unspecified, stable order. Acceptable values are:"startTime": Order by the start date/time (ascending). This is only available when querying single events (i.e. the parameter singleEvents is True); "updated": Order by last modification time (ascending).'
     )
+    .optional(),
+
+  singleEvents: z
+    .boolean()
+    .describe(
+      'Whether to expand recurring events into instances and only return single one-off events and instances of recurring events, but not the underlying recurring events themselves. Optional. The default is False.'
+    )
     .optional()
 }
 
@@ -64,38 +71,88 @@ export class ListEvents extends AbstractTool<Args> {
 
   execute: ToolCallback<Args> = async args => {
     const events = await GoogleCalendar.getInstance().listEvents(args)
-    const content = this.formatEventList(events.data.items || [])
-    return {
-      content: [{ type: 'text', text: content }]
+    if (events.data.items) {
+      const content = this.formatEventList(events.data.items)
+
+      return {
+        content: content
+      }
+    } else {
+      return {
+        content: [{ type: 'text', text: 'No events found' }]
+      }
     }
   }
 
-  formatEventList(events: calendar_v3.Schema$Event[]): string {
+  formatEventList(
+    events: calendar_v3.Schema$Event[]
+  ): { type: 'text'; text: string }[] {
     return events
       .map(event => {
-        const attendeeList = event.attendees
-          ? `\nAttendees: ${event.attendees
-              .map(
-                a =>
-                  `${a.email || 'no-email'} (${a.responseStatus || 'unknown'})`
-              )
-              .join(', ')}`
-          : ''
-        const locationInfo = event.location
-          ? `\nLocation: ${event.location}`
-          : ''
-        const colorInfo = event.colorId ? `\nColor ID: ${event.colorId}` : ''
-        const reminderInfo = event.reminders
-          ? `\nReminders: ${
-              event.reminders.useDefault
-                ? 'Using default'
-                : (event.reminders.overrides || [])
-                    .map(r => `${r.method} ${r.minutes} minutes before`)
-                    .join(', ') || 'None'
-            }`
-          : ''
-        return `${event.summary || 'Untitled'} (${event.id || 'no-id'})${locationInfo}\nStart: ${event.start?.dateTime || event.start?.date || 'unspecified'}\nEnd: ${event.end?.dateTime || event.end?.date || 'unspecified'}${attendeeList}${colorInfo}${reminderInfo}\n`
+        let msg = `Event Title: ${event.summary} Event ID: ${event.id || 'no-id'}`
+
+        msg += `\nEvent Start Time: ${event.start?.dateTime || event.start?.date || 'no-start-time'}`
+        msg += `\nEvent End Time: ${event.end?.dateTime || event.end?.date || 'no-end-time'}`
+
+        if (event.attendees?.length !== 0) {
+          const makeStatus = (status: string) => {
+            if (status === 'needsAction')
+              return 'Needs To Accept The Invitation'
+            if (status === 'accepted') return 'Accepted The Invitation'
+            if (status === 'tentative') return 'Maybe Will Attend'
+            if (status === 'declined') return 'Declined The Invitation'
+            return status
+          }
+
+          const list = event.attendees?.map(a => {
+            return `Attendee Name: ${a.displayName || 'no-name'} - Attendee Email: ${a.email || 'no-email'} - Attendee Status: ${makeStatus(a.responseStatus || 'unknown')}`
+          })
+          msg += `\nAttendees: ${list?.join('; ')}`
+        }
+        if (event.location) {
+          msg += `\nLocation: ${event.location}`
+        }
+        if (event.colorId) {
+          msg += `\nColor ID: ${event.colorId}`
+        }
+        if (event.hangoutLink) {
+          msg += `\nMeeting Link: ${event.hangoutLink}`
+        }
+        if (event.reminders) {
+          const overrides = event.reminders.overrides || []
+          const reminders = overrides.map(r => {
+            return `Reminder Send Method: ${r.method} - Reminder Minutes Before The Event: ${r.minutes}`
+          })
+          msg += `\nReminders: ${
+            event.reminders.useDefault
+              ? 'Using default'
+              : reminders.join('; ') || 'None'
+          }`
+        }
+        if (event.organizer) {
+          if (event.organizer.self) {
+            msg += `\nOrganizer: You`
+          } else {
+            msg += `\nOrganizer Name: ${event.organizer.displayName || 'no-name'} - Organizer Email: ${event.organizer.email || 'no-email'}`
+          }
+        }
+        if (event.workingLocationProperties) {
+          msg += `\nWorking Location Properties: ${event.workingLocationProperties.type}`
+          if (event.organizer?.self) {
+            msg += ` Obs: This event is your working location in this day`
+          }
+        }
+        if (event.birthdayProperties) {
+          msg += `\nThis event is a birthday`
+          if (event.birthdayProperties?.type === 'self') {
+            msg += ` and it's your birthday in this day. Congrats!`
+          }
+        }
+        return msg
       })
-      .join('\n')
+      .map(event => ({
+        type: 'text',
+        text: event
+      }))
   }
 }

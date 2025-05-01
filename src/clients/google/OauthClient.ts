@@ -38,7 +38,8 @@ export class OauthClient {
     )
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
-      scope: this.scopes
+      scope: this.scopes,
+      prompt: 'consent'
     })
 
     return res.redirect(302, authUrl)
@@ -99,7 +100,8 @@ export class OauthClient {
       oauth2Client.on('tokens', newTokens => {
         GoogleTokensDatabase.getInstance().updateTokens(token.email, {
           ...token.tokens,
-          ...newTokens
+          ...newTokens,
+          refresh_token: token.tokens.refresh_token
         })
       })
 

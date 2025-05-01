@@ -241,6 +241,27 @@ export class Chatbot {
       await stream.done()
     }
 
+    stream.on('error', async error => {
+      if (error.name === 'overloaded_error') {
+        messageSender?.sendFinalMessage(
+          'A API do Anthropic está sobrecarregada, por favor, tente novamente mais tarde. TracerId: ' +
+            tracer?.getID()
+        )
+      } else if (error.name === 'request_too_large') {
+        messageSender?.sendFinalMessage(
+          'A mensagem é muito grande, por favor, tente novamente com uma mensagem menor. Pode ser que que a resposta da ferramenta seja muito grande para ser enviada de volta para Anthropic.' +
+            'TracerId: ' +
+            tracer?.getID()
+        )
+      } else {
+        messageSender?.sendFinalMessage(
+          'Ocorreu um erro, por favor, tente novamente mais tarde. TracerId: ' +
+            tracer?.getID()
+        )
+      }
+      return await endProcess()
+    })
+
     stream.on('finalMessage', async message => {
       const textMessages = message.content.filter(
         content => content.type === 'text'
@@ -316,6 +337,10 @@ export class Chatbot {
         )
         return await endProcess()
       }
+    })
+
+    stream.on('error', error => {
+      console.log('Error', error)
     })
   }
 

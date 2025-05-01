@@ -41,6 +41,7 @@ export class GoogleCalendar {
     timeMax?: string
     maxResults?: number
     orderBy?: string
+    singleEvents?: boolean
   }) {
     const oauth2Client = await OauthClient.getInstance().getOauthClient(
       args.email
@@ -51,7 +52,8 @@ export class GoogleCalendar {
       timeMin: args.timeMin,
       timeMax: args.timeMax,
       maxResults: args.maxResults,
-      orderBy: args.orderBy
+      orderBy: args.orderBy,
+      singleEvents: args.singleEvents
     })
   }
 }
