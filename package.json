@@ -54,6 +54,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "sharp": "^0.34.1",
+    "tailwindcss": "^4.1.7",
     "terser": "^5.39.2",
     "winston": "^3.17.0",
     "winston-transport": "^4.9.0",
