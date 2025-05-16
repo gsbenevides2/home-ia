@@ -1,6 +1,8 @@
 FROM oven/bun:latest
 WORKDIR /app
-RUN apt-get update && apt-get install -y dnsutils curl wget procps ffmpeg && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends dnsutils curl wget procps ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY . .
 RUN bun install

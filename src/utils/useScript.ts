@@ -40,7 +40,8 @@ const minify = async (js: string) => {
         side_effects: false
       }
     })
-    const code = result?.code?.replace(/;$/, '') as string
+    // `?? null` prevents accidental `undefined` propagation
+    const code = result?.code?.replace(/;$/, '') ?? null
 
     log?.()
 
@@ -65,23 +66,29 @@ export function useScript<T extends (...args: any[]) => any>(
   ...params: Parameters<T>
 ): string {
   const javascript = fn.toString()
-  const cached = cache.get(javascript) || minify(javascript)
+  let cached = cache.get(javascript)
 
-  if (typeof cached === 'object') {
-    cache.set(javascript, cached)
+  if (!cached) {
+    // Immediately store the promise in the cache to prevent duplicate work
+    const minifyPromise = minify(javascript)
+    cache.set(javascript, minifyPromise)
 
-    cached.then(minified => {
+    // Handle promise resolution to update cache with actual string value
+    minifyPromise.then(minified => {
       if (minified === null) {
         cache.delete(javascript)
       } else {
         cache.set(javascript, minified)
       }
     })
+
+    cached = minifyPromise
   }
 
-  const minified = typeof cached === 'string' ? cached : javascript
+  // If cached is a promise, we can't use it directly - fall back to original
+  const scriptContent = typeof cached === 'string' ? cached : javascript
 
-  return `(${minified})(${params.map(p => JSON.stringify(p)).join(', ')})`
+  return `(${scriptContent})(${params.map(p => JSON.stringify(p)).join(', ')})`
 }
 
 export function useScriptAsDataURI<T extends (...args: any[]) => any>(
