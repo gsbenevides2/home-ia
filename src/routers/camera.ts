@@ -145,7 +145,6 @@ class HLSManager {
           )
 
           if (errorMessageOperationNotPermited) {
-            // Kill all ffmpeg processes when we get "Operation not permitted" error
             try {
               Bun.spawnSync(['pkill', 'ffmpeg'], {
                 stderr: 'inherit'
@@ -275,16 +274,8 @@ hlsManager.start()
 
 const router = express.Router()
 
-// Exportando as rotas suportadas
-export const camerasPath = [
-  '/cameras/rua/playlist.m3u8',
-  '/cameras/rua/snapshot.jpg',
-  '/video/playlist.m3u8',
-  '/video/segment*.ts'
-]
-
 // Rota para streaming mpeg-ts direto (fallback)
-router.get('/cameras/rua/stream', (req, res) => {
+router.get('/cameras-service/rua/stream', (req, res) => {
   try {
     res.redirect('/cameras/rua/playlist.m3u8')
   } catch {
@@ -293,7 +284,7 @@ router.get('/cameras/rua/stream', (req, res) => {
 })
 
 // Rota para o arquivo de playlist HLS
-router.get('/cameras/rua/playlist.m3u8', async (req, res) => {
+router.get('/cameras-service/rua/playlist.m3u8', async (req, res) => {
   try {
     const playlistPath = path.join(HLS_DIR, PLAYLIST_NAME)
 
@@ -342,7 +333,7 @@ router.get('/cameras/rua/playlist.m3u8', async (req, res) => {
 })
 
 // Rota para obter uma imagem estática (snapshot) da câmera
-router.get('/cameras/rua/snapshot.jpg', async (req, res) => {
+router.get('/cameras-service/rua/snapshot.jpg', async (req, res) => {
   try {
     // Usar fetch para obter a imagem diretamente da câmera
     const response = await fetch(SNAPSHOT_URL)
@@ -366,7 +357,7 @@ router.get('/cameras/rua/snapshot.jpg', async (req, res) => {
 })
 
 // Servir os arquivos de segmento
-router.get('/cameras/rua/:filename', (req, res) => {
+router.get('/cameras-service/rua/:filename', (req, res) => {
   try {
     const filename = req.params.filename
     if (!filename.endsWith('.ts') && !filename.endsWith('.m3u8')) {

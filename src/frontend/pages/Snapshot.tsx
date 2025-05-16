@@ -1,7 +1,7 @@
 import { useScriptAsDataURI } from "../../utils/useScript";
 import Basic from "../Basic";
 
-const loadPage = async () => {
+const loadPage = async (camera: string) => {
     const initSnapshotViewer = () => {
         const container = document.getElementById("snapshotContainer");
         if (!container) return;
@@ -70,7 +70,7 @@ const loadPage = async () => {
             };
 
             // Definir src da imagem para disparar carregamento
-            img.src = `/cameras/rua/snapshot.jpg?_t=${timestamp}`;
+            img.src = `/cameras-service/${camera}/snapshot.jpg?_t=${timestamp}`;
         };
 
         // Atualizar inicialmente
@@ -121,14 +121,18 @@ const loadPage = async () => {
     }
 };
 
-export default function Snapshot() {
+interface SnapshotProps {
+    camera: string;
+}
+
+export default function Snapshot(props: SnapshotProps) {
     return (
         <Basic>
             <div style={{ maxWidth: "800px", margin: "20px auto" }}>
                 <h1 style={{ textAlign: "center" }}>Câmera (Modo Estático)</h1>
                 <div style={{ margin: "10px 0" }}>
                     <a
-                        href="/"
+                        href={`/camera/${props.camera}`}
                         style={{
                             color: "#007bff",
                             textDecoration: "none",
@@ -163,7 +167,7 @@ export default function Snapshot() {
                     </p>
                 </div>
             </div>
-            <script src={useScriptAsDataURI(loadPage)} />
+            <script src={useScriptAsDataURI(loadPage, props.camera)} />
         </Basic>
     );
 }

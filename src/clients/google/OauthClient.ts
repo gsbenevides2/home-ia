@@ -45,7 +45,7 @@ export class OauthClient {
     return res.redirect(302, authUrl)
   }
 
-  public async handleOauthRedirect(req: Request, res: Response) {
+  public async handleOauthRedirect(req: Request) {
     const redirectUri = this.redirectUri.toString()
     const oauth2Client = new google.auth.OAuth2(
       process.env.GCP_OAUTH_CLIENT_ID,
@@ -62,7 +62,6 @@ export class OauthClient {
       throw new Error('Email not found')
     }
     await GoogleTokensDatabase.getInstance().saveTokens(email, tokens)
-    return res.send('<h1>Success</h1>')
   }
 
   public async getOauthClient(email: string) {

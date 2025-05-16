@@ -1,5 +1,6 @@
 process.env.TZ = 'America/Sao_Paulo'
 
+import cookieParser from 'cookie-parser'
 import express from 'express'
 import path from 'path'
 import { DiscordBot } from './discord/index.ts'
@@ -8,7 +9,7 @@ import { MCPSSEClientSingleton } from './mcp/client/sse.ts'
 import authenticationRouter from './routers/authentication.ts'
 import cameraRouter from './routers/camera.ts'
 import frontendRouter from './routers/frontend.tsx'
-import googleOauthRouter from './routers/googleOauth.ts'
+import googleOauthRouter from './routers/googleOauth.tsx'
 import mcpRouter from './routers/mcp.ts'
 import queueRouters from './routers/queue.ts'
 import { Scheduller } from './scheduller/index.ts'
@@ -18,6 +19,8 @@ await Bun.$`bunx tailwindcss -i src/tailwind.css -o public/css/tailwind.css --mi
 
 const app = express()
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(cookieParser())
 app.use(authenticationRouter)
 app.use(googleOauthRouter)
 app.use(mcpRouter)
