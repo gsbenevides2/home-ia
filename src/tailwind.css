@@ -1,0 +1,8 @@
+@import "tailwindcss";
+@layer theme, base, components, utilities;
+
+@theme {
+    --font-sans: "Poppins", sans-serif;
+    --font-mono: "Poppins", sans-serif;
+    --font-serif: "Poppins", sans-serif;
+}

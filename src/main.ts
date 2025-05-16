@@ -1,13 +1,20 @@
 process.env.TZ = 'America/Sao_Paulo'
+
 import express from 'express'
+import path from 'path'
 import { DiscordBot } from './discord/index.ts'
 import { Logger } from './logger/index.ts'
 import { MCPSSEClientSingleton } from './mcp/client/sse.ts'
 import authenticationRouter from './routers/authentication.ts'
+import cameraRouter from './routers/camera.ts'
+import frontendRouter from './routers/frontend.tsx'
 import googleOauthRouter from './routers/googleOauth.ts'
 import mcpRouter from './routers/mcp.ts'
 import queueRouters from './routers/queue.ts'
 import { Scheduller } from './scheduller/index.ts'
+
+// Build tailwind css
+await Bun.$`bunx tailwindcss -i src/tailwind.css -o public/css/tailwind.css --minify`
 
 const app = express()
 app.use(express.json())
@@ -15,6 +22,13 @@ app.use(authenticationRouter)
 app.use(googleOauthRouter)
 app.use(mcpRouter)
 app.use(queueRouters)
+app.use(cameraRouter)
+
+// Servir arquivos estáticos para vídeo HLS
+app.use('/video', express.static(path.join(process.cwd(), 'public', 'video')))
+
+// Sempre por último: rotas de frontend
+app.use(frontendRouter)
 
 const port = Bun.env.PORT
 
