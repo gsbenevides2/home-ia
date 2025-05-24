@@ -4,5 +4,4 @@ node_modules
 dist
 data
 public/css/tailwind.css
-public/video/segment*.ts
-public/video/playlist.m3u8
+public/video/**

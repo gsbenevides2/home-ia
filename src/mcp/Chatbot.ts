@@ -14,6 +14,7 @@ import { GoogleCloudStorage } from '../clients/google/CloudStorage'
 import type { Tracer } from '../logger/Tracer'
 import { cathable } from '../utils/cathable'
 import { MCPStreamableClientSingleton } from './client/streamable'
+import { error } from 'winston'
 
 type MessageSender = (message: string) => Promise<void>
 
@@ -77,7 +78,7 @@ export class Chatbot {
       })
     }
     tracer?.info('Sending messages to Anthropic', {
-      messages: JSON.stringify(this.messages)
+      messages: this.messages
     })
     const response = await anthropic.messages.create({
       model: AnthropicSingleton.model,
@@ -221,7 +222,7 @@ export class Chatbot {
       })
     }
     tracer?.info('Sending messages to Anthropic', {
-      messages: JSON.stringify(this.messages)
+      messages: this.messages
     })
     messageSender?.sendPartialMessage('Pensando...')
 

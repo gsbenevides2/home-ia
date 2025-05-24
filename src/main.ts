@@ -13,9 +13,16 @@ import googleOauthRouter from './routers/googleOauth.tsx'
 import mcpRouter from './routers/mcp.ts'
 import queueRouters from './routers/queue.ts'
 import { Scheduller } from './scheduller/index.ts'
+import { startAllHlsManagers, stopAllHlsManagers } from './utils/cameras.ts'
 
-// Build tailwind css
-await Bun.$`bunx tailwindcss -i src/tailwind.css -o public/css/tailwind.css --minify`
+Logger.info('Main', 'Preparing server... Building Tailwind CSS')
+await Bun.$`DEBUG=false bunx tailwindcss -i src/tailwind.css -o public/css/tailwind.css --minify`
+Logger.info('Main', 'Tailwind CSS built')
+
+Logger.info('Main', 'Preparing server... Starting HLS managers')
+await startAllHlsManagers()
+Logger.info('Main', 'HLS managers started')
+Logger.info('Main', 'Server ready to start')
 
 const app = express()
 app.use(express.json())
@@ -38,8 +45,10 @@ const port = Bun.env.PORT
 if (!port) {
   throw new Error('PORT not set')
 }
+
+Logger.info('Main', 'Starting server...')
 const server = app.listen(port, async () => {
-  Logger.info('HTTP Server', `API is running on port ${port}`)
+  Logger.info('Main', `API is running on port ${port}`)
   if (Bun.env.ENABLE_DISCORD === 'true') {
     await DiscordBot.getInstance().connect()
   }
@@ -47,9 +56,12 @@ const server = app.listen(port, async () => {
 })
 
 process.on('SIGINT', async () => {
+  Logger.info('Main', 'Shutting down server...')
   await DiscordBot.getInstance().disconnect()
   await Scheduller.gracefulShutdown()
   await (await MCPSSEClientSingleton.getInstance()).client.close()
+  await stopAllHlsManagers()
+  Logger.info('Main', 'Server shut down')
   server.close()
   process.exit(0)
 })
