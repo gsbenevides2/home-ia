@@ -2,7 +2,22 @@
 @layer theme, base, components, utilities;
 
 @theme {
-    --font-sans: "Poppins", sans-serif;
-    --font-mono: "Poppins", sans-serif;
-    --font-serif: "Poppins", sans-serif;
+    --font-sans: "Roboto", sans-serif;
+    --font-mono: "Roboto", sans-serif;
+    --font-serif: "Roboto", sans-serif;
+}
+
+:root {
+    --mdc-theme-primary: #03a9f4;
+    --mdc-theme-secondary: #ff9800;
+    --mdc-theme-background: #111111;
+    --mdc-theme-surface: #1c1c1c;
+    --mdc-theme-on-primary: #ffffff;
+    --mdc-theme-on-secondary: #ffffff;
+    --mdc-theme-on-surface: #e1e1e1;
+}
+
+body {
+    background-color: var(--mdc-theme-background);
+    color: var(--mdc-theme-on-surface);
 }

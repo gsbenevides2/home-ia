@@ -19,6 +19,7 @@
     "@types/fluent-ffmpeg": "^2.1.27",
     "@types/nodemailer": "^6.4.17",
     "@types/pg": "^8.11.14",
+    "@types/react": "^19.1.5",
     "drizzle-kit": "^0.31.0",
     "eslint": "^9.25.1",
     "eslint-config-prettier": "^10.1.2",

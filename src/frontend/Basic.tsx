@@ -1,10 +1,12 @@
+import { useScriptAsDataURI } from "../utils/useScript";
+
 interface BasicProps {
     children: React.ReactNode;
 }
 
 export default function Basic(props: BasicProps) {
     return (
-        <html lang="en">
+        <html lang="pt-br">
             <head>
                 <meta
                     name="viewport"
@@ -13,20 +15,34 @@ export default function Basic(props: BasicProps) {
                 <meta name="description" content="Home GCP" />
                 <meta name="author" content="Home GCP" />
                 <title>Home GCP</title>
-                <link rel="stylesheet" href="/css/tailwind.css" />
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" />
+                <link rel="preconnect" href="https://unpkg.com" />
                 <link
-                    rel="preconnect"
-                    href="https://fonts.gstatic.com"
-                    crossOrigin="anonymous"
-                    rel="noopener"
+                    rel="stylesheet"
+                    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
                 />
                 <link
-                    href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+                    href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css"
                     rel="stylesheet"
                 />
+                <link
+                    rel="stylesheet"
+                    href="https://fonts.googleapis.com/icon?family=Material+Icons"
+                >
+                </link>
+                <link rel="stylesheet" href="/css/material-icons.css" />
+                <link rel="stylesheet" href="/css/tailwind.css" />
+
+                <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js">
+                </script>
             </head>
-            <body>{props.children}</body>
+            <body className="mdc-typography">{props.children}</body>
+            <script
+                src={useScriptAsDataURI(() => {
+                    window.mdc.autoInit();
+                })}
+            />
         </html>
     );
 }

@@ -1,7 +1,6 @@
 import { useScriptAsDataURI } from "../../utils/useScript";
 import Basic from "../Basic";
-import Button from "../components/Button";
-import Card from "../components/Card";
+import CameraCard from "../components/CameraCard";
 
 interface HomeProps {
     cameraList: string[];
@@ -14,7 +13,7 @@ const setupLogoutConfirmation = () => {
         logoutButton.addEventListener("click", (e) => {
             e.preventDefault();
             const confirmed = window.confirm(
-                "Are you sure you want to logout?",
+                "Tem certeza que deseja sair?",
             );
             if (confirmed) {
                 window.location.href = "/logout";
@@ -26,30 +25,45 @@ const setupLogoutConfirmation = () => {
 export default function Home(props: HomeProps) {
     return (
         <Basic>
-            <Card title="Home">
-                <div className="flex flex-col space-y-4">
-                    {props.cameraList.map((camera: string) => (
-                        <Button
-                            key={camera}
-                            href={`/camera/${camera}`}
-                            variant="primary"
-                        >
-                            Camera {camera}
-                        </Button>
-                    ))}
-                    <Button
-                        href={props.googleLoginUrl}
-                        variant="red"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Login with Google
-                    </Button>
-                    <Button href="/logout" variant="gray">
-                        Logout
-                    </Button>
+            <div className="mdc-layout-grid">
+                <div className="mdc-layout-grid__inner">
+                    <div className="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+                        <h1 className="mdc-typography--headline4">
+                            Bem vindo Guilherme
+                        </h1>
+                        <p className="mdc-typography--body1 mt-1.5">
+                            O que deseja fazer hoje?
+                        </p>
+                        <div className="grid grid-cols-1 gap-4 mt-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            <CameraCard
+                                cameraId="rua"
+                                cameraName="Câmera da rua"
+                            />
+                            <CameraCard
+                                cameraId="rua"
+                                cameraName="Câmera da rua"
+                            />
+                            <CameraCard
+                                cameraId="rua"
+                                cameraName="Câmera da rua"
+                            />
+                            <CameraCard
+                                cameraId="rua"
+                                cameraName="Câmera da rua"
+                            />
+                            <CameraCard
+                                cameraId="rua"
+                                cameraName="Câmera da rua"
+                            />
+                            <CameraCard
+                                cameraId="rua"
+                                cameraName="Câmera da rua"
+                            />
+                        </div>
+                    </div>
                 </div>
-            </Card>
+            </div>
+
             <script src={useScriptAsDataURI(setupLogoutConfirmation)} />
         </Basic>
     );
