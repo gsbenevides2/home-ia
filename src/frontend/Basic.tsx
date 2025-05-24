@@ -33,11 +33,10 @@ export default function Basic(props: BasicProps) {
                 </link>
                 <link rel="stylesheet" href="/css/material-icons.css" />
                 <link rel="stylesheet" href="/css/tailwind.css" />
-
-                <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js">
-                </script>
             </head>
             <body className="mdc-typography">{props.children}</body>
+            <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js" />
+            <script src="https://unpkg.com/htmx.org@2.0.4" />
             <script
                 src={useScriptAsDataURI(() => {
                     window.mdc.autoInit();

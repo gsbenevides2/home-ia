@@ -36,6 +36,7 @@
     "@google-cloud/compute": "^5.1.0",
     "@google-cloud/speech": "^7.0.1",
     "@google-cloud/storage": "^7.16.0",
+    "@material/menu": "^14.0.0",
     "@modelcontextprotocol/sdk": "^1.10.2",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "@tailwindcss/cli": "^4.1.7",
