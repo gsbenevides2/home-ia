@@ -9,6 +9,24 @@ declare global {
           }
         }
       }
+      textField: {
+        MDCTextField: {
+          new (element: HTMLElement): MDCTextField
+        }
+      }
+      banner: {
+        MDCBanner: {
+          new (element: HTMLElement): MDCBanner
+        }
+      }
+      autoInit: () => void
+    }
+
+    videojs: {
+      (element: HTMLElement, options: unknown): VideoJS.Player
+      prototype: {
+        src: (src: string) => void
+      }
     }
   }
 }

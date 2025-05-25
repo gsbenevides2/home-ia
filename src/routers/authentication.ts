@@ -1,18 +1,26 @@
 import { type NextFunction, type Request, type Response, Router } from 'express'
+import { match } from 'path-to-regexp'
 import { MCPServer } from '../mcp/server'
 
 const authenticationRouter = Router()
 
 const mcpServer = MCPServer.getInstance()
 
-const unprotectedPaths = ['/login', '/css/tailwind.css']
+const unprotectedPathsPatterns = [
+  '/login',
+  '/css/:file',
+  '/fonts/:file',
+  '/js/:file'
+]
 
 authenticationRouter.use(
   async (req: Request, res: Response, next: NextFunction) => {
     const acceptHeader = req.headers.accept
     const isFromBrowser = acceptHeader?.includes('text/html')
-
-    if (unprotectedPaths.includes(req.path)) {
+    const isUnprotectedPath = unprotectedPathsPatterns.some(pattern =>
+      match(pattern)(req.path)
+    )
+    if (isUnprotectedPath) {
       next()
       return
     }

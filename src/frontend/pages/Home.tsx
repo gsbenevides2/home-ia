@@ -73,6 +73,8 @@ export default function Home(props: HomeProps) {
                                             href={props.googleLoginUrl}
                                             target="_blank"
                                         >
+                                            <span className="mdc-list-item__ripple" />
+
                                             <span className="material-icons mdc-list-item__graphic !text-base">
                                                 login
                                             </span>
@@ -85,6 +87,7 @@ export default function Home(props: HomeProps) {
                                             role="menuitem"
                                             href="/logout"
                                         >
+                                            <span className="mdc-list-item__ripple" />
                                             <span className="material-icons mdc-list-item__graphic !text-base">
                                                 logout
                                             </span>

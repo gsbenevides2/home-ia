@@ -1,10 +1,9 @@
 import { Router } from "express";
+import path from "path";
 import { renderToString } from "react-dom/server";
 import { OauthClient } from "../clients/google/OauthClient.ts";
-import CameraPage from "../frontend/pages/CameraPage.tsx";
 import Home from "../frontend/pages/Home.tsx";
 import Login from "../frontend/pages/Login.tsx";
-import Snapshot from "../frontend/pages/Snapshot.tsx";
 
 const frontendRouter = Router();
 const oauthClient = OauthClient.getInstance();
@@ -22,30 +21,26 @@ frontendRouter.get("/", async (req, res) => {
     res.send(html);
 });
 
-frontendRouter.get("/camera/:camera", async (req, res) => {
-    if (!cameraList.includes(req.params.camera)) {
-        return res.status(404).send("Camera not found");
-    }
-    const html = await renderToString(
-        <CameraPage camera={req.params.camera} />,
-    );
-    res.setHeader("Content-Type", "text/html");
-    res.send(html);
-});
-
-frontendRouter.get("/camera/:camera/snapshot", async (req, res) => {
-    if (!cameraList.includes(req.params.camera)) {
-        return res.status(404).send("Camera not found");
-    }
-    const html = await renderToString(<Snapshot camera={req.params.camera} />);
-    res.setHeader("Content-Type", "text/html");
-    res.send(html);
-});
-
-frontendRouter.get("/css/tailwind.css", async (req, res) => {
-    const css = await Bun.file("public/css/tailwind.css").text();
+frontendRouter.get("/css/:file", async (req, res) => {
+    const css = await Bun.file(`public/css/${req.params.file}`).text();
     res.setHeader("Content-Type", "text/css");
     res.send(css);
+});
+
+frontendRouter.get("/fonts/:file", async (req, res) => {
+    const filePath = path.join(
+        process.cwd(),
+        "public",
+        "fonts",
+        req.params.file,
+    );
+    res.sendFile(filePath);
+});
+
+frontendRouter.get("/js/:file", async (req, res) => {
+    const js = await Bun.file(`public/js/${req.params.file}`).text();
+    res.setHeader("Content-Type", "text/javascript");
+    res.send(js);
 });
 
 frontendRouter.get("/login", async (req, res) => {
