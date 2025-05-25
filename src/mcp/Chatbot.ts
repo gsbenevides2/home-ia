@@ -14,7 +14,7 @@ import { GoogleCloudStorage } from '../clients/google/CloudStorage'
 import type { Tracer } from '../logger/Tracer'
 import { cathable } from '../utils/cathable'
 import { MCPStreamableClientSingleton } from './client/streamable'
-import { error } from 'winston'
+import type { Content } from './tool/AbstractTool'
 
 type MessageSender = (message: string) => Promise<void>
 
@@ -325,15 +325,38 @@ export class Chatbot {
           )
           tracer?.unsetGlobalTracerID()
           tracer?.info('Tool result', { toolResult })
-          const toolResultContent = toolResult.content as
-            | Array<TextBlockParam | ImageBlockParam>
-            | string
+          const toolResultContent = toolResult.content as Content[]
+
           tracer?.info('Saving tool result', { toolResultContent })
 
           toolResults.push({
             type: 'tool_result',
             tool_use_id: toolUseID,
-            content: toolResultContent
+            content: toolResultContent.map<TextBlockParam | ImageBlockParam>(
+              content => {
+                if (content.type === 'text') {
+                  const textBlock: TextBlockParam = {
+                    type: 'text',
+                    text: content.text
+                  }
+                  return textBlock
+                } else if (content.type === 'image') {
+                  const imageBlock: ImageBlockParam = {
+                    type: 'image',
+                    source: {
+                      type: 'base64' as const,
+                      data: content.data,
+                      media_type: content.mimeType
+                    }
+                  }
+                  return imageBlock
+                }
+                return {
+                  type: 'text',
+                  text: 'Erro ao processar o resultado da ferramenta'
+                }
+              }
+            )
           })
         }
         await this.saveMessage({

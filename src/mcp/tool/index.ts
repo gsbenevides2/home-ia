@@ -23,6 +23,7 @@ import { GetStreamerIdsTool } from './home_assistant/twicth/getStreamerIds.ts'
 import { StartDeviceTool } from './home_assistant/wakeOnLan/startDevice.ts'
 import { MarkdownfyWebpage } from './markdownfy/webpage.ts'
 
+import { SnapshotTool } from './camera/snapshot.ts'
 import { SendEmailTool } from './email/sendEmail.ts'
 import { CreateEventTool } from './google/calendar/createEvent.ts'
 import { DeleteEventTool } from './google/calendar/deleteEvent.ts'
@@ -89,7 +90,8 @@ export const toolList = [
   new ListEvents(),
   new CreateEventTool(),
   new DeleteEventTool(),
-  new UpdateEventTool()
+  new UpdateEventTool(),
+  new SnapshotTool()
 ]
 
 export function registerTools(server: McpServer) {

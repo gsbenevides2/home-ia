@@ -1,5 +1,7 @@
 import { Camera } from './Camera'
 
+const camerasNames = ['rua'] as const
+
 const camerasAndIps = {
   rua: {
     ipAddress: '192.168.0.5',
@@ -44,5 +46,9 @@ export class Cameras {
     await Promise.all(
       Object.values(this.cameras).map(camera => camera.hlsStream.stop())
     )
+  }
+
+  getAvailableCameras() {
+    return camerasNames
   }
 }

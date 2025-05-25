@@ -15,11 +15,21 @@ export type Parameters = {
   [key: string]: z.ZodSchema
 }
 
+export type TextBlockParam = {
+  type: 'text'
+  text: string
+}
+
+export type ImageBlockParam = {
+  type: 'image'
+  data: string
+  mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+}
+
+export type Content = TextBlockParam | ImageBlockParam
+
 export type ToolExecuteResult = {
-  content: {
-    type: 'text'
-    text: string
-  }[]
+  content: Content[]
 }
 
 export type OnErrorToolCallback<P extends ZodRawShape> = (
