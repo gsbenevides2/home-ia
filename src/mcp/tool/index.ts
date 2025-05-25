@@ -45,6 +45,8 @@ import { CreateJobTool } from './scheduller/createJob.ts'
 import { CurrentTimeTool } from './scheduller/currentTime.ts'
 import { DeleteJobTool } from './scheduller/deleteJob.ts'
 import { ListJobTool } from './scheduller/listJob.ts'
+import { SendWhatsAppAudioMessageTool } from './whatsapp/sendAudioMessage.ts'
+import { SendWhatsAppMessageTool } from './whatsapp/sendMessage.ts'
 
 export const toolList = [
   new GetRoomLampTool(),
@@ -91,7 +93,9 @@ export const toolList = [
   new CreateEventTool(),
   new DeleteEventTool(),
   new UpdateEventTool(),
-  new SnapshotTool()
+  new SnapshotTool(),
+  new SendWhatsAppMessageTool(),
+  new SendWhatsAppAudioMessageTool()
 ]
 
 export function registerTools(server: McpServer) {
