@@ -129,8 +129,22 @@ export default function CameraCard(props: CameraCardProps) {
         }
     }, containerId);
 
+    const clickToFullScreen = useScript((containerId: string) => {
+        const container = document.getElementById(
+            containerId,
+        ) as HTMLDivElement;
+        if (!container) {
+            console.error("Container não encontrado");
+        }
+        container.requestFullscreen();
+    }, containerId);
+
     return (
-        <div className="flex relative cursor-pointer" id={containerId}>
+        <div
+            className="flex relative cursor-pointer"
+            id={containerId}
+            hx-on:click={clickToFullScreen}
+        >
             <video
                 className="w-full relative rounded-2xl aspect-video video-js"
                 poster={`/cameras-service/${cameraId}/snapshot.jpg`}
