@@ -99,6 +99,9 @@ export default function CameraCard(props: CameraCardProps) {
         cameraId,
     );
     const unmute = useScript((containerId: string) => {
+        console.log(event);
+        console.log(this);
+        event.preventDefault();
         const container = document.getElementById(
             containerId,
         ) as HTMLDivElement;
@@ -130,11 +133,18 @@ export default function CameraCard(props: CameraCardProps) {
     }, containerId);
 
     const clickToFullScreen = useScript((containerId: string) => {
+        if (event?.target.tagName === "BUTTON") {
+            return;
+        }
         const container = document.getElementById(
             containerId,
         ) as HTMLDivElement;
         if (!container) {
             console.error("Container não encontrado");
+        }
+        if (document.fullscreen) {
+            document.exitFullscreen();
+            return;
         }
         container.requestFullscreen();
     }, containerId);
