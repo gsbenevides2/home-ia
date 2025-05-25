@@ -149,6 +149,30 @@ export default function CameraCard(props: CameraCardProps) {
         container.requestFullscreen();
     }, containerId);
 
+    const moveUp = useScript((cameraId: string) => {
+        fetch(`/cameras-service/${cameraId}/up`, {
+            method: "POST",
+        });
+    }, cameraId);
+
+    const moveDown = useScript((cameraId: string) => {
+        fetch(`/cameras-service/${cameraId}/down`, {
+            method: "POST",
+        });
+    }, cameraId);
+
+    const moveLeft = useScript((cameraId: string) => {
+        fetch(`/cameras-service/${cameraId}/left`, {
+            method: "POST",
+        });
+    }, cameraId);
+
+    const moveRight = useScript((cameraId: string) => {
+        fetch(`/cameras-service/${cameraId}/right`, {
+            method: "POST",
+        });
+    }, cameraId);
+
     return (
         <div
             className="flex relative cursor-pointer"
@@ -183,24 +207,28 @@ export default function CameraCard(props: CameraCardProps) {
                     <button
                         className="mdc-icon-button material-icons mx-1"
                         title="Mover para cima"
+                        hx-on:click={moveUp}
                     >
                         arrow_upward
                     </button>
                     <button
                         className="mdc-icon-button material-icons mx-1"
                         title="Mover para baixo"
+                        hx-on:click={moveDown}
                     >
                         arrow_downward
                     </button>
                     <button
                         className="mdc-icon-button material-icons mx-1"
                         title="Mover para esquerda"
+                        hx-on:click={moveLeft}
                     >
                         arrow_back
                     </button>
                     <button
                         className="mdc-icon-button material-icons mx-1"
                         title="Mover para direita"
+                        hx-on:click={moveRight}
                     >
                         arrow_forward
                     </button>

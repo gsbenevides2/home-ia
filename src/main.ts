@@ -3,6 +3,7 @@ process.env.TZ = 'America/Sao_Paulo'
 import cookieParser from 'cookie-parser'
 import express from 'express'
 import path from 'path'
+import { Cameras } from './clients/Camera/CamerasSingleton.ts'
 import { DiscordBot } from './discord/index.ts'
 import { Logger } from './logger/index.ts'
 import { MCPSSEClientSingleton } from './mcp/client/sse.ts'
@@ -13,14 +14,13 @@ import googleOauthRouter from './routers/googleOauth.tsx'
 import mcpRouter from './routers/mcp.ts'
 import queueRouters from './routers/queue.ts'
 import { Scheduller } from './scheduller/index.ts'
-import { startAllHlsManagers, stopAllHlsManagers } from './utils/cameras.ts'
 
 Logger.info('Main', 'Preparing server... Building Tailwind CSS')
 await Bun.$`DEBUG=false bunx tailwindcss -i src/tailwind.css -o public/css/tailwind.css --minify`
 Logger.info('Main', 'Tailwind CSS built')
 
 Logger.info('Main', 'Preparing server... Starting HLS managers')
-await startAllHlsManagers()
+await Cameras.getInstance().initAll()
 Logger.info('Main', 'HLS managers started')
 Logger.info('Main', 'Server ready to start')
 
@@ -60,7 +60,7 @@ process.on('SIGINT', async () => {
   await DiscordBot.getInstance().disconnect()
   await Scheduller.gracefulShutdown()
   await (await MCPSSEClientSingleton.getInstance()).client.close()
-  await stopAllHlsManagers()
+  await Cameras.getInstance().stopAll()
   Logger.info('Main', 'Server shut down')
   server.close()
   process.exit(0)

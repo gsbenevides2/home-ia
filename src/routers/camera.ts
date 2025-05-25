@@ -1,7 +1,7 @@
 import express from 'express'
 import fs from 'fs'
 import path from 'path'
-import { CAMERAS, hlsManagers } from '../utils/cameras'
+import { Cameras, type CameraName } from '../clients/Camera/CamerasSingleton'
 
 const router = express.Router()
 
@@ -9,11 +9,13 @@ const router = express.Router()
 router.get('/cameras-service/:cameraName/playlist.m3u8', async (req, res) => {
   try {
     const cameraName = req.params.cameraName
-    const cameraIndex = CAMERAS.findIndex(c => c.name === cameraName)
-    if (cameraIndex === -1) {
+    const camera = await Cameras.getInstance().getCamera(
+      cameraName as CameraName
+    )
+    if (!camera) {
       return res.status(404).send('Camera not found')
     }
-    const hlsManager = hlsManagers[cameraIndex]
+    const hlsManager = camera.hlsStream
 
     // Verificar se é uma solicitação explícita de stream atualizado
     const forceRefresh = req.query.refresh === 'true'
@@ -63,13 +65,14 @@ router.get('/cameras-service/:cameraName/playlist.m3u8', async (req, res) => {
 router.get('/cameras-service/:cameraName/snapshot.jpg', async (req, res) => {
   try {
     const cameraName = req.params.cameraName
-    const cameraIndex = CAMERAS.findIndex(c => c.name === cameraName)
-    if (cameraIndex === -1) {
+    const camera = await Cameras.getInstance().getCamera(
+      cameraName as CameraName
+    )
+    if (!camera) {
       return res.status(404).send('Camera not found')
     }
-    const camera = CAMERAS[cameraIndex]
     // Usar fetch para obter a imagem diretamente da câmera
-    const response = await fetch(camera.snapshotUrl)
+    const response = await fetch(camera.getSnapshotUrl())
 
     if (!response.ok) {
       throw new Error(`Erro na resposta: ${response.status}`)
@@ -90,14 +93,16 @@ router.get('/cameras-service/:cameraName/snapshot.jpg', async (req, res) => {
 })
 
 // Servir os arquivos de segmento
-router.get('/cameras-service/:cameraName/:filename', (req, res) => {
+router.get('/cameras-service/:cameraName/:filename', async (req, res) => {
   try {
     const cameraName = req.params.cameraName
-    const cameraIndex = CAMERAS.findIndex(c => c.name === cameraName)
-    if (cameraIndex === -1) {
+    const camera = await Cameras.getInstance().getCamera(
+      cameraName as CameraName
+    )
+    if (!camera) {
       return res.status(404).send('Camera not found')
     }
-    const hlsManager = hlsManagers[cameraIndex]
+    const hlsManager = camera.hlsStream
     const filename = req.params.filename
     if (!filename.endsWith('.ts') && !filename.endsWith('.m3u8')) {
       return res.status(403).send('Acesso negado')
@@ -115,5 +120,45 @@ router.get('/cameras-service/:cameraName/:filename', (req, res) => {
   } catch {
     res.status(500).send('Erro interno')
   }
+})
+
+router.post('/cameras-service/:cameraName/up', async (req, res) => {
+  const cameraName = req.params.cameraName
+  const camera = await Cameras.getInstance().getCamera(cameraName as CameraName)
+  if (!camera) {
+    return res.status(404).send('Camera not found')
+  }
+  await camera.up()
+  res.status(200).send('Camera moved up')
+})
+
+router.post('/cameras-service/:cameraName/down', async (req, res) => {
+  const cameraName = req.params.cameraName
+  const camera = await Cameras.getInstance().getCamera(cameraName as CameraName)
+  if (!camera) {
+    return res.status(404).send('Camera not found')
+  }
+  await camera.down()
+  res.status(200).send('Camera moved down')
+})
+
+router.post('/cameras-service/:cameraName/left', async (req, res) => {
+  const cameraName = req.params.cameraName
+  const camera = await Cameras.getInstance().getCamera(cameraName as CameraName)
+  if (!camera) {
+    return res.status(404).send('Camera not found')
+  }
+  await camera.left()
+  res.status(200).send('Camera moved left')
+})
+
+router.post('/cameras-service/:cameraName/right', async (req, res) => {
+  const cameraName = req.params.cameraName
+  const camera = await Cameras.getInstance().getCamera(cameraName as CameraName)
+  if (!camera) {
+    return res.status(404).send('Camera not found')
+  }
+  await camera.right()
+  res.status(200).send('Camera moved right')
 })
 export default router

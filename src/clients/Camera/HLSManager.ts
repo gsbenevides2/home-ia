@@ -24,10 +24,10 @@ export class HLSManager {
   readonly hlsDir: string
   private rtspUrl: string
 
-  constructor(cameraName: string, rtspUrl: string) {
+  constructor(cameraName: string, rtspUrl?: string) {
     this.cameraName = cameraName
     this.hlsDir = path.join(HLS_DIR, this.cameraName)
-    this.rtspUrl = rtspUrl
+    this.rtspUrl = rtspUrl ?? ''
 
     if (!fs.existsSync(this.hlsDir)) {
       fs.mkdirSync(this.hlsDir, { recursive: true })
@@ -165,6 +165,10 @@ export class HLSManager {
       this.running = false
       this.scheduleRestart()
     }
+  }
+
+  setRtspUrl(rtspUrl: string) {
+    this.rtspUrl = rtspUrl
   }
 
   private scheduleRestart() {
