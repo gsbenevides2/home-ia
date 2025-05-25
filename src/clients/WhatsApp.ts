@@ -1,6 +1,7 @@
 import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js'
 import { Logger } from '../logger'
 
+
 await Bun.$`rm .wwebjs_auth/session/SingletonCookie .wwebjs_auth/session/SingletonLock .wwebjs_auth/session/SingletonSocket`.nothrow()
 await Bun.$`killall -9 chrome`.nothrow()
 
@@ -21,13 +22,14 @@ export class WhatsAppClient {
     this.webClient = new Client({
       authStrategy: new LocalAuth(),
       puppeteer: {
-        headless: false,
+        headless: Bun.env.HEADLESS === 'true',
+
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage'
         ],
-        executablePath: '/usr/bin/google-chrome'
+        executablePath: Bun.env.CHROME_PATH
       }
     })
 
