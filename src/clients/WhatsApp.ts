@@ -68,7 +68,7 @@ export class WhatsAppClient {
     }
   }
 
-  private async waitForQRCode() {
+  async waitForQRCode() {
     while (!this.qrCode) {
       await new Promise(resolve => setTimeout(resolve, 1000))
     }
