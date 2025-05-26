@@ -23,6 +23,7 @@ export default function Basic(props: BasicProps) {
                 <script src="/js/material-components-web.min.js" />
                 <script src="/js/htmx.js" />
                 <script src="/js/video.min.js" />
+                <script src="/js/axios.min.js" />
             </head>
             <body className="mdc-typography">{props.children}</body>
             <script

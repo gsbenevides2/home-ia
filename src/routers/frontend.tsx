@@ -2,10 +2,12 @@ import { Router } from "express";
 import path from "path";
 import qrcode from "qrcode";
 import { renderToString } from "react-dom/server";
+import { SavedPromptDatabase } from "../clients/database/savedPrompts.ts";
 import { OauthClient } from "../clients/google/OauthClient.ts";
 import { WhatsAppClient } from "../clients/WhatsApp.ts";
 import Home from "../frontend/pages/Home.tsx";
 import Login from "../frontend/pages/Login.tsx";
+import SavedPrompts from "../frontend/pages/SavedPrompts.tsx";
 import WhatsAppAuth from "../frontend/pages/WhatsAppAuth.tsx";
 
 const frontendRouter = Router();
@@ -63,6 +65,13 @@ frontendRouter.get("/whatsapp-auth", async (req, res) => {
         return;
     }
     const html = await renderToString(<WhatsAppAuth qrCode={qrCode} />);
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+});
+
+frontendRouter.get("/saved-prompts", async (req, res) => {
+    const prompts = await SavedPromptDatabase.getInstance().getSavedPrompts();
+    const html = await renderToString(<SavedPrompts prompts={prompts} />);
     res.setHeader("Content-Type", "text/html");
     res.send(html);
 });

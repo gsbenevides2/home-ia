@@ -4,6 +4,7 @@ import { Logger } from '../logger/index.ts'
 import { codespacesStart } from './operations/codespacesStart.ts'
 import { codespacesStop } from './operations/codespacesStop.ts'
 import { codespacesToggle } from './operations/codespacesToggle.ts'
+import { executeSavedPrompt } from './operations/executeSavedPrompt.ts'
 import { updateCodespacesSensor } from './operations/updateCodespacesSensor.ts'
 import { updateDNSSensors } from './operations/updateDNSSensors.ts'
 import { updatePageStatusSensors } from './operations/updatePageStatusSensors.ts'
@@ -20,14 +21,21 @@ export const publicOperations = [
   'update-codespaces-sensor',
   'update-page-status-sensors',
   'update-dns-sensors',
-  'update-sensors',
+  'update-sensors'
 ] as const
+
+export const privateOperations = ['execute-saved-prompt'] as const
+
+export type PrivateOperations = (typeof privateOperations)[number]
 
 export type PublicOperations = (typeof publicOperations)[number]
 
-export type Operations = PublicOperations
+export type Operations = PublicOperations | PrivateOperations
 
-const opFuncs: Record<Operations, () => Promise<void>> = {
+const opFuncs: Record<
+  Operations,
+  (data: Record<string, unknown>) => Promise<void>
+> = {
   'codespaces-start': codespacesStart,
   'codespaces-stop': codespacesStop,
   'codespaces-toggle': codespacesToggle,
@@ -36,12 +44,22 @@ const opFuncs: Record<Operations, () => Promise<void>> = {
   'update-page-status-sensors': updatePageStatusSensors,
   'update-dns-sensors': updateDNSSensors,
   'update-sensors': updateSensors,
+  'execute-saved-prompt': executeSavedPrompt
 }
-
-db.listenQueue(async (operation) => {
+interface QueueItem {
+  operation: Operations
+  data: Record<string, unknown>
+}
+db.listenQueue(async queueItem => {
+  const { operation, data } = queueItem as QueueItem
   const tracerId = randomUUIDv7()
   if (typeof operation !== 'string') {
-    Logger.error('Queue', 'Operation is not a string', { operation }, tracerId)
+    Logger.error(
+      'Queue',
+      'Operation is not a string',
+      { operation, data },
+      tracerId
+    )
     return
   }
   if (!(operation in opFuncs)) {
@@ -49,7 +67,7 @@ db.listenQueue(async (operation) => {
       'Queue',
       'Operation is not a valid operation',
       {
-        operation,
+        operation
       },
       tracerId
     )
@@ -57,7 +75,7 @@ db.listenQueue(async (operation) => {
   }
   Logger.info('Queue', 'Operation received', operation, tracerId)
   try {
-    await opFuncs[operation as Operations]()
+    await opFuncs[operation as Operations](data)
     Logger.info('Queue', 'Operation completed', operation)
   } catch (e: unknown) {
     Logger.error(
@@ -65,13 +83,19 @@ db.listenQueue(async (operation) => {
       'Operation failed',
       {
         operation,
-        error: e,
+        error: e
       },
       tracerId
     )
   }
 })
 
-export const addToQueue = async (operation: Operations) => {
-  await db.enqueue(operation)
+export const addToQueue = async (
+  operation: Operations,
+  data?: Record<string, unknown>
+) => {
+  await db.enqueue({
+    operation,
+    data: data ?? {}
+  })
 }

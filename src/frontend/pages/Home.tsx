@@ -95,6 +95,19 @@ export default function Home(props: HomeProps) {
                                                 Logout
                                             </span>
                                         </a>
+                                        <a
+                                            className="mdc-list-item !py-3 !gap-2 !items-center"
+                                            role="menuitem"
+                                            href="/whatsapp-auth"
+                                        >
+                                            <span className="mdc-list-item__ripple" />
+                                            <span className="material-icons mdc-list-item__graphic !text-base">
+                                                login
+                                            </span>
+                                            <span className="mdc-list-item__text">
+                                                Login no WhatsApp
+                                            </span>
+                                        </a>
                                     </ul>
                                 </div>
                             </div>

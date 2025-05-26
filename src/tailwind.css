@@ -96,3 +96,10 @@ body {
 .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-line-ripple::before {
     border-bottom-color: var(--mdc-theme-primary) !important;
 }
+
+.mdc-data-table__header-cell,
+.mdc-data-table__pagination-total,
+.mdc-data-table__pagination-rows-per-page-label,
+.mdc-data-table__cell {
+    color: var(--mdc-theme-on-surface) !important;
+}

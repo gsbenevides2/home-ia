@@ -1,26 +1,8 @@
+import type Axios from 'axios'
+import type * as MDC from 'material-components-web'
 declare global {
   interface Window {
-    mdc: {
-      menu: {
-        MDCMenu: {
-          new (element: HTMLElement): MDCMenu
-          prototype: {
-            open: boolean
-          }
-        }
-      }
-      textField: {
-        MDCTextField: {
-          new (element: HTMLElement): MDCTextField
-        }
-      }
-      banner: {
-        MDCBanner: {
-          new (element: HTMLElement): MDCBanner
-        }
-      }
-      autoInit: () => void
-    }
+    mdc: typeof MDC
 
     videojs: {
       (element: HTMLElement, options: unknown): VideoJS.Player
@@ -28,6 +10,8 @@ declare global {
         src: (src: string) => void
       }
     }
+
+    axios: typeof Axios
   }
 }
 export {}
