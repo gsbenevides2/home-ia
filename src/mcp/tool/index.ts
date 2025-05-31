@@ -30,6 +30,12 @@ import { DeleteEventTool } from './google/calendar/deleteEvent.ts'
 import { ListCalendars } from './google/calendar/listCalendars.ts'
 import { ListEvents } from './google/calendar/listEvents.ts'
 import { UpdateEventTool } from './google/calendar/updateEvent.ts'
+import { GetEmailById } from './google/gmail/getEmailById.ts'
+import { GetLabels } from './google/gmail/getLabels.ts'
+import { GetUnreadEmails } from './google/gmail/getUnreadEmails.ts'
+import { ListEmails } from './google/gmail/listEmails.ts'
+import { MarkAsRead } from './google/gmail/markAsRead.ts'
+import { SearchEmails } from './google/gmail/searchEmails.ts'
 import { GetMultiplePlatformStatusTool } from './home_assistant/platform_status/getMultipleStatus.ts'
 import { AddObservationsTool } from './memory/addObservations.ts'
 import { CreateEntitiesTool } from './memory/createEntities.ts'
@@ -93,6 +99,12 @@ export const toolList = [
   new CreateEventTool(),
   new DeleteEventTool(),
   new UpdateEventTool(),
+  new ListEmails(),
+  new GetUnreadEmails(),
+  new MarkAsRead(),
+  new GetEmailById(),
+  new SearchEmails(),
+  new GetLabels(),
   new SnapshotTool(),
   new SendWhatsAppMessageTool(),
   new SendWhatsAppAudioMessageTool()
