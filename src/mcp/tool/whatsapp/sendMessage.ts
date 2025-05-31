@@ -18,7 +18,19 @@ export class SendWhatsAppMessageTool extends AbstractTool<typeof args> {
   args = args
 
   execute: ToolCallback<typeof args> = async args => {
-    await WhatsAppClient.getInstance().sendMessage(args.to, args.message)
+    const whatsAppInstance = await WhatsAppClient.getInstance()
+    const connectResult = await whatsAppInstance.connect()
+    if (connectResult === 'awaitingForAuthentication') {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: 'WhatsApp is not connected, please connect to WhatsApp to send a message'
+          }
+        ]
+      }
+    }
+    await whatsAppInstance.sendMessage(args.to, args.message)
     return {
       content: [{ type: 'text', text: 'Message sent successfully' }]
     }

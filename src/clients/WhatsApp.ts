@@ -1,22 +1,41 @@
+import { EventEmitter } from 'node:events'
 import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js'
 import { Logger } from '../logger'
-
 
 await Bun.$`rm .wwebjs_auth/session/SingletonCookie .wwebjs_auth/session/SingletonLock .wwebjs_auth/session/SingletonSocket`.nothrow()
 await Bun.$`killall -9 chrome`.nothrow()
 
 export class WhatsAppClient {
-  private static instance: WhatsAppClient
+  protected static instance: WhatsAppClient | null = null
 
-  public static getInstance() {
+  public static async getInstance() {
+    if (WhatsAppClient.instance) {
+      await WhatsAppClient.waitReleaseInstance()
+    }
+
     if (!WhatsAppClient.instance) {
       WhatsAppClient.instance = new WhatsAppClient()
     }
     return WhatsAppClient.instance
   }
+
+  private static async waitReleaseInstance() {
+    while (WhatsAppClient.instance) {
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+  }
+
+  public static forceCurrentInstanceRelease() {
+    if (WhatsAppClient.instance) {
+      WhatsAppClient.instance.release()
+    }
+  }
+
   private webClient: Client
   private qrCode: string = ''
   private isReady: boolean = false
+
+  private initializationEventEmmiter = new EventEmitter()
 
   constructor() {
     this.webClient = new Client({
@@ -35,20 +54,38 @@ export class WhatsAppClient {
 
     this.webClient.on('qr', qr => {
       this.qrCode = qr
+      Logger.info('WhatsAppClient', 'Awaiting for authentication...')
+      this.initializationEventEmmiter.emit('awaitingForAuthentication')
     })
 
     this.webClient.on('ready', () => {
       this.isReady = true
+      Logger.info('WhatsAppClient', 'WhatsApp is ready')
     })
   }
 
   async connect() {
+    return new Promise<'readyToSendMessages' | 'awaitingForAuthentication'>(
+      resolve => {
+        this.initializationEventEmmiter.on('readyToSendMessages', () => {
+          resolve('readyToSendMessages')
+        })
+        this.initializationEventEmmiter.on('awaitingForAuthentication', () => {
+          resolve('awaitingForAuthentication')
+        })
+        this.initializeConnection()
+      }
+    )
+  }
+
+  private async initializeConnection() {
     Logger.info('WhatsAppClient', 'Initializing WhatsApp...')
     await this.webClient.initialize()
     Logger.info('WhatsAppClient', 'WhatsApp Initialized')
     Logger.info('WhatsAppClient', 'Waiting for WhatsApp to be ready...')
     await this.waitForReady()
     Logger.info('WhatsAppClient', 'WhatsApp is ready')
+    this.initializationEventEmmiter.emit('readyToSendMessages')
   }
 
   async sendMessage(to: number, message: string) {
@@ -75,5 +112,11 @@ export class WhatsAppClient {
       await new Promise(resolve => setTimeout(resolve, 1000))
     }
     return this.qrCode
+  }
+
+  async release() {
+    Logger.info('WhatsAppClient', 'Releasing WhatsApp...')
+    this.webClient.destroy()
+    WhatsAppClient.instance = null
   }
 }

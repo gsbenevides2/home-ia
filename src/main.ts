@@ -4,7 +4,6 @@ import cookieParser from 'cookie-parser'
 import express from 'express'
 import path from 'path'
 import { Cameras } from './clients/Camera/CamerasSingleton.ts'
-import { WhatsAppClient } from './clients/WhatsApp.ts'
 import { DiscordBot } from './discord/index.ts'
 import { Logger } from './logger/index.ts'
 import { MCPSSEClientSingleton } from './mcp/client/sse.ts'
@@ -56,7 +55,6 @@ const server = app.listen(port, async () => {
     await DiscordBot.getInstance().connect()
   }
   await Scheduller.init()
-  await WhatsAppClient.getInstance().connect()
 })
 
 process.on('SIGINT', async () => {

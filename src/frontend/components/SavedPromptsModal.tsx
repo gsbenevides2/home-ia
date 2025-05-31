@@ -3,7 +3,7 @@ export default function SavedPromptsModal() {
         <>
             {/* Modal */}
             <aside
-                className="mdc-drawer mdc-drawer--modal top-0  lg:min-w-[400px]"
+                className="mdc-drawer mdc-drawer--modal top-0  lg:min-w-[49vw]"
                 id="modal"
             >
                 <div className="mdc-drawer__content">
@@ -38,7 +38,7 @@ export default function SavedPromptsModal() {
                             <span className="mdc-text-field__resizer w-full">
                                 <textarea
                                     id="prompt-text"
-                                    className="mdc-text-field__input w-full"
+                                    className="mdc-text-field__input w-full !min-h-[400px]"
                                     rows={5}
                                     required
                                 >

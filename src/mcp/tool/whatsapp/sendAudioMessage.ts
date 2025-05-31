@@ -22,7 +22,19 @@ export class SendWhatsAppAudioMessageTool extends AbstractTool<typeof args> {
     const audio = await GoogleTextToSpeach.getInstance().textToSpeach(
       args.message
     )
-    await WhatsAppClient.getInstance().sendAudio(args.to, audio)
+    const whatsAppInstance = await WhatsAppClient.getInstance()
+    const connectResult = await whatsAppInstance.connect()
+    if (connectResult === 'awaitingForAuthentication') {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: 'WhatsApp is not connected, please connect to WhatsApp to send a audio message'
+          }
+        ]
+      }
+    }
+    await whatsAppInstance.sendAudio(args.to, audio)
     return {
       content: [{ type: 'text', text: 'Message sent successfully' }]
     }

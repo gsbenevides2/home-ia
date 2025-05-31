@@ -108,6 +108,19 @@ export default function Home(props: HomeProps) {
                                                 Login no WhatsApp
                                             </span>
                                         </a>
+                                        <a
+                                            className="mdc-list-item !py-3 !gap-2 !items-center"
+                                            role="menuitem"
+                                            href="/saved-prompts"
+                                        >
+                                            <span className="mdc-list-item__ripple" />
+                                            <span className="material-icons mdc-list-item__graphic !text-base">
+                                                save
+                                            </span>
+                                            <span className="mdc-list-item__text">
+                                                Prompts salvas
+                                            </span>
+                                        </a>
                                     </ul>
                                 </div>
                             </div>

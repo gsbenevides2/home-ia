@@ -37,20 +37,27 @@ authenticationRouter.use(
     }
 
     const authorizationHeader = req.headers.authorization
-    if (!authorizationHeader) {
-      if (isFromBrowser) {
-        return res.redirect('/login')
-      }
-      return res.status(401).json({ message: 'Unauthorized' })
-    }
     if (authorizationHeader === `Bearer ${Bun.env.AUTH_TOKEN}`) {
       next()
-    } else {
-      if (isFromBrowser) {
-        return res.redirect('/login')
-      }
-      return res.status(401).json({ message: 'Unauthorized' })
+      return
     }
+
+    const authQueryParam = req.query.token
+    if (authQueryParam === Bun.env.AUTH_TOKEN) {
+      if (isFromBrowser) {
+        res.setHeader(
+          'Set-Cookie',
+          `authorization=Bearer ${Bun.env.AUTH_TOKEN}`
+        )
+      }
+      next()
+      return
+    }
+
+    if (isFromBrowser) {
+      return res.redirect('/login')
+    }
+    return res.status(401).json({ message: 'Unauthorized' })
   }
 )
 

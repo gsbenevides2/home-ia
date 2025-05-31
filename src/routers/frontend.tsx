@@ -56,17 +56,44 @@ frontendRouter.get("/login", async (req, res) => {
 });
 
 frontendRouter.get("/whatsapp-auth", async (req, res) => {
-    const qrCodeText = await WhatsAppClient.getInstance().waitForQRCode();
-    const qrCode = await qrcode.toDataURL(qrCodeText, {
-        type: "png",
+    const wathsAppInstance = await WhatsAppClient.getInstance();
+    const connectResult = await wathsAppInstance.connect();
+    let isClosed = false;
+    req.on("close", () => {
+        if (!isClosed) {
+            wathsAppInstance.release();
+            isClosed = true;
+        }
     });
-    if (!qrCode) {
-        res.status(500).send("Failed to generate QR code");
+
+    if (connectResult === "awaitingForAuthentication") {
+        const qrCodeText = await wathsAppInstance.waitForQRCode();
+        const qrCode = await qrcode.toDataURL(qrCodeText, {
+            type: "image/png",
+        });
+        if (!qrCode) {
+            res.status(500).send("Failed to generate QR code");
+            return;
+        }
+
+        const html = await renderToString(<WhatsAppAuth qrCode={qrCode} />);
+        res.setHeader("Content-Type", "text/html");
+        res.send(html);
+        isClosed = true;
         return;
     }
-    const html = await renderToString(<WhatsAppAuth qrCode={qrCode} />);
+
+    wathsAppInstance.release();
+
+    const html = await renderToString(<WhatsAppAuth authenticated />);
     res.setHeader("Content-Type", "text/html");
     res.send(html);
+    isClosed = true;
+});
+
+frontendRouter.get("/whatsapp-auth/finish", async (req, res) => {
+    WhatsAppClient.forceCurrentInstanceRelease();
+    res.redirect("/");
 });
 
 frontendRouter.get("/saved-prompts", async (req, res) => {
