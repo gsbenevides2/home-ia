@@ -41,6 +41,7 @@ import { ListEmails } from './google/gmail/listEmails.ts'
 import { MarkAsRead } from './google/gmail/markAsRead.ts'
 import { SearchEmails } from './google/gmail/searchEmails.ts'
 import { GetMultiplePlatformStatusTool } from './home_assistant/platform_status/getMultipleStatus.ts'
+import { GetPrinterStatusTool } from './home_assistant/printer/getPrinterStatus.ts'
 import { AddObservationsTool } from './memory/addObservations.ts'
 import { CreateEntitiesTool } from './memory/createEntities.ts'
 import { CreateRelationsTool } from './memory/createRelations.ts'
@@ -115,7 +116,8 @@ export const toolList = [
   new GetLabels(),
   new SnapshotTool(),
   new SendWhatsAppMessageTool(),
-  new SendWhatsAppAudioMessageTool()
+  new SendWhatsAppAudioMessageTool(),
+  new GetPrinterStatusTool()
 ]
 
 export function registerTools(server: McpServer) {
