@@ -13,6 +13,10 @@ import { GetPiholeStatusTool } from './home_assistant/pihole/getStatus.ts'
 import { SetPiholeStatusTool } from './home_assistant/pihole/setStatus.ts'
 import { GetIdOfPlataformsTool } from './home_assistant/platform_status/getIdOfPlataforms.ts'
 import { GetPlatformStatusTool } from './home_assistant/platform_status/getStatus.ts'
+import { GetRouterDataTool } from './home_assistant/router/getRouterData.ts'
+import { RebootRouterTool } from './home_assistant/router/rebootRouter.ts'
+import { ToggleDataFetchingTool } from './home_assistant/router/toggleDataFetching.ts'
+import { ToggleGuestWifiTool } from './home_assistant/router/toggleGuestWifi.ts'
 import { GetSpotifyData } from './home_assistant/spotify/getData.ts'
 import { MakeSpotifyOperation } from './home_assistant/spotify/makeOperation.ts'
 import { PlaySong } from './home_assistant/spotify/playSong.ts'
@@ -73,6 +77,10 @@ export const toolList = [
   new GetIdOfPlataformsTool(),
   new GetMultiplePlatformStatusTool(),
   new StartDeviceTool(),
+  new GetRouterDataTool(),
+  new ToggleGuestWifiTool(),
+  new ToggleDataFetchingTool(),
+  new RebootRouterTool(),
   new GetSpotifyData(),
   new MakeSpotifyOperation(),
   new SearchSong(),
