@@ -2,7 +2,7 @@ import type {
   ContentBlockParam,
   MessageParam
 } from '@anthropic-ai/sdk/resources/index.mjs'
-import { desc, inArray, sql } from 'drizzle-orm'
+import { desc, eq, inArray, sql } from 'drizzle-orm'
 import { json, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 import { DatabaseClient } from './client'
 
@@ -55,7 +55,8 @@ export class ChatbotDatabase {
         content: table.content,
         role: table.role,
         interactionId: table.interactionId,
-        date: table.date
+        date: table.date,
+        pkId: table.id
       })
       .from(table)
       .where(
@@ -87,6 +88,20 @@ export class ChatbotDatabase {
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     await drizzleClient.delete(table)
+    await connection.release()
+  }
+
+  public async editSpecificMessage(
+    message: Pick<ChatbotDatabaseRow, 'content' | 'id'>
+  ) {
+    const { connection, drizzleClient } =
+      await DatabaseClient.getInstance().getConnection()
+    await drizzleClient
+      .update(table)
+      .set({
+        content: message.content
+      })
+      .where(eq(table.id, message.id))
     await connection.release()
   }
 }

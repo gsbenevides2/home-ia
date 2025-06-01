@@ -386,6 +386,54 @@ export class Chatbot {
   private async readMessagesFromDatabase() {
     const messages =
       await ChatbotDatabase.getInstance().getMessagesOldMessages()
+
+    const toolUseMessages = messages.flatMap(message => {
+      const toolBlockParam = message.content.filter(
+        content => content.type === 'tool_use'
+      )
+      return toolBlockParam.map(tool => ({
+        pkId: message.pkId,
+        tooluId: tool.id
+      }))
+    })
+    const toolResultsMessages = messages.flatMap(message => {
+      const toolBlockParam = message.content.filter(
+        content => content.type === 'tool_result'
+      )
+      return toolBlockParam.map(tool => ({
+        pkId: message.pkId,
+        tooluId: tool.tool_use_id
+      }))
+    })
+    const messagesWithoutToolUseResult = toolUseMessages.filter(message => {
+      const toolResult = toolResultsMessages.find(
+        toolResult => toolResult.tooluId === message.tooluId
+      )
+      return !toolResult
+    })
+
+    for (const message of messagesWithoutToolUseResult) {
+      const removedToolUseBlock = messages.find(
+        message => message.pkId === message.pkId
+      )
+      if (removedToolUseBlock) {
+        removedToolUseBlock.content = removedToolUseBlock.content.filter(
+          content => {
+            if (content.type !== 'tool_use') return true
+            return content.id !== message.tooluId
+          }
+        )
+        await ChatbotDatabase.getInstance().editSpecificMessage({
+          id: removedToolUseBlock.pkId,
+          content: removedToolUseBlock.content
+        })
+      }
+    }
+    if (messagesWithoutToolUseResult.length > 0) {
+      await this.readMessagesFromDatabase()
+      return
+    }
+
     this.messages = messages.reverse().map(message => ({
       role: message.role,
       content: message.content,
