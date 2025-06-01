@@ -25,7 +25,10 @@ export class GetRouterDataTool extends AbstractTool<Args> {
 • Memory Usage: ${routerData.memoryUsed}
 • Total Clients: ${routerData.totalClients}
 • Data Fetching: ${routerData.dataFetching}
-• Guest WiFi: ${routerData.guestWifi}`
+• Guest WiFi: ${routerData.guestWifi}
+• Download Speed: ${routerData.downloadSpeed}
+• Upload Speed: ${routerData.uploadSpeed}
+• Ping: ${routerData.ping}`
         }
       ]
     }
