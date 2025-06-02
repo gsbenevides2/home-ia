@@ -75,5 +75,15 @@ export const Spotify = {
   playSong: async (account: SpotifyAccounts, uri: string) => {
     const sensor = Spotify.getSensor(account)
     await sensor.playSong(uri, 'spotify://track')
+  },
+
+  playAlbum: async (account: SpotifyAccounts, uri: string) => {
+    const sensor = Spotify.getSensor(account)
+    await sensor.playSong(uri, 'spotify://album')
+  },
+
+  playArtist: async (account: SpotifyAccounts, uri: string) => {
+    const sensor = Spotify.getSensor(account)
+    await sensor.playSong(uri, 'spotify://artist')
   }
 }

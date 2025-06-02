@@ -16,7 +16,7 @@ export class SearchSong extends AbstractTool<Args> {
   args = args
 
   execute: ToolCallback<Args> = async args => {
-    const songs = await SpotifyAPIWrapper.search(args.query)
+    const songs = await SpotifyAPIWrapper.searchTrack(args.query)
 
     if (songs.length === 0) {
       return {

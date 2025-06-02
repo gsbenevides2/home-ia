@@ -17,9 +17,15 @@ import { GetRouterDataTool } from './home_assistant/router/getRouterData.ts'
 import { RebootRouterTool } from './home_assistant/router/rebootRouter.ts'
 import { ToggleDataFetchingTool } from './home_assistant/router/toggleDataFetching.ts'
 import { ToggleGuestWifiTool } from './home_assistant/router/toggleGuestWifi.ts'
+import { GetArtistAlbums } from './home_assistant/spotify/getArtistAlbums.ts'
+import { GetArtistTopTracks } from './home_assistant/spotify/getArtistTopTracks.ts'
 import { GetSpotifyData } from './home_assistant/spotify/getData.ts'
 import { MakeSpotifyOperation } from './home_assistant/spotify/makeOperation.ts'
+import { PlayAlbum } from './home_assistant/spotify/playAlbum.ts'
+import { PlayArtist } from './home_assistant/spotify/playArtist.ts'
 import { PlaySong } from './home_assistant/spotify/playSong.ts'
+import { SearchAlbum } from './home_assistant/spotify/searchAlbum.ts'
+import { SearchArtist } from './home_assistant/spotify/searchArtist.ts'
 import { SearchSong } from './home_assistant/spotify/searchSong.ts'
 import { GetTrainStatus } from './home_assistant/train/getStatus.ts'
 import { GetStreamerStatusTool } from './home_assistant/twicth/getStatus.ts'
@@ -117,7 +123,13 @@ export const toolList = [
   new SnapshotTool(),
   new SendWhatsAppMessageTool(),
   new SendWhatsAppAudioMessageTool(),
-  new GetPrinterStatusTool()
+  new GetPrinterStatusTool(),
+  new SearchArtist(),
+  new SearchAlbum(),
+  new GetArtistAlbums(),
+  new GetArtistTopTracks(),
+  new PlayAlbum(),
+  new PlayArtist()
 ]
 
 export function registerTools(server: McpServer) {
