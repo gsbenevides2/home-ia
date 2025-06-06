@@ -31,6 +31,7 @@ export class SendWhatsAppMessageTool extends AbstractTool<typeof args> {
       }
     }
     await whatsAppInstance.sendMessage(args.to, args.message)
+    await whatsAppInstance.release()
     return {
       content: [{ type: 'text', text: 'Message sent successfully' }]
     }

@@ -33,20 +33,27 @@ const openObserveTransport = new OpenObserveTransport({
 export type LoggerData = object | Array<unknown> | string | unknown | undefined
 
 const disableOpenObserve = Bun.env.DISABLE_OPEN_OBSERVE === 'true'
+const disableConsole = Bun.env.DISABLE_CONSOLE === 'true'
 
 const transports: winston.transport[] = [
-  new winston.transports.Console({
-    forceConsole: Bun.env.DEBUG === 'true',
-    log(info, next) {
-      if (Bun.env.DEBUG === 'true') {
-        console.log(JSON.parse(JSON.stringify(info)))
-      } else {
-        console.log(JSON.stringify(info))
-      }
-      next()
-    }
-  })
+  
 ]
+
+if(!disableConsole) {
+  transports.push(
+    new winston.transports.Console({
+      forceConsole: Bun.env.DEBUG === 'true',
+      log(info, next) {
+        if (Bun.env.DEBUG === 'true') {
+          console.log(JSON.parse(JSON.stringify(info)))
+        } else {
+          console.log(JSON.stringify(info))
+        }
+        next()
+      }
+    })
+  )
+}
 
 if (!disableOpenObserve) {
   transports.push(openObserveTransport)

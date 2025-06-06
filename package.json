@@ -10,7 +10,8 @@
     "build": "bun build  src/main.ts --target bun --packages external --outdir dist",
     "lint": "eslint src --ext src/**/*.ts",
     "lint:fix": "eslint src --ext src/**/*.ts --fix",
-    "format": "prettier --write src/**/*.ts"
+    "format": "prettier --write src/**/*.ts",
+    "whatsapp-service": "node src/whatsapp-service/whatsapp-node-service.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.1",
@@ -49,7 +50,7 @@
     "@tailwindcss/cli": "^4.1.7",
     "@types/sharp": "^0.32.0",
     "axios": "^1.9.0",
-    "baileys": "^6.7.17",
+    "baileys": "^6.7.18",
     "cookie-parser": "^1.4.7",
     "croner": "^9.0.0",
     "date-fns": "^4.1.0",

@@ -35,6 +35,7 @@ export class SendWhatsAppAudioMessageTool extends AbstractTool<typeof args> {
       }
     }
     await whatsAppInstance.sendAudio(args.to, audio)
+    await whatsAppInstance.release()
     return {
       content: [{ type: 'text', text: 'Message sent successfully' }]
     }

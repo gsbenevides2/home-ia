@@ -8,3 +8,4 @@ public/video/**
 .wwebjs_auth/**
 .wwebjs_cache/**
 auth_info_baileys/**
+temp/**

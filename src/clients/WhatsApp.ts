@@ -1,12 +1,16 @@
+import { ChildProcess, spawn } from 'child_process'
 import { EventEmitter } from 'node:events'
-import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js'
+import path from 'path'
 import { Logger } from '../logger'
-
-await Bun.$`rm .wwebjs_auth/session/SingletonCookie .wwebjs_auth/session/SingletonLock .wwebjs_auth/session/SingletonSocket`.nothrow()
-await Bun.$`killall -9 chrome`.nothrow()
+import { WhatsAppIPCClient } from './WhatsAppIPC'
 
 export class WhatsAppClient {
   protected static instance: WhatsAppClient | null = null
+  private nodeProcess: ChildProcess | null = null
+  private ipcClient: WhatsAppIPCClient | null = null
+  private initializationEventEmmiter = new EventEmitter()
+  private isReady: boolean = false
+  private qrCode: string = ''
 
   public static async getInstance() {
     if (WhatsAppClient.instance) {
@@ -31,80 +35,89 @@ export class WhatsAppClient {
     }
   }
 
-  private webClient: Client
-  private qrCode: string = ''
-  private isReady: boolean = false
-
-  private initializationEventEmmiter = new EventEmitter()
-
-  constructor() {
-    this.webClient = new Client({
-      authStrategy: new LocalAuth(),
-      puppeteer: {
-        headless: Bun.env.HEADLESS === 'true',
-
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage'
-        ],
-        executablePath: Bun.env.CHROME_PATH
-      }
+  private async startNodeProcess() {
+    const servicePath = path.join(process.cwd(), 'src/whatsapp-service/whatsapp-node-service.mjs')
+    
+    Logger.info('WhatsAppClient', 'Starting WhatsApp Node.js service...')
+    this.nodeProcess = spawn('node', [servicePath], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      detached: false
     })
 
-    this.webClient.on('qr', qr => {
-      this.qrCode = qr
-      Logger.info('WhatsAppClient', 'Awaiting for authentication...')
-      this.initializationEventEmmiter.emit('awaitingForAuthentication')
+    this.nodeProcess.stdout?.on('data', (data) => {
+      Logger.info('WhatsAppNodeService', data.toString().trim())
     })
 
-    this.webClient.on('ready', () => {
-      this.isReady = true
-      Logger.info('WhatsAppClient', 'WhatsApp is ready')
+    this.nodeProcess.stderr?.on('data', (data) => {
+      Logger.error('WhatsAppNodeService', data.toString().trim())
     })
+
+    this.nodeProcess.on('exit', (code) => {
+      Logger.warn('WhatsAppClient', `Node.js service exited with code ${code}`)
+      this.nodeProcess = null
+    })
+
+    // Espera um pouco para o serviço inicializar
+    await new Promise(resolve => setTimeout(resolve, 2000))
   }
 
-  async connect() {
-    return new Promise<'readyToSendMessages' | 'awaitingForAuthentication'>(
-      resolve => {
-        this.initializationEventEmmiter.on('readyToSendMessages', () => {
-          resolve('readyToSendMessages')
-        })
-        this.initializationEventEmmiter.on('awaitingForAuthentication', () => {
-          resolve('awaitingForAuthentication')
-        })
-        this.initializeConnection()
+  private async ensureIPCConnection() {
+    if (!this.ipcClient) {
+      // Inicia o processo Node.js se necessário
+      if (!this.nodeProcess) {
+        await this.startNodeProcess()
       }
-    )
+
+      this.ipcClient = new WhatsAppIPCClient()
+      
+      this.ipcClient.on('qr_update', (qr) => {
+        this.qrCode = qr
+        Logger.info('WhatsAppClient', 'Awaiting for authentication...')
+        this.initializationEventEmmiter.emit('awaitingForAuthentication')
+      })
+
+      this.ipcClient.on('ready', () => {
+        this.isReady = true
+        Logger.info('WhatsAppClient', 'WhatsApp is ready')
+        this.initializationEventEmmiter.emit('readyToSendMessages')
+      })
+
+      this.ipcClient.on('auth_failed', () => {
+        this.isReady = false
+        this.qrCode = ''
+        Logger.error('WhatsAppClient', 'Authentication failed')
+      })
+
+      await this.ipcClient.connect()
+    }
   }
 
-  private async initializeConnection() {
-    Logger.info('WhatsAppClient', 'Initializing WhatsApp...')
-    await this.webClient.initialize()
-    Logger.info('WhatsAppClient', 'WhatsApp Initialized')
-    Logger.info('WhatsAppClient', 'Waiting for WhatsApp to be ready...')
-    await this.waitForReady()
-    Logger.info('WhatsAppClient', 'WhatsApp is ready')
-    this.initializationEventEmmiter.emit('readyToSendMessages')
+  async connect(): Promise<'readyToSendMessages' | 'awaitingForAuthentication'> {
+    return new Promise(async (resolve) => {
+      this.initializationEventEmmiter.on('readyToSendMessages', () => {
+        resolve('readyToSendMessages')
+      })
+      this.initializationEventEmmiter.on('awaitingForAuthentication', () => {
+        resolve('awaitingForAuthentication')
+      })
+
+      await this.ensureIPCConnection()
+      const result = await this.ipcClient!.connectWhatsApp()
+      
+      if (result === 'readyToSendMessages') {
+        this.isReady = true
+      }
+    })
   }
 
   async sendMessage(to: number, message: string) {
-    await this.waitForReady()
-    const phoneNumber = `${to}@c.us`
-    await this.webClient.sendMessage(phoneNumber, message)
+    await this.ensureIPCConnection()
+    await this.ipcClient!.sendWhatsAppMessage(to, message)
   }
 
   async sendAudio(to: number, audio: string) {
-    await this.waitForReady()
-    const phoneNumber = `${to}@c.us`
-    const media = new MessageMedia('audio/mp3', audio, 'audio.mp3')
-    await this.webClient.sendMessage(phoneNumber, media)
-  }
-
-  private async waitForReady() {
-    while (!this.isReady) {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-    }
+    await this.ensureIPCConnection()
+    await this.ipcClient!.sendWhatsAppAudio(to, audio)
   }
 
   async waitForQRCode() {
@@ -116,7 +129,20 @@ export class WhatsAppClient {
 
   async release() {
     Logger.info('WhatsAppClient', 'Releasing WhatsApp...')
-    this.webClient.destroy()
+    
+    if (this.ipcClient) {
+      await this.ipcClient.release()
+      this.ipcClient.disconnect()
+      this.ipcClient = null
+    }
+
+    if (this.nodeProcess) {
+      this.nodeProcess.kill('SIGTERM')
+      this.nodeProcess = null
+    }
+
     WhatsAppClient.instance = null
+    this.isReady = false
+    this.qrCode = ''
   }
 }
