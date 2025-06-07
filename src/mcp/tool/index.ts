@@ -22,7 +22,7 @@ import { GetArtistTopTracks } from './home_assistant/spotify/getArtistTopTracks.
 import { GetSpotifyData } from './home_assistant/spotify/getData.ts'
 import { MakeSpotifyOperation } from './home_assistant/spotify/makeOperation.ts'
 import { PlayAlbum } from './home_assistant/spotify/playAlbum.ts'
-import { PlayArtist } from './home_assistant/spotify/playArtist.ts'
+import { PlayArtist, PlayArtist } from './home_assistant/spotify/playArtist.ts'
 import { PlaySong } from './home_assistant/spotify/playSong.ts'
 import { SearchAlbum } from './home_assistant/spotify/searchAlbum.ts'
 import { SearchArtist } from './home_assistant/spotify/searchArtist.ts'
@@ -48,6 +48,7 @@ import { MarkAsRead } from './google/gmail/markAsRead.ts'
 import { SearchEmails } from './google/gmail/searchEmails.ts'
 import { GetMultiplePlatformStatusTool } from './home_assistant/platform_status/getMultipleStatus.ts'
 import { GetPrinterStatusTool } from './home_assistant/printer/getPrinterStatus.ts'
+import { GetAlbumTracks } from './home_assistant/spotify/getAlbumTracks.ts'
 import { AddObservationsTool } from './memory/addObservations.ts'
 import { CreateEntitiesTool } from './memory/createEntities.ts'
 import { CreateRelationsTool } from './memory/createRelations.ts'
@@ -129,7 +130,8 @@ export const toolList = [
   new GetArtistAlbums(),
   new GetArtistTopTracks(),
   new PlayAlbum(),
-  new PlayArtist()
+  new PlayArtist(),
+  new GetAlbumTracks()
 ]
 
 export function registerTools(server: McpServer) {

@@ -28,5 +28,9 @@ export const SpotifyAPIWrapper = {
   async getArtistTopTracks(artistId: string) {
     const tracks = await this.sdk.artists.topTracks(artistId, 'BR')
     return tracks.tracks
+  },
+  async getAlbumTracks(albumId: string) {
+    const tracks = await this.sdk.albums.tracks(albumId)
+    return tracks.items
   }
 }
