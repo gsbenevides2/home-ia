@@ -4,7 +4,8 @@ import type {
   ContentBlockParam,
   ImageBlockParam,
   MessageParam,
-  TextBlockParam
+  TextBlockParam,
+  ToolUnion
 } from '@anthropic-ai/sdk/resources/index.mjs'
 import { randomUUIDv7 } from 'bun'
 import { AnthropicSingleton } from '../clients/Anthropic/AnthropicSingleton'
@@ -52,6 +53,25 @@ export class Chatbot {
     }
   }
 
+  async getMcpData() {
+    const { client: mcpClient, tools: mcpTools } =
+      await MCPStreamableClientSingleton.getInstance()
+    const anthropicTools: ToolUnion[] = mcpTools.map(tool => ({
+      name: tool.name,
+      description: tool.description,
+      input_schema: tool.inputSchema
+    }))
+
+    anthropicTools.push({
+      type: 'web_search_20250305' as any,
+      name: 'web_search' as any
+    })
+    return {
+      mcpClient,
+      anthropicTools
+    }
+  }
+
   async processQuery(
     query?: string,
     onMessage?: (message: string) => Promise<void>,
@@ -62,14 +82,8 @@ export class Chatbot {
     const interactionId = paramInteractionId ?? randomUUIDv7()
     tracer?.setProgram('chatbot')
     const anthropic = await AnthropicSingleton.getInstance()
-    const { client: mcpClient, tools: mcpTools } =
-      await MCPStreamableClientSingleton.getInstance()
+    const { mcpClient, anthropicTools } = await this.getMcpData()
 
-    const anthropicTools = mcpTools.map(tool => ({
-      name: tool.name,
-      description: tool.description,
-      input_schema: tool.inputSchema
-    }))
     if (query) {
       await this.saveMessage({
         role: 'user',
@@ -175,18 +189,12 @@ export class Chatbot {
     tracer?.setProgram('chatbot')
 
     const anthropic = await AnthropicSingleton.getInstance()
-    const { client: mcpClient, tools: mcpTools } =
-      await MCPStreamableClientSingleton.getInstance()
+    const { mcpClient, anthropicTools } = await this.getMcpData()
 
     const messageSender = getMessageSender
       ? await getMessageSender('Processando...')
       : undefined
 
-    const anthropicTools = mcpTools.map(tool => ({
-      name: tool.name,
-      description: tool.description,
-      input_schema: tool.inputSchema
-    }))
     if (query) {
       const content: ContentBlockParam[] = [
         {
