@@ -27,7 +27,12 @@ frontendRouter.get("/", async (req, res) => {
 });
 
 frontendRouter.get("/css/:file", async (req, res) => {
-    const css = await Bun.file(`public/css/${req.params.file}`).text();
+    const file = Bun.file(`public/css/${req.params.file}`);
+    if (!await file.exists()) {
+        res.status(404).send("File not found");
+        return;
+    }
+    const css = await file.text();
     res.setHeader("Content-Type", "text/css");
     res.send(css);
 });
@@ -39,11 +44,24 @@ frontendRouter.get("/fonts/:file", async (req, res) => {
         "fonts",
         req.params.file,
     );
-    res.sendFile(filePath);
+    try {
+        if (!await Bun.file(filePath).exists()) {
+            res.status(404).send("File not found");
+            return;
+        }
+        res.sendFile(filePath);
+    } catch (err) {
+        res.status(404).send("File not found");
+    }
 });
 
 frontendRouter.get("/js/:file", async (req, res) => {
-    const js = await Bun.file(`public/js/${req.params.file}`).text();
+    const file = Bun.file(`public/js/${req.params.file}`);
+    if (!await file.exists()) {
+        res.status(404).send("File not found");
+        return;
+    }
+    const js = await file.text();
     res.setHeader("Content-Type", "text/javascript");
     res.send(js);
 });
