@@ -49,7 +49,9 @@ savedPromptsRouter.post(
     }
 
     let promptText = prompt.prompt ?? ''
-    const contents: string[] = req.body?.contents ?? []
+    const contents: string[] = (req.body?.contents ?? []).filter(
+      (content: string) => content !== ''
+    )
     contents.forEach((content, index) => {
       promptText = promptText.replace(`{{content[${index}]}}`, content)
     })
