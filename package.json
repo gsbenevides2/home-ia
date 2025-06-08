@@ -11,7 +11,8 @@
     "lint": "eslint src --ext src/**/*.ts",
     "lint:fix": "eslint src --ext src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
-    "whatsapp-service": "node src/whatsapp-service/whatsapp-node-service.mjs"
+    "whatsapp-service": "node src/whatsapp-service/whatsapp-node-service.mjs",
+    "pluggy-ngrok": "sudo ngrok http --url=scorpion-trusted-blowfish.ngrok-free.app 3000"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.1",
@@ -69,6 +70,7 @@
     "onvif": "^0.8.0",
     "path-to-regexp": "^8.2.0",
     "pg": "^8.15.6",
+    "pluggy-sdk": "^0.71.2",
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "react": "^19.1.0",

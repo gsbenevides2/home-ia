@@ -12,6 +12,7 @@ import cameraRouter from './routers/camera.ts'
 import frontendRouter from './routers/frontend.tsx'
 import googleOauthRouter from './routers/googleOauth.tsx'
 import mcpRouter from './routers/mcp.ts'
+import pluggyRouter from './routers/pluggy.ts'
 import queueRouters from './routers/queue.ts'
 import savedPromptsRouter from './routers/savedPrompts.ts'
 import { Scheduller } from './scheduller/index.ts'
@@ -35,6 +36,7 @@ app.use(mcpRouter)
 app.use(queueRouters)
 app.use(cameraRouter)
 app.use(savedPromptsRouter)
+app.use(pluggyRouter)
 
 // Servir arquivos estáticos para vídeo HLS
 app.use('/video', express.static(path.join(process.cwd(), 'public', 'video')))

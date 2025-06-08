@@ -10,7 +10,8 @@ const unprotectedPathsPatterns = [
   '/login',
   '/css/:file',
   '/fonts/:file',
-  '/js/:file'
+  '/js/:file',
+  '/pluggy/update-account-data'
 ]
 
 authenticationRouter.use(
