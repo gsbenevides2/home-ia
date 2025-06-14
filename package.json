@@ -1,5 +1,5 @@
 {
-  "name": "home-gcp",
+  "name": "home-ia",
   "module": "index.ts",
   "type": "module",
   "scripts": {

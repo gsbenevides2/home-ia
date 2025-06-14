@@ -1,4 +1,4 @@
-# Home GCP - Plataforma de Automação Doméstica e Gerenciamento de Infraestrutura
+# Home IA - Plataforma de Automação Doméstica e Gerenciamento de Infraestrutura
 
 Uma plataforma completa de automação doméstica que integra múltiplos serviços e dispositivos, com foco em controle de infraestrutura Google Cloud Platform (GCP), monitoramento de dispositivos IoT, e automação residencial através do Home Assistant.
 
