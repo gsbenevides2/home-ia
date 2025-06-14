@@ -283,10 +283,19 @@ export class DiscordBot {
     >()
 
     this.voiceConnection.receiver.speaking.on('start', (userId: string) => {
+      const DISCORD_ALLOWED_USER_ID = Bun.env.DISCORD_ALLOWED_USER_ID
       if (this.processingVoice) {
         Logger.info(
           'Discord Bot',
           `Usuário ${userId} começou a falar, mas já está sendo processado, ignorando...`,
+          null
+        )
+        return
+      }
+      if (userId !== DISCORD_ALLOWED_USER_ID) {
+        Logger.info(
+          'Discord Bot',
+          `Usuário ${userId} começou a falar, mas não é o usuário permitido, ignorando...`,
           null
         )
         return

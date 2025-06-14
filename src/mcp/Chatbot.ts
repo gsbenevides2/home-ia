@@ -370,7 +370,7 @@ export class Chatbot {
         messages: this.remakeMessagesListToAnthropicFormat(),
         model: AnthropicSingleton.model,
         max_tokens: AnthropicSingleton.maxTokens,
-        system: AnthropicSingleton.systemPrompt,
+        system: AnthropicSingleton.systemPromptForText,
         tools: anthropicTools
       })
     ).catch(errorHandler)
