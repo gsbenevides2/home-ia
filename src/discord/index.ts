@@ -129,6 +129,13 @@ export class DiscordBot {
           if (pendingEdit) clearTimeout(pendingEdit)
         }
 
+        async function sendMessage(
+          type: 'system' | 'content',
+          messageContent: string
+        ) {
+          await message.channel.send(messageContent)
+        }
+
         function cleanup() {
           if (pendingEdit) clearTimeout(pendingEdit)
         }
@@ -136,6 +143,7 @@ export class DiscordBot {
         return {
           sendPartialMessage,
           sendFinalMessage,
+          sendMessage,
           cleanup
         }
       }

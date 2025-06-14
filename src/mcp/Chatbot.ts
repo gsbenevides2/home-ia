@@ -23,11 +23,16 @@ type MessageSender = (type: MessageType, message: string) => Promise<void>
 type MessageSenderFactory = (
   type: MessageType,
   initialMessage: string
-) => Promise<{
+) => MessageSenderPromise
+
+type MessageSenderPromise = Promise<MessageSenderReturnPromise>
+
+type MessageSenderReturnPromise = {
   sendPartialMessage: MessageSender
   sendFinalMessage: MessageSender
+  sendMessage: MessageSender
   cleanup: () => void
-}>
+}
 
 export interface ChatbotMessage {
   role: MessageParam['role']
@@ -57,6 +62,12 @@ export class Chatbot {
     }
   }
 
+  async blockInteraction(interactionId: string) {
+    if (this.useDatabase) {
+      await ChatbotDatabase.getInstance().blockInteraction(interactionId)
+    }
+  }
+
   async getMcpData() {
     const { client: mcpClient, tools: mcpTools } =
       await MCPStreamableClientSingleton.getInstance()
@@ -78,20 +89,73 @@ export class Chatbot {
 
   async processQuery(
     query?: string,
-    onMessage?: (message: string) => Promise<void>,
+    getMessageSender?: MessageSenderFactory | MessageSenderReturnPromise,
     tracer?: Tracer,
     paramInteractionId?: string,
-    continueFromPreviousInteraction?: boolean
+    continueFromPreviousInteraction?: boolean,
+    imagesUrls?: string[]
   ) {
+    let messageSender: MessageSenderReturnPromise | undefined = undefined
+
+    if (typeof getMessageSender === 'function') {
+      const sender = await getMessageSender('content', 'Aguarde um momento...')
+      messageSender = sender
+    } else if (
+      getMessageSender &&
+      typeof getMessageSender === 'object' &&
+      'sendPartialMessage' in getMessageSender
+    ) {
+      messageSender = await getMessageSender
+    }
+
     const interactionId = paramInteractionId ?? randomUUIDv7()
     tracer?.setProgram('chatbot')
     const anthropic = await AnthropicSingleton.getInstance()
     const { mcpClient, anthropicTools } = await this.getMcpData()
 
     if (query) {
+      const content: ContentBlockParam[] = [
+        {
+          type: 'text',
+          text: query
+        }
+      ]
+      if (imagesUrls && imagesUrls.length > 0) {
+        messageSender?.sendPartialMessage('content', 'Otimizando imagens...')
+        const imagesBlockPromise = Promise.all<ContentBlockParam>(
+          imagesUrls.map(async url => {
+            const { data } = await prepareImageToSendToAnthropic(url)
+            const imageUrl = await GoogleCloudStorage.getInstance().uploadFile(
+              data,
+              `ai/${randomUUIDv7()}.jpeg`,
+              'gui-dev-br.appspot.com'
+            )
+            return {
+              type: 'image',
+              source: {
+                type: 'url',
+                url: imageUrl
+              }
+            }
+          })
+        )
+        const imageBlocks = await imagesBlockPromise.catch(error => {
+          tracer?.error('Error on image optimization', { error })
+          messageSender?.sendFinalMessage(
+            'system',
+            'Ocorreu um erro ao otimizar as imagens, por favor, tente novamente mais tarde.\nRastreabilidade: ' +
+              tracer?.getID()
+          )
+          return []
+        })
+        if (imageBlocks.length === 0) {
+          return
+        }
+        content.push(...imageBlocks)
+      }
       await this.saveMessage({
         role: 'user',
-        content: [{ type: 'text', text: query }],
+        content,
         interactionId
       })
     }
@@ -118,6 +182,9 @@ export class Chatbot {
       if (!continueFromPreviousInteraction) {
         await this.cleanUpProcess()
       }
+      if (messageSender) {
+        messageSender.cleanup()
+      }
     }
 
     const textMessages = response.content.filter(
@@ -127,15 +194,22 @@ export class Chatbot {
       content => content.type === 'tool_use'
     )
     for (const content of textMessages) {
-      if (onMessage) {
+      if (messageSender) {
         tracer?.info('Sending message to onMessage', { message: content.text })
-        await onMessage(content.text)
+        if (messageSender) {
+          await messageSender.sendMessage('content', content.text)
+        }
       }
     }
     const stopReason = response.stop_reason
 
     if (stopReason === 'max_tokens') {
-      if (onMessage) await onMessage('Quantidade máxima de tokens atingida')
+      if (messageSender) {
+        await messageSender.sendFinalMessage(
+          'system',
+          'Quantidade máxima de tokens atingida'
+        )
+      }
       return await endProcess()
     }
 
@@ -175,7 +249,13 @@ export class Chatbot {
         content: toolResults,
         interactionId
       })
-      await this.processQuery(undefined, onMessage, tracer, interactionId, true)
+      await this.processQuery(
+        undefined,
+        messageSender,
+        tracer,
+        interactionId,
+        true
+      )
       return await endProcess()
     }
     return await endProcess()
@@ -280,7 +360,7 @@ export class Chatbot {
             tracer?.getID()
         )
       }
-      await ChatbotDatabase.getInstance().blockInteraction(interactionId)
+      await this.blockInteraction(interactionId)
     }
     const stream = await cathable(() =>
       anthropic.messages.stream({
@@ -326,7 +406,7 @@ export class Chatbot {
           'Ocorreu um erro ao se comunicar com o Anthropic: Quantidade máxima de tokens atingida.\nRastreabilidade: ' +
             tracer?.getID()
         )
-        await ChatbotDatabase.getInstance().blockInteraction(interactionId)
+        await this.blockInteraction(interactionId)
         return await endProcess(stream)
       }
       if (stopReason === 'tool_use') {
@@ -413,6 +493,7 @@ export class Chatbot {
   }
 
   private async readMessagesFromDatabase() {
+    if (!this.useDatabase) return []
     const messages =
       await ChatbotDatabase.getInstance().getMessagesOldMessages()
 
