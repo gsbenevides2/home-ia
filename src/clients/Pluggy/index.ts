@@ -46,7 +46,8 @@ export class PluggySingletonClient {
     const accountId = PLUGGY_ACCOUNTS_IDS[accountName]
     return new Promise(resolve => {
       this.client.updateItem(accountId, undefined, {
-        webhookUrl: process.env.PLUGGY_WEBHOOK_URL!
+        webhookUrl: process.env.PLUGGY_WEBHOOK_URL!,
+        products: ['ACCOUNTS', 'TRANSACTIONS']
       })
       this.eventEmitter.on(`updateAccountData-${accountName}`, () => {
         this.eventEmitter.removeAllListeners(`updateAccountData-${accountName}`)
@@ -59,5 +60,18 @@ export class PluggySingletonClient {
     return Object.entries(PLUGGY_ACCOUNTS_IDS).find(
       ([_, value]) => value === id
     )?.[0] as (typeof PLUGGY_ACCOUNTS_NAMES)[number] | undefined
+  }
+
+  async getAccountTransactions(
+    accountName: (typeof PLUGGY_ACCOUNTS_NAMES)[number]
+  ) {
+    const accountData = await this.getAccountData(accountName)
+    const transactions = await this.client.fetchTransactions(
+      accountData.results[0].id,
+      {
+        pageSize: 4
+      }
+    )
+    return transactions
   }
 }
