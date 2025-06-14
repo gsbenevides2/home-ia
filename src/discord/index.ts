@@ -253,7 +253,7 @@ export class DiscordBot {
       Logger.error('Discord Bot', `Erro ao conectar ao canal de voz: ${error}`)
     }
   }
-
+  private processingVoice = false
   private setupVoiceProcessing() {
     if (!this.voiceConnection) return
 
@@ -283,6 +283,16 @@ export class DiscordBot {
     >()
 
     this.voiceConnection.receiver.speaking.on('start', (userId: string) => {
+      if (this.processingVoice) {
+        Logger.info(
+          'Discord Bot',
+          `Usuário ${userId} começou a falar, mas já está sendo processado, ignorando...`,
+          null
+        )
+        return
+      }
+
+      this.processingVoice = true
       Logger.info('Discord Bot', `Usuário ${userId} começou a falar`, null)
 
       if (activeRecordings.has(userId)) {
@@ -462,13 +472,21 @@ export class DiscordBot {
         },
         sendMessage: (type: 'system' | 'content', content: string) => {
           Logger.info('Discord Bot', `Mensagem: ${content}`, null)
-          botResponse = content
+          botResponse += '\n' + content
           return Promise.resolve()
         },
         cleanup: () => {}
       }
 
-      await chatbot.processQuery(transcription, messageSender, tracer)
+      await chatbot.processQuery(
+        transcription,
+        messageSender,
+        tracer,
+        undefined,
+        undefined,
+        undefined,
+        true
+      )
 
       if (!botResponse || botResponse.trim().length === 0) {
         botResponse = 'Desculpe, não consegui processar sua solicitação.'
@@ -507,7 +525,12 @@ export class DiscordBot {
     } catch (error) {
       Logger.error('Discord Bot', `Erro no pipeline de voz-texto-voz: ${error}`)
       tracer.error('Erro no pipeline de voz', { error, userId })
-
+      if (
+        error instanceof Error &&
+        error.message.includes('Transcrição vazia')
+      ) {
+        return
+      }
       // Em caso de erro, reproduzir áudio de erro
       try {
         const errorMessage =
@@ -542,6 +565,7 @@ export class DiscordBot {
       // Limpeza de arquivos temporários em caso de erro
       this.cleanupTempFiles([decodedPath])
     }
+    this.processingVoice = false
   }
 
   private convertPcmToWav(

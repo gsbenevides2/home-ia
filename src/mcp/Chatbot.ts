@@ -93,7 +93,8 @@ export class Chatbot {
     tracer?: Tracer,
     paramInteractionId?: string,
     continueFromPreviousInteraction?: boolean,
-    imagesUrls?: string[]
+    imagesUrls?: string[],
+    usePromptForVoice?: boolean
   ) {
     let messageSender: MessageSenderReturnPromise | undefined = undefined
 
@@ -166,7 +167,9 @@ export class Chatbot {
       model: AnthropicSingleton.model,
       messages: this.remakeMessagesListToAnthropicFormat(),
       max_tokens: AnthropicSingleton.maxTokens,
-      system: AnthropicSingleton.systemPrompt,
+      system: usePromptForVoice
+        ? AnthropicSingleton.systemPromptForVoice
+        : AnthropicSingleton.systemPromptForText,
       tools: anthropicTools
     })
     tracer?.info('Received response from Anthropic', {

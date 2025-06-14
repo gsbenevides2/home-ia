@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-const systemPrompt = await Bun.file('src/systemPrompt.txt').text()
+const systemPromptText = await Bun.file('src/systemPromptText.txt').text()
+const systemPromptVoice = await Bun.file('src/systemPromptVoice.txt').text()
 
 export class AnthropicSingleton {
   private static instance: Anthropic
@@ -20,10 +21,18 @@ export class AnthropicSingleton {
   }
 
   static model = 'claude-3-5-haiku-20241022'
-  static systemPrompt: Anthropic.TextBlockParam[] = [
+  static systemPromptForText: Anthropic.TextBlockParam[] = [
     {
       type: 'text',
-      text: systemPrompt,
+      text: systemPromptText,
+      cache_control: { type: 'ephemeral' }
+    }
+  ]
+
+  static systemPromptForVoice: Anthropic.TextBlockParam[] = [
+    {
+      type: 'text',
+      text: systemPromptVoice,
       cache_control: { type: 'ephemeral' }
     }
   ]
