@@ -75,13 +75,23 @@ export class DiscordBot {
         content = transcribedText
       }
 
-      async function getMessageSender(initialMessage: string) {
+      async function getMessageSender(
+        type: 'system' | 'content',
+        initialMessage: string
+      ) {
         const responseMessage = message.author.send(initialMessage)
         let pendingEdit: NodeJS.Timeout | null = null
         const messagesParts: Promise<Message>[] = [responseMessage]
 
-        async function sendPartialMessage(messageContent: string) {
+        async function sendPartialMessage(
+          type: 'system' | 'content',
+          messageContent: string
+        ) {
           if (messageContent.length === 0) return
+          if (type === 'system') {
+            message.channel.send('Sistema: ' + messageContent)
+            return
+          }
           return await new Promise<void>(resolve => {
             if (pendingEdit) clearTimeout(pendingEdit)
             pendingEdit = setTimeout(async () => {
@@ -111,8 +121,11 @@ export class DiscordBot {
           })
         }
 
-        async function sendFinalMessage(messageContent: string) {
-          await sendPartialMessage(messageContent)
+        async function sendFinalMessage(
+          type: 'system' | 'content',
+          messageContent: string
+        ) {
+          await sendPartialMessage(type, messageContent)
           if (pendingEdit) clearTimeout(pendingEdit)
         }
 

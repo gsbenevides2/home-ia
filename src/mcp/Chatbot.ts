@@ -17,9 +17,13 @@ import { cathable } from '../utils/cathable'
 import { MCPStreamableClientSingleton } from './client/streamable'
 import type { Content } from './tool/AbstractTool'
 
-type MessageSender = (message: string) => Promise<void>
+type MessageType = 'system' | 'content'
+type MessageSender = (type: MessageType, message: string) => Promise<void>
 
-type MessageSenderFactory = (initialMessage: string) => Promise<{
+type MessageSenderFactory = (
+  type: MessageType,
+  initialMessage: string
+) => Promise<{
   sendPartialMessage: MessageSender
   sendFinalMessage: MessageSender
   cleanup: () => void
@@ -192,7 +196,7 @@ export class Chatbot {
     const { mcpClient, anthropicTools } = await this.getMcpData()
 
     const messageSender = getMessageSender
-      ? await getMessageSender('Processando...')
+      ? await getMessageSender('content', 'Aguarde um momento...')
       : undefined
 
     if (query) {
@@ -203,7 +207,7 @@ export class Chatbot {
         }
       ]
       if (imagesUrls && imagesUrls.length > 0) {
-        messageSender?.sendPartialMessage('Otimizando imagens...')
+        messageSender?.sendPartialMessage('content', 'Otimizando imagens...')
         const imageBlocks: ContentBlockParam[] = await Promise.all(
           imagesUrls.map(async url => {
             const { data } = await prepareImageToSendToAnthropic(url)
@@ -232,7 +236,7 @@ export class Chatbot {
     tracer?.info('Sending messages to Anthropic', {
       messages: this.messages
     })
-    messageSender?.sendPartialMessage('Pensando...')
+    messageSender?.sendPartialMessage('content', 'Só mais um momento...')
 
     const endProcess = async (stream: MessageStream | null) => {
       if (!continueFromPreviousInteraction) {
@@ -242,24 +246,28 @@ export class Chatbot {
         await stream.done()
       }
     }
-    const errorHandler = (error: AnthropicError | Error) => {
+    const errorHandler = async (error: AnthropicError | Error) => {
       if (error.name === 'overloaded_error') {
         messageSender?.sendFinalMessage(
-          'A API do Anthropic está sobrecarregada, por favor, tente novamente mais tarde. TracerId: ' +
+          'system',
+          'A API do Anthropic está sobrecarregada, por favor, tente novamente mais tarde.\nRastreabilidade: ' +
             tracer?.getID()
         )
       } else if (error.name === 'request_too_large') {
         messageSender?.sendFinalMessage(
+          'system',
           'A mensagem é muito grande, por favor, tente novamente com uma mensagem menor. Pode ser que que a resposta da ferramenta seja muito grande para ser enviada de volta para Anthropic.' +
-            'TracerId: ' +
+            '\nRastreabilidade: ' +
             tracer?.getID()
         )
       } else {
         messageSender?.sendFinalMessage(
-          'Ocorreu um erro, por favor, tente novamente mais tarde. TracerId: ' +
+          'system',
+          'Ocorreu um erro na nossa comunicação com o Anthropic, por favor, tente novamente mais tarde.\nRastreabilidade: ' +
             tracer?.getID()
         )
       }
+      await ChatbotDatabase.getInstance().blockInteraction(interactionId)
     }
     const stream = await cathable(() =>
       anthropic.messages.stream({
@@ -275,12 +283,12 @@ export class Chatbot {
     }
 
     stream.on('error', async error => {
-      errorHandler(error)
+      await errorHandler(error)
       return await endProcess(stream)
     })
     stream.on('text', (_, textSnapshot) => {
       if (messageSender) {
-        messageSender.sendPartialMessage(textSnapshot)
+        messageSender.sendPartialMessage('content', textSnapshot)
       }
     })
     stream.on('finalMessage', async message => {
@@ -289,7 +297,7 @@ export class Chatbot {
       )
       const finalText = textMessages.map(content => content.text).join('')
       if (messageSender) {
-        await messageSender.sendFinalMessage(finalText)
+        await messageSender.sendFinalMessage('content', finalText)
       }
       await this.saveMessage({
         role: message.role,
@@ -300,12 +308,12 @@ export class Chatbot {
 
       if (stopReason === 'max_tokens') {
         if (!getMessageSender) return await endProcess(stream)
-        const messageSender = await getMessageSender(
-          'Quantidade máxima de tokens atingida'
+        messageSender?.sendFinalMessage(
+          'system',
+          'Ocorreu um erro ao se comunicar com o Anthropic: Quantidade máxima de tokens atingida.\nRastreabilidade: ' +
+            tracer?.getID()
         )
-        await messageSender.sendFinalMessage(
-          'Quantidade máxima de tokens atingida'
-        )
+        await ChatbotDatabase.getInstance().blockInteraction(interactionId)
         return await endProcess(stream)
       }
       if (stopReason === 'tool_use') {

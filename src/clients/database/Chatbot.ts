@@ -3,7 +3,14 @@ import type {
   MessageParam
 } from '@anthropic-ai/sdk/resources/index.mjs'
 import { desc, eq, inArray, sql } from 'drizzle-orm'
-import { json, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  json,
+  pgTable,
+  text,
+  timestamp,
+  uuid
+} from 'drizzle-orm/pg-core'
 import { DatabaseClient } from './client'
 
 const table = pgTable('chatbot', {
@@ -17,7 +24,8 @@ const table = pgTable('chatbot', {
   })
     .notNull()
     .default(sql`now()`),
-  interactionId: uuid('interactionId').notNull()
+  interactionId: uuid('interactionId').notNull(),
+  blocked: boolean('blocked').notNull().default(false)
 })
 
 type ChatbotDatabaseRow = typeof table.$inferSelect
@@ -45,6 +53,7 @@ export class ChatbotDatabase {
         interactionId: table.interactionId
       })
       .from(table)
+      .where(eq(table.blocked, false))
       .orderBy(desc(table.date))
       .limit(MAX_INTERACTIONS)
 
@@ -102,6 +111,16 @@ export class ChatbotDatabase {
         content: message.content
       })
       .where(eq(table.id, message.id))
+    await connection.release()
+  }
+
+  public async blockInteraction(interactionId: string) {
+    const { connection, drizzleClient } =
+      await DatabaseClient.getInstance().getConnection()
+    await drizzleClient
+      .update(table)
+      .set({ blocked: true })
+      .where(eq(table.interactionId, interactionId))
     await connection.release()
   }
 }
