@@ -208,7 +208,7 @@ export class Chatbot {
       ]
       if (imagesUrls && imagesUrls.length > 0) {
         messageSender?.sendPartialMessage('content', 'Otimizando imagens...')
-        const imageBlocks: ContentBlockParam[] = await Promise.all(
+        const imagesBlockPromise = Promise.all<ContentBlockParam>(
           imagesUrls.map(async url => {
             const { data } = await prepareImageToSendToAnthropic(url)
             const imageUrl = await GoogleCloudStorage.getInstance().uploadFile(
@@ -225,6 +225,18 @@ export class Chatbot {
             }
           })
         )
+        const imageBlocks = await imagesBlockPromise.catch(error => {
+          tracer?.error('Error on image optimization', { error })
+          messageSender?.sendFinalMessage(
+            'system',
+            'Ocorreu um erro ao otimizar as imagens, por favor, tente novamente mais tarde.\nRastreabilidade: ' +
+              tracer?.getID()
+          )
+          return []
+        })
+        if (imageBlocks.length === 0) {
+          return
+        }
         content.push(...imageBlocks)
       }
       await this.saveMessage({
@@ -247,6 +259,7 @@ export class Chatbot {
       }
     }
     const errorHandler = async (error: AnthropicError | Error) => {
+      tracer?.error('Error on stream', { error })
       if (error.name === 'overloaded_error') {
         messageSender?.sendFinalMessage(
           'system',
