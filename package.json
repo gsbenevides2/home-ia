@@ -41,6 +41,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@deno/kv": "^0.10.0",
+    "@discordjs/voice": "^0.18.0",
     "@google-cloud/compute": "^5.1.0",
     "@google-cloud/speech": "^7.0.1",
     "@google-cloud/storage": "^7.16.0",
@@ -68,6 +69,7 @@
     "node-onvif": "^0.1.7",
     "nodemailer": "^6.10.1",
     "onvif": "^0.8.0",
+    "opusscript": "^0.1.1",
     "path-to-regexp": "^8.2.0",
     "pg": "^8.15.6",
     "pluggy-sdk": "^0.71.2",
