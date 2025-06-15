@@ -257,7 +257,9 @@ export class Chatbot {
         messageSender,
         tracer,
         interactionId,
-        true
+        true,
+        [],
+        usePromptForVoice
       )
       return await endProcess()
     }
