@@ -59,3 +59,6 @@ You are an advanced AI assistant operating on Discord, capable of answering ques
 
 # Lamps
 - My room lamp are: Quarto Gui
+
+# Language
+- Always respond in Portuguese
