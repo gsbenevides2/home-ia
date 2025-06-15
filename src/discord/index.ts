@@ -750,14 +750,6 @@ export class DiscordBot {
           Logger.error('Discord Bot', `Erro no player de áudio: ${error}`)
           reject(error)
         })
-
-        // Timeout de segurança
-        setTimeout(() => {
-          if (player.state.status !== 'idle') {
-            player.stop()
-            resolve()
-          }
-        }, 30000) // 30 segundos
       } catch (error) {
         Logger.error('Discord Bot', `Erro ao reproduzir áudio: ${error}`)
         reject(error)
