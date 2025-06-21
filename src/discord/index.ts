@@ -7,8 +7,16 @@ import {
   VoiceConnection
 } from '@discordjs/voice'
 import { spawn } from 'child_process'
+import console from 'console'
 import type { VoiceBasedChannel } from 'discord.js'
-import { Client, GatewayIntentBits, Message, Partials } from 'discord.js'
+import {
+  ApplicationCommandType,
+  Client,
+  Collection,
+  GatewayIntentBits,
+  Message,
+  Partials
+} from 'discord.js'
 import * as fs from 'fs'
 import * as path from 'path'
 import { GoogleSpeachToText } from '../clients/google/GoogleSpeachToText.ts'
@@ -28,6 +36,10 @@ try {
   console.log('⚠️ opusscript não disponível, usando fallback')
 }
 
+const DISCORD_ALLOWED_USER_ID = Bun.env.DISCORD_ALLOWED_USER_ID
+const DISCORD_BOT_ID = Bun.env.DISCORD_BOT_ID
+const DISCORD_TOKEN = Bun.env.DISCORD_TOKEN
+
 export class DiscordBot {
   private client: Client
   private static instance: DiscordBot
@@ -43,8 +55,6 @@ export class DiscordBot {
   }
 
   private constructor() {
-    const DISCORD_ALLOWED_USER_ID = Bun.env.DISCORD_ALLOWED_USER_ID
-    const DISCORD_BOT_ID = Bun.env.DISCORD_BOT_ID
     if (!DISCORD_ALLOWED_USER_ID) {
       throw new Error('DISCORD_ALLOWED_USER_ID is not set')
     }
@@ -67,10 +77,22 @@ export class DiscordBot {
   private setupEventHandlers() {
     const DISCORD_ALLOWED_USER_ID = Bun.env.DISCORD_ALLOWED_USER_ID!
     const DISCORD_BOT_ID = Bun.env.DISCORD_BOT_ID!
+    const collection = new Collection()
 
     this.client.on('ready', () => {
       Logger.info('Discord Bot', 'Bot is connected to Discord', null)
-      this.setupVoiceConnection()
+      this.client.application?.commands.create({
+        name: 'connect',
+        description: 'Connect to the voice channel',
+        dmPermission: true,
+        type: ApplicationCommandType.ChatInput
+      })
+      this.client.application?.commands.create({
+        name: 'disconnect',
+        description: 'Disconnect from the voice channel',
+        dmPermission: true,
+        type: ApplicationCommandType.ChatInput
+      })
     })
 
     this.client.on('messageCreate', async message => {
@@ -203,6 +225,18 @@ export class DiscordBot {
               '```'
           )
         })
+    })
+
+    this.client.on('interactionCreate', async interaction => {
+      if (!interaction.isChatInputCommand()) return
+      const commandName = interaction.commandName
+      if (commandName === 'connect') {
+        await this.setupVoiceConnection()
+        interaction.reply('Conectado ao canal de voz!')
+      } else if (commandName === 'disconnect') {
+        await this.unsetupVoiceConnection()
+        interaction.reply('Desconectado do canal de voz!')
+      }
     })
   }
 
@@ -777,8 +811,14 @@ export class DiscordBot {
     }
   }
 
+  private async unsetupVoiceConnection() {
+    if (this.voiceConnection) {
+      this.voiceConnection.destroy()
+      this.voiceConnection = null
+    }
+  }
+
   async connect() {
-    const DISCORD_TOKEN = Bun.env.DISCORD_TOKEN
     if (!DISCORD_TOKEN) {
       Logger.error('Discord Bot', 'DISCORD_TOKEN is not set')
       throw new Error('DISCORD_TOKEN is not set')
