@@ -3,6 +3,7 @@ import { JobDatabase } from '../clients/database/Jobs'
 import { Logger } from '../logger'
 import { Tracer } from '../logger/Tracer'
 import { Chatbot } from '../mcp/Chatbot'
+import { tasks } from './default_tasks/tasks'
 
 export interface JobData {
   id: string
@@ -31,6 +32,24 @@ export class Scheduller {
       Logger.info(
         'Scheduller',
         `Retrived from DB Job ${id} scheduled at ${time} next invocation at ${next?.toISOString()}`
+      )
+    }
+
+    for (const task of tasks) {
+      const cron = new Cron(
+        task.cron,
+        {
+          name: task.name,
+          timezone: 'America/Sao_Paulo'
+        },
+        () => {
+          task.execute()
+        }
+      )
+      const next = cron.nextRun()
+      Logger.info(
+        'Scheduller',
+        `Retrived from LocalTask ${task.name} scheduled at ${task.cron} next invocation at ${next?.toISOString()}`
       )
     }
   }
