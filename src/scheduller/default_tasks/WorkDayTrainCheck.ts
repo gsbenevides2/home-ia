@@ -24,12 +24,26 @@ export class WorkDayTrainCheck extends TaskJob {
       line => !this.unhealtyNotifiedLines.includes(line)
     )
 
+    const healthyLinesNotifiedAfter = this.unhealtyNotifiedLines.filter(
+      line => !unhealtyLines.includes(line)
+    )
+
     if (unhealtyUnnotifiedLines.length > 0) {
       const chatbot = new Chatbot(false)
       await chatbot.init()
       const query = `Puxe o status das linhas de trem e metro: ${unhealtyUnnotifiedLines.join(', ')}. E diga se elas estão ok ou não. Se não estiverem, diga o motivo. Mande isso via mensagem no Discord`
       await chatbot.processQuery(query, undefined, tracer)
       this.unhealtyNotifiedLines.push(...unhealtyUnnotifiedLines)
+    }
+
+    if (healthyLinesNotifiedAfter.length > 0) {
+      const chatbot = new Chatbot(false)
+      await chatbot.init()
+      const query = `Puxe o status das linhas de trem e metro: ${healthyLinesNotifiedAfter.join(', ')}. E diga se elas estão ok ou não. Se estiverem, diga que estão ok. Mande isso via mensagem no Discord`
+      await chatbot.processQuery(query, undefined, tracer)
+      this.unhealtyNotifiedLines = this.unhealtyNotifiedLines.filter(
+        line => !healthyLinesNotifiedAfter.includes(line)
+      )
     }
   }
 }
