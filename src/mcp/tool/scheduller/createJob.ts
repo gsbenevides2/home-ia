@@ -1,6 +1,6 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { Scheduller } from '../../../scheduller'
+import { AiScheduller } from '../../../scheduller/AiScheduler'
 import { AbstractTool, type OnErrorToolCallback } from '../AbstractTool'
 const args = {
   type: z
@@ -36,7 +36,12 @@ export class CreateJobTool extends AbstractTool<Args> {
   execute: ToolCallback<Args> = async args => {
     const { type, time, llm, exclude } = args
 
-    const jobId = await Scheduller.scheduleJob({ type, time, llm, exclude })
+    const jobId = await AiScheduller.scheduleJob({
+      type,
+      time,
+      llm,
+      exclude
+    })
 
     return {
       content: [

@@ -15,7 +15,7 @@ import mcpRouter from './routers/mcp.ts'
 import pluggyRouter from './routers/pluggy.ts'
 import queueRouters from './routers/queue.ts'
 import savedPromptsRouter from './routers/savedPrompts.ts'
-import { Scheduller } from './scheduller/index.ts'
+import * as SchedulerManager from './scheduller/SchedulerManager.ts'
 
 Logger.info('Main', 'Preparing server... Building Tailwind CSS')
 await Bun.$`DEBUG=false bunx tailwindcss -i src/tailwind.css -o public/css/tailwind.css --minify`
@@ -56,13 +56,13 @@ const server = app.listen(port, async () => {
   if (Bun.env.ENABLE_DISCORD === 'true') {
     await DiscordBot.getInstance().connect()
   }
-  await Scheduller.init()
+  await SchedulerManager.StartScheduller()
 })
 
 process.on('SIGINT', async () => {
   Logger.info('Main', 'Shutting down server...')
   await DiscordBot.getInstance().disconnect()
-  await Scheduller.gracefulShutdown()
+  await SchedulerManager.StopScheduller()
   await (await MCPSSEClientSingleton.getInstance()).client.close()
   await Cameras.getInstance().stopAll()
   Logger.info('Main', 'Server shut down')

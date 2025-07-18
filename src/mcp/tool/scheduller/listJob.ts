@@ -1,5 +1,5 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { Scheduller } from '../../../scheduller'
+import { AiScheduller } from '../../../scheduller/AiScheduler'
 import { AbstractTool, type OnErrorToolCallback } from '../AbstractTool'
 
 const args = {} as const
@@ -12,7 +12,7 @@ export class ListJobTool extends AbstractTool<Args> {
   args = args
 
   execute: ToolCallback<Args> = async () => {
-    const jobs = await Scheduller.getJobs()
+    const jobs = await AiScheduller.getJobs()
 
     return {
       content: [{ type: 'text', text: `Jobs: ${JSON.stringify(jobs)}` }]

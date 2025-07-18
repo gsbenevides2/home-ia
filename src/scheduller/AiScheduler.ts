@@ -1,9 +1,8 @@
-import { Cron, scheduledJobs } from 'croner'
+import { Cron } from 'croner'
 import { JobDatabase } from '../clients/database/Jobs'
 import { Logger } from '../logger'
 import { Tracer } from '../logger/Tracer'
 import { Chatbot } from '../mcp/Chatbot'
-import { tasks } from './default_tasks/tasks'
 
 export interface JobData {
   id: string
@@ -13,7 +12,9 @@ export interface JobData {
   exclude: boolean
 }
 
-export class Scheduller {
+export class AiScheduller {
+  private static myJobs: Cron[] = []
+
   public static async init() {
     const dbJobs = await this.getJobs()
     for (const dbJob of dbJobs) {
@@ -30,28 +31,15 @@ export class Scheduller {
       )
       const next = cron.nextRun()
       Logger.info(
-        'Scheduller',
+        'AiScheduller',
         `Retrived from DB Job ${id} scheduled at ${time} next invocation at ${next?.toISOString()}`
       )
+      this.myJobs.push(cron)
     }
+  }
 
-    for (const task of tasks) {
-      const cron = new Cron(
-        task.cron,
-        {
-          name: task.name,
-          timezone: 'America/Sao_Paulo'
-        },
-        () => {
-          task.execute()
-        }
-      )
-      const next = cron.nextRun()
-      Logger.info(
-        'Scheduller',
-        `Retrived from LocalTask ${task.name} scheduled at ${task.cron} next invocation at ${next?.toISOString()}`
-      )
-    }
+  private static makeId(databaseId: string) {
+    return `ai-${databaseId}`
   }
 
   public static async scheduleJob(data: Omit<JobData, 'id'>) {
@@ -65,7 +53,7 @@ export class Scheduller {
     const cron = new Cron(
       time,
       {
-        name: id,
+        name: this.makeId(id),
         timezone: 'America/Sao_Paulo'
       },
       () => {
@@ -74,14 +62,14 @@ export class Scheduller {
     )
     const next = cron.currentRun()
     Logger.info(
-      'Scheduller',
+      'AiScheduller',
       `Job ${id} scheduled at ${time} next invocation at ${next?.toISOString()}`
     )
     return id
   }
 
-  public static cancelJob(name: string) {
-    const job = scheduledJobs.find(job => job.name === name)
+  public static cancelJob(id: string) {
+    const job = this.myJobs.find(job => job.name === this.makeId(id))
     if (job) {
       job.stop()
     }
@@ -110,8 +98,7 @@ export class Scheduller {
     await chatbot.init()
     await chatbot.processQuery(job.llm, undefined, tracer)
     if (!job.exclude) return
-    this.cancelJob(id)
-    await JobDatabase.getInstance().deleteJob(id)
+    this.deleteJob(id)
   }
 
   public static async changeJob(
@@ -132,12 +119,12 @@ export class Scheduller {
     this.cancelJob(id)
     const cron = new Cron(
       timeToUpdate,
-      { name: id, timezone: 'America/Sao_Paulo' },
+      { name: this.makeId(id), timezone: 'America/Sao_Paulo' },
       () => this.callback(id)
     )
     const next = cron.currentRun()
     Logger.info(
-      'Scheduller',
+      'AiScheduller',
       `Job ${id} scheduled at ${time} next invocation at ${next?.toISOString()}`
     )
     return {
@@ -150,8 +137,8 @@ export class Scheduller {
   }
 
   public static gracefulShutdown() {
-    scheduledJobs.forEach(job => {
+    for (const job of this.myJobs) {
       job.stop()
-    })
+    }
   }
 }
