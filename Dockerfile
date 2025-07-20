@@ -18,7 +18,6 @@ ENV FLUENTFFMPEG_COV=0
 
 COPY . .
 RUN bun install
-RUN bun run build
 ENV DATA_PATH=/app/data
 RUN mkdir -p $DATA_PATH
 RUN mkdir -p temp
