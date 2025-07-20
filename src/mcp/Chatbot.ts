@@ -77,10 +77,12 @@ export class Chatbot {
       input_schema: tool.inputSchema
     }))
 
-    anthropicTools.push({
-      type: 'web_search_20250305' as any,
-      name: 'web_search' as any
-    })
+    const webSearchTool = {
+      type: 'web_search_20250305',
+      name: 'web_search'
+    } as unknown as ToolUnion
+
+    anthropicTools.push(webSearchTool)
     return {
       mcpClient,
       anthropicTools

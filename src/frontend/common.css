@@ -1,0 +1,99 @@
+:root {
+    --mdc-button-disabled-ink-color: #6f6f6f;
+    --mdc-button-outline-color: rgba(225, 225, 225, 0.12);
+    --mdc-checkbox-disabled-color: #6f6f6f;
+    --mdc-checkbox-unchecked-color: rgba(225, 225, 225, 0.54);
+    --mdc-dialog-content-ink-color: #e1e1e1;
+    --mdc-dialog-heading-ink-color: #e1e1e1;
+    --mdc-dialog-scroll-divider-color: rgba(225, 225, 225, 0.12);
+    --mdc-radio-disabled-color: #6f6f6f;
+    --mdc-radio-unchecked-color: rgba(225, 225, 225, 0.54);
+    --mdc-ripple-fg-scale: 1;
+    --mdc-ripple-fg-size: 0;
+    --mdc-ripple-fg-translate-end: 0;
+    --mdc-ripple-fg-translate-start: 0;
+    --mdc-ripple-left: 0;
+    --mdc-ripple-top: 0;
+    --mdc-select-disabled-dropdown-icon-color: rgba(255, 255, 255, 0.37);
+    --mdc-select-disabled-fill-color: rgba(255, 255, 255, 0.02);
+    --mdc-select-disabled-ink-color: rgba(255, 255, 255, 0.37);
+    --mdc-select-dropdown-icon-color: rgba(255, 255, 255, 0.54);
+    --mdc-select-fill-color: rgba(255, 255, 255, 0.05);
+    --mdc-select-hover-line-color: rgba(255, 255, 255, 0.87);
+    --mdc-select-idle-line-color: rgba(255, 255, 255, 0.42);
+    --mdc-select-ink-color: rgba(255, 255, 255, 0.87);
+    --mdc-select-label-ink-color: rgba(255, 255, 255, 0.6);
+    --mdc-select-outlined-disabled-border-color: rgba(255, 255, 255, 0.06);
+    --mdc-select-outlined-hover-border-color: rgba(255, 255, 255, 0.87);
+    --mdc-select-outlined-idle-border-color: rgba(255, 255, 255, 0.38);
+    --mdc-tab-text-label-color-default: #e1e1e1;
+    --mdc-text-field-disabled-fill-color: rgba(255, 255, 255, 0.02);
+    --mdc-text-field-disabled-ink-color: rgba(255, 255, 255, 0.37);
+    --mdc-text-field-disabled-line-color: rgba(255, 255, 255, 0.06);
+    --mdc-text-field-fill-color: rgba(255, 255, 255, 0.05);
+    --mdc-text-field-hover-line-color: rgba(255, 255, 255, 0.87);
+    --mdc-text-field-idle-line-color: rgba(255, 255, 255, 0.42);
+    --mdc-text-field-ink-color: rgba(255, 255, 255, 0.87);
+    --mdc-text-field-label-ink-color: rgba(255, 255, 255, 0.6);
+    --mdc-text-field-outlined-disabled-border-color: rgba(255, 255, 255, 0.06);
+    --mdc-text-field-outlined-hover-border-color: rgba(255, 255, 255, 0.87);
+    --mdc-text-field-outlined-idle-border-color: rgba(255, 255, 255, 0.38);
+    --mdc-theme-background: #111111;
+    --mdc-theme-error: #db4437;
+    --mdc-theme-on-primary: #ffffff;
+    --mdc-theme-on-secondary: #ffffff;
+    --mdc-theme-on-surface: #e1e1e1;
+    --mdc-theme-primary: #03a9f4;
+    --mdc-theme-secondary: #ff9800;
+    --mdc-theme-surface: #1c1c1c;
+    --mdc-theme-text-disabled-on-light: #6f6f6f;
+    --mdc-theme-text-hint-on-background: #9b9b9b;
+    --mdc-theme-text-icon-on-background: #9b9b9b;
+    --mdc-theme-text-primary-on-background: #e1e1e1;
+    --mdc-theme-text-secondary-on-background: #9b9b9b;
+}
+
+body {
+    background-color: var(--mdc-theme-background);
+}
+
+* {
+    color: var(--mdc-theme-on-surface);
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.mdc-text-field .mdc-text-field__input {
+    color: var(--mdc-text-field-ink-color) !important;
+}
+
+.mdc-text-field:not(.mdc-text-field--outlined) {
+    background-color: var(--mdc-text-field-fill-color, #f5f5f5) !important;
+}
+
+.mdc-text-field:not(.mdc-text-field--invalid):not(.mdc-text-field--focused):not(.mdc-text-field--invalid) .mdc-floating-label,
+.mdc-text-field:not(.mdc-text-field--invalid):not(.mdc-text-field--focused):not(.mdc-text-field--invalid) .mdc-floating-label::after {
+    color: var(--mdc-text-field-label-ink-color, rgba(0, 0, 0, 0.6)) !important;
+}
+
+.mdc-text-field--filled:not(.mdc-text-field--disabled):not(.mdc-text-field--invalid):hover .mdc-line-ripple::before,
+.mdc-text-field:not(.mdc-text-field--disabled):not(.mdc-text-field--invalid) .mdc-line-ripple::before {
+    border-bottom-color: rgba(0, 0, 0, .42);
+    border-bottom-color: var(--mdc-text-field-idle-line-color, rgba(0, 0, 0, .42));
+}
+
+.mdc-text-field--focused:not(.mdc-text-field--disabled):not(.mdc-text-field--invalid) .mdc-floating-label {
+    color: var(--mdc-theme-primary) !important;
+}
+
+.mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-line-ripple::before {
+    border-bottom-color: var(--mdc-theme-primary) !important;
+}
+
+.mdc-data-table__header-cell,
+.mdc-data-table__pagination-total,
+.mdc-data-table__pagination-rows-per-page-label,
+.mdc-data-table__cell {
+    color: var(--mdc-theme-on-surface) !important;
+}

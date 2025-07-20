@@ -1,28 +1,34 @@
-import { type Request, type Response, Router } from 'express'
-import { z } from 'zod'
-import { validateRequest } from 'zod-express-middleware'
-import { addToQueue, publicOperations } from '../queue/queue.ts'
+import Elysia, { t } from 'elysia'
+import {
+  addToQueue,
+  publicOperations,
+  type PublicOperations
+} from '../queue/queue'
+import { authService } from './authentication'
 
-const queueRouters = Router()
+const typedPublicOperationsObj = publicOperations.reduce(
+  (acc, operation) => {
+    acc[operation] = t.Never()
+    return acc
+  },
+  {} as Record<PublicOperations, ReturnType<typeof t.Never>>
+)
 
-const queueBodySchema = z.object({
-  operations: z.array(z.enum(publicOperations)),
-})
-
-type QueueBodyRequest = z.infer<typeof queueBodySchema>
-
-queueRouters.post(
+const queueRouter = new Elysia().use(authService).post(
   '/queue',
-  validateRequest({
-    body: queueBodySchema,
-  }),
-  (req: Request, res: Response) => {
-    const { operations } = req.body as QueueBodyRequest
-    operations.forEach((operation) => {
+  context => {
+    const { operations } = context.body
+    operations.forEach(operation => {
       addToQueue(operation)
     })
-    res.status(200).json({ message: 'Operations received' })
+    return { message: 'Operations received' }
+  },
+  {
+    body: t.Object({
+      operations: t.Array(t.KeyOf(t.Object(typedPublicOperationsObj)))
+    }),
+    requireAuthentication: true
   }
 )
 
-export default queueRouters
+export default queueRouter

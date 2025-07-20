@@ -8,7 +8,7 @@ const SEGMENT_PREFIX = 'segment'
 const SEGMENTS_TO_KEEP = 6 // Número de segmentos para manter no servidor
 const RESTART_DELAY = 10000 // 10 segundos entre tentativas de reinício
 const MAX_RESTART_ATTEMPTS = 5 // Máximo de tentativas de reinício consecutivas
-const HLS_DIR = path.join(process.cwd(), 'public', 'video')
+const HLS_DIR = path.join(process.cwd(), 'camerastreams')
 
 // Classe para gerenciar o streaming HLS
 export class HLSManager {

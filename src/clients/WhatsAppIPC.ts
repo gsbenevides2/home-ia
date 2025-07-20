@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import { randomUUID } from 'crypto'
 import fs from 'fs'
 import net from 'net'
@@ -8,20 +9,23 @@ import { Logger } from '../logger'
 interface IPCMessage {
   id: string
   type: string
-  data?: any
+  data?: unknown
 }
 
 interface IPCResponse {
   id: string
   type: string
-  data?: any
+  data?: unknown
   error?: string
 }
 
 export class WhatsAppIPCClient extends EventEmitter {
   private socket: net.Socket | null = null
   private connected: boolean = false
-  private pendingRequests = new Map<string, { resolve: Function; reject: Function }>()
+  private pendingRequests = new Map<
+    string,
+    { resolve: Function; reject: Function }
+  >()
   private reconnectTimer: NodeJS.Timeout | null = null
   private messageBuffer = ''
 
@@ -37,7 +41,7 @@ export class WhatsAppIPCClient extends EventEmitter {
       }
 
       this.socket = new net.Socket()
-      
+
       this.socket.on('connect', () => {
         Logger.info('WhatsAppIPC', 'Connected to WhatsApp Node Service')
         this.connected = true
@@ -48,20 +52,23 @@ export class WhatsAppIPCClient extends EventEmitter {
         resolve()
       })
 
-      this.socket.on('data', (data) => {
+      this.socket.on('data', data => {
         this.messageBuffer += data.toString()
-        
+
         // Processa mensagens completas (separadas por \n)
         const lines = this.messageBuffer.split('\n')
         this.messageBuffer = lines.pop() || '' // Mantém a linha incompleta no buffer
-        
+
         lines.forEach(line => {
           if (line.trim()) {
             try {
               const response: IPCResponse = JSON.parse(line)
               this.handleResponse(response)
             } catch (error) {
-              Logger.error('WhatsAppIPC', 'Error parsing response', { error, line })
+              Logger.error('WhatsAppIPC', 'Error parsing response', {
+                error,
+                line
+              })
             }
           }
         })
@@ -73,7 +80,7 @@ export class WhatsAppIPCClient extends EventEmitter {
         this.scheduleReconnect()
       })
 
-      this.socket.on('error', (error) => {
+      this.socket.on('error', error => {
         Logger.error('WhatsAppIPC', 'Socket error', { error })
         this.connected = false
         reject(error)
@@ -86,7 +93,7 @@ export class WhatsAppIPCClient extends EventEmitter {
 
   private scheduleReconnect() {
     if (this.reconnectTimer) return
-    
+
     this.reconnectTimer = setTimeout(async () => {
       try {
         Logger.info('WhatsAppIPC', 'Attempting to reconnect...')
@@ -104,7 +111,7 @@ export class WhatsAppIPCClient extends EventEmitter {
     if (id && this.pendingRequests.has(id)) {
       const { resolve, reject } = this.pendingRequests.get(id)!
       this.pendingRequests.delete(id)
-      
+
       if (error) {
         reject(new Error(error))
       } else {
@@ -127,7 +134,7 @@ export class WhatsAppIPCClient extends EventEmitter {
     }
   }
 
-  private async sendMessage(type: string, data?: any): Promise<any> {
+  private async sendMessage(type: string, data?: unknown): Promise<unknown> {
     if (!this.connected) {
       await this.connect()
     }
@@ -135,9 +142,9 @@ export class WhatsAppIPCClient extends EventEmitter {
     return new Promise((resolve, reject) => {
       const id = Math.random().toString(36).substring(7)
       const message: IPCMessage = { id, type, data }
-      
+
       this.pendingRequests.set(id, { resolve, reject })
-      
+
       // Timeout para requests
       setTimeout(() => {
         if (this.pendingRequests.has(id)) {
@@ -154,8 +161,12 @@ export class WhatsAppIPCClient extends EventEmitter {
     })
   }
 
-  async connectWhatsApp(): Promise<'readyToSendMessages' | 'awaitingForAuthentication'> {
-    return await this.sendMessage('connect')
+  async connectWhatsApp(): Promise<
+    'readyToSendMessages' | 'awaitingForAuthentication'
+  > {
+    return (await this.sendMessage('connect')) as
+      | 'readyToSendMessages'
+      | 'awaitingForAuthentication'
   }
 
   async sendWhatsAppMessage(to: number, message: string): Promise<void> {
@@ -168,15 +179,15 @@ export class WhatsAppIPCClient extends EventEmitter {
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true })
     }
-    
+
     const tempFileName = `audio_${randomUUID()}.mp3`
     const tempFilePath = path.join(tempDir, tempFileName)
-    
+
     try {
       // Salvar áudio base64 em arquivo temporário
       const audioBuffer = Buffer.from(audioBase64, 'base64')
       fs.writeFileSync(tempFilePath, audioBuffer)
-      
+
       // Enviar apenas o caminho do arquivo via IPC
       await this.sendMessage('sendAudio', { to, audioFilePath: tempFilePath })
     } catch (error) {
@@ -189,7 +200,7 @@ export class WhatsAppIPCClient extends EventEmitter {
   }
 
   async getQRCode(): Promise<string> {
-    return await this.sendMessage('getQRCode')
+    return (await this.sendMessage('getQRCode')) as string
   }
 
   async release(): Promise<void> {
@@ -207,4 +218,4 @@ export class WhatsAppIPCClient extends EventEmitter {
       this.reconnectTimer = null
     }
   }
-} 
+}

@@ -1,90 +1,87 @@
-import { type NextFunction, type Request, type Response, Router } from 'express'
-import { match } from 'path-to-regexp'
-import { MCPServer } from '../mcp/server'
-
-const authenticationRouter = Router()
-
-const mcpServer = MCPServer.getInstance()
-
-const unprotectedPathsPatterns = [
-  '/login',
-  '/css/:file',
-  '/fonts/:file',
-  '/js/:file',
-  '/services/pluggy/webhooks/update-account-data'
-]
-
-authenticationRouter.use(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const acceptHeader = req.headers.accept
-    const isFromBrowser = acceptHeader?.includes('text/html')
-    const isUnprotectedPath = unprotectedPathsPatterns.some(pattern =>
-      match(pattern)(req.path)
-    )
-    if (isUnprotectedPath) {
-      next()
-      return
-    }
-
-    if (mcpServer.getMCPServerPaths().includes(req.path)) {
-      await mcpServer.handleAuthentication(req, res, next)
-      return
-    }
-
-    const authorizationCookie = req.cookies.authorization
-    if (authorizationCookie === `Bearer ${Bun.env.AUTH_TOKEN}`) {
-      next()
-      return
-    }
-
-    const authorizationHeader = req.headers.authorization
-    if (authorizationHeader === `Bearer ${Bun.env.AUTH_TOKEN}`) {
-      next()
-      return
-    }
-
-    const authQueryParam = req.query.token
-    if (authQueryParam === Bun.env.AUTH_TOKEN) {
-      if (isFromBrowser) {
-        res.setHeader(
-          'Set-Cookie',
-          `authorization=Bearer ${Bun.env.AUTH_TOKEN}`
-        )
-      }
-      next()
-      return
-    }
-
-    if (isFromBrowser) {
-      return res.redirect('/login')
-    }
-    return res.status(401).json({ message: 'Unauthorized' })
-  }
-)
+import { Elysia, t } from 'elysia'
 
 const envUserName = Bun.env.LOGIN_USERNAME
 const envPassword = Bun.env.LOGIN_PASSWORD
+export const envAuthToken = Bun.env.AUTH_TOKEN
 
-authenticationRouter.post('/login', (req: Request, res: Response) => {
-  const { username, password } = req.body
-  const isFromBrowser = req.headers.accept?.includes('text/html')
+const authenticationRouter = new Elysia()
+  .post(
+    '/login',
+    context => {
+      const { username, password } = context.body
 
-  if (username === envUserName && password === envPassword) {
-    if (isFromBrowser) {
-      res.cookie('authorization', `Bearer ${Bun.env.AUTH_TOKEN}`)
-      return res.redirect('/')
+      if (username === envUserName && password === envPassword) {
+        context.set.headers['set-cookie'] =
+          `authorization=Bearer ${envAuthToken}`
+        return context.status(200, {
+          status: 'Login successful'
+        })
+      }
+
+      return context.status(401, {
+        status: 'Unauthorized'
+      })
+    },
+    {
+      body: t.Object({
+        username: t.String(),
+        password: t.String()
+      }),
+      response: {
+        200: t.Object({
+          status: t.String()
+        }),
+        401: t.Object({
+          status: t.String()
+        })
+      }
     }
-    return res.json({ message: 'Logged in successfully' })
-  }
-  if (isFromBrowser) {
-    return res.redirect(`/login?error=true`)
-  }
-  return res.status(401).json({ message: 'Unauthorized' })
-})
+  )
+  .get(
+    '/is-authenticated',
+    context => {
+      const authorizationCookie = context.cookie.authorization?.value
+      if (authorizationCookie === `Bearer ${envAuthToken}`) {
+        return context.status(200, {
+          status: 'Authenticated'
+        })
+      }
 
-authenticationRouter.get('/logout', (req: Request, res: Response) => {
-  res.clearCookie('authorization')
-  return res.redirect('/')
+      return context.status(401, {
+        status: 'Unauthorized'
+      })
+    },
+    {
+      response: {
+        200: t.Object({
+          status: t.String()
+        }),
+        401: t.Object({
+          status: t.String()
+        })
+      }
+    }
+  )
+
+export const authService = new Elysia({
+  name: 'Auth.service'
+}).macro({
+  requireAuthentication: {
+    resolve: context => {
+      let finalDecision = false
+      const authorizationCookie = context.cookie.authorization?.value
+      if (authorizationCookie === `Bearer ${envAuthToken}`) {
+        finalDecision = true
+      }
+
+      if (!finalDecision) {
+        return context.status(401, {
+          status: 'Unauthorized'
+        })
+      }
+      return context
+    }
+  }
 })
 
 export default authenticationRouter

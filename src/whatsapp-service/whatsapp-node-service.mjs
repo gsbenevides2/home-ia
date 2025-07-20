@@ -1,3 +1,4 @@
+/* eslint-disable */
 import baileys from 'baileys'
 import { EventEmitter } from 'events'
 import fs from 'fs'
@@ -21,11 +22,11 @@ class WhatsAppNodeService extends EventEmitter {
 
   async start() {
     // Cria servidor TCP para comunicação IPC
-    this.server = net.createServer((socket) => {
+    this.server = net.createServer(socket => {
       console.log('Client connected')
       this.clients.add(socket)
-      
-      socket.on('data', async (data) => {
+
+      socket.on('data', async data => {
         try {
           const message = JSON.parse(data.toString())
           await this.handleMessage(socket, message)
@@ -44,7 +45,7 @@ class WhatsAppNodeService extends EventEmitter {
         this.clients.delete(socket)
       })
 
-      socket.on('error', (error) => {
+      socket.on('error', error => {
         console.error('Socket error:', error)
         this.clients.delete(socket)
       })
@@ -62,12 +63,20 @@ class WhatsAppNodeService extends EventEmitter {
       switch (type) {
         case 'connect':
           const result = await this.connect()
-          this.sendResponse(socket, { id, type: 'connect_result', data: result })
+          this.sendResponse(socket, {
+            id,
+            type: 'connect_result',
+            data: result
+          })
           break
 
         case 'sendMessage':
           await this.sendMessage(data.to, data.message)
-          this.sendResponse(socket, { id, type: 'message_sent', data: 'success' })
+          this.sendResponse(socket, {
+            id,
+            type: 'message_sent',
+            data: 'success'
+          })
           break
 
         case 'sendAudio':
@@ -85,7 +94,11 @@ class WhatsAppNodeService extends EventEmitter {
           break
 
         default:
-          this.sendResponse(socket, { id, type: 'error', data: `Unknown message type: ${type}` })
+          this.sendResponse(socket, {
+            id,
+            type: 'error',
+            data: `Unknown message type: ${type}`
+          })
       }
     } catch (error) {
       console.error('Error handling message:', error)
@@ -110,7 +123,7 @@ class WhatsAppNodeService extends EventEmitter {
   }
 
   async connect() {
-    return new Promise(async (resolve) => {
+    return new Promise(async resolve => {
       if (this.isReady) {
         resolve('readyToSendMessages')
         return
@@ -138,9 +151,13 @@ class WhatsAppNodeService extends EventEmitter {
   async initializeConnection() {
     try {
       console.log('Initializing WhatsApp Loading Credentials...')
-      const { state, saveCreds } = await useMultiFileAuthState("data/auth_info_baileys")
-      console.log('WhatsApp Credentials Loaded, Initializing WhatsApp Socket...')
-      
+      const { state, saveCreds } = await useMultiFileAuthState(
+        'data/auth_info_baileys'
+      )
+      console.log(
+        'WhatsApp Credentials Loaded, Initializing WhatsApp Socket...'
+      )
+
       const webClient = makeWASocket({
         auth: state,
         shouldSyncHistoryMessage: () => false,
@@ -149,29 +166,29 @@ class WhatsAppNodeService extends EventEmitter {
       })
 
       webClient.ev.on('creds.update', saveCreds)
-      
-      webClient.ev.on('connection.update', (update) => {
+
+      webClient.ev.on('connection.update', update => {
         const { qr, connection, lastDisconnect } = update
-        
+
         if (qr) {
           this.qrCode = qr
           console.log('Awaiting for authentication...')
           this.emit('awaitingForAuthentication')
           this.broadcast({ type: 'qr_update', data: qr })
         }
-        
+
         if (connection === 'open') {
           console.log('WhatsApp is ready')
           this.isReady = true
           this.emit('readyToSendMessages')
           this.broadcast({ type: 'ready' })
         }
-        
+
         if (connection === 'close') {
           const statusCode = lastDisconnect?.error?.output?.statusCode
           console.log(`Connection closed with status: ${statusCode}`)
           this.isReady = false
-          
+
           if (statusCode !== 401) {
             console.log('Attempting to reconnect...')
             setTimeout(() => this.initializeConnection(), 5000)
@@ -184,7 +201,6 @@ class WhatsAppNodeService extends EventEmitter {
       })
 
       this.webClient = webClient
-      
     } catch (error) {
       console.error('Failed to initialize connection:', error)
       setTimeout(() => this.initializeConnection(), 10000)
@@ -204,17 +220,17 @@ class WhatsAppNodeService extends EventEmitter {
       throw new Error('WhatsApp is not ready')
     }
     const phoneNumber = `${to}@s.whatsapp.net`
-    
+
     try {
       // Ler arquivo de áudio
       const audioBuffer = fs.readFileSync(audioFilePath)
-      
+
       await this.webClient.sendMessage(phoneNumber, {
         audio: audioBuffer,
         mimetype: 'audio/mp4',
         ptt: true // Enviar como voice note
       })
-      
+
       // Remover arquivo temporário após envio
       fs.unlinkSync(audioFilePath)
       console.log(`Audio sent and temp file deleted: ${audioFilePath}`)
@@ -265,4 +281,4 @@ process.on('SIGTERM', async () => {
   console.log('Shutting down WhatsApp Node Service...')
   await service.stop()
   process.exit(0)
-}) 
+})

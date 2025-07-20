@@ -1,0 +1,128 @@
+.successContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #111827;
+
+    & .card {
+        padding: 2rem;
+        border-radius: 0.5rem;
+        width: 100%;
+        max-width: 28rem;
+        background-color: #1F2937;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+        & .titleArea {
+            display: flex;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+            align-items: center;
+
+            & .icon {
+                margin-right: 0.75rem;
+                font-size: 2.25rem;
+                line-height: 2.5rem;
+                color: #10B981;
+            }
+
+            & .title {
+                font-size: 1.5rem;
+                line-height: 2rem;
+                font-weight: 700;
+                color: #F3F4F6;
+            }
+        }
+
+        & .message {
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: #D1D5DB;
+        }
+    }
+}
+
+.qrCodePageContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+
+    & .card {
+        padding: 2rem;
+        width: 100%;
+        max-width: 28rem;
+
+        & .titleArea {
+            text-align: center;
+
+            & .title {
+                margin-bottom: 1.5rem;
+            }
+
+            & .subtitle {
+                margin-bottom: 1.5rem;
+                color: #4B5563;
+            }
+
+            & .qrCodeArea {
+                display: flex;
+                justify-content: center;
+                margin-bottom: 1.5rem;
+
+                & .qrCodeContainer {
+                    padding: 1rem;
+                    border-radius: 0.5rem;
+                    border-width: 1px;
+                    background-color: #ffffff;
+                    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+                    & .qrCode {
+                        object-fit: contain;
+                        width: 16rem;
+                        height: 16rem;
+                    }
+                }
+            }
+
+            & .infoArea {
+                padding: 1rem;
+                margin-bottom: 1rem;
+                border-radius: 0.5rem;
+                background-color: #1F2937;
+
+                & .infoContent {
+                    display: flex;
+                    gap: 0.75rem;
+                    align-items: flex-start;
+
+                    & .icon {
+                        margin-top: 0.125rem;
+                        color: #4B5563;
+                    }
+
+                    & .infoText {
+                        text-align: left;
+
+                        & .paragraph {
+                            margin-bottom: 0.5rem;
+                            font-weight: 500;
+                            color: #1E40AF;
+                        }
+
+                        & .list {
+                            margin-top: 0.25rem;
+                            list-style-type: decimal;
+                            list-style-position: inside;
+                            color: #1D4ED8;
+                        }
+                    }
+                }
+            }
+
+            & .button {
+                width: 100%;
+            }
+        }
+    }
+}

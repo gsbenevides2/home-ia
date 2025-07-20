@@ -1,164 +1,197 @@
-import express from 'express'
-import fs from 'fs'
+import { Elysia } from 'elysia'
+import fs from 'fs/promises'
 import path from 'path'
 import { Cameras, type CameraName } from '../clients/Camera/CamerasSingleton'
+import { authService } from './authentication'
 
-const router = express.Router()
-
-// Rota para o arquivo de playlist HLS
-router.get('/cameras-service/:cameraName/playlist.m3u8', async (req, res) => {
-  try {
-    const cameraName = req.params.cameraName
-    const camera = await Cameras.getInstance().getCamera(
-      cameraName as CameraName
-    )
-    if (!camera) {
-      return res.status(404).send('Camera not found')
-    }
-    const hlsManager = camera.hlsStream
-
-    // Verificar se é uma solicitação explícita de stream atualizado
-    const forceRefresh = req.query.refresh === 'true'
-
-    if (forceRefresh) {
-      //await hlsManager.forceRefresh()
-    }
-
-    // Iniciar o HLS manager se não estiver rodando
-    if (!hlsManager.isRunning()) {
-      //hlsManager.start()
-
-      // Aguardar um pouco para verificar se o arquivo foi criado
-      setTimeout(() => {
-        if (fs.existsSync(hlsManager.playlistPath)) {
-          res.set('Cache-Control', 'no-cache, no-store, must-revalidate')
-          res.set('Pragma', 'no-cache')
-          res.set('Expires', '0')
-          res.sendFile(hlsManager.playlistPath)
-        } else {
-          res
-            .status(503)
-            .send(
-              'Playlist não disponível ainda. Tente novamente em instantes.'
-            )
-        }
-      }, 2000)
-    } else {
-      // Se já está rodando, enviar o arquivo da playlist
-      if (fs.existsSync(hlsManager.playlistPath)) {
-        res.set('Cache-Control', 'no-cache, no-store, must-revalidate')
-        res.set('Pragma', 'no-cache')
-        res.set('Expires', '0')
-        res.sendFile(hlsManager.playlistPath)
-      } else {
-        res
-          .status(503)
-          .send('Playlist não disponível ainda. Tente novamente em instantes.')
+const app = new Elysia({
+  prefix: '/cameras-service'
+})
+  .use(authService)
+  .get(
+    '/:cameraName/snapshot.jpg',
+    async context => {
+      const cameraName = context.params.cameraName
+      const camera = await Cameras.getInstance().getCamera(
+        cameraName as CameraName
+      )
+      if (!camera) {
+        return context.status(404, 'Not Found')
       }
+      const response = await fetch(camera.getSnapshotUrl())
+      if (!response.ok) {
+        return context.status(500, 'Internal Server Error')
+      }
+      const buffer = await response.arrayBuffer()
+      const data = Buffer.from(buffer)
+      context.set.headers['content-type'] = 'image/jpeg'
+      context.set.headers['cache-control'] =
+        'no-cache, no-store, must-revalidate'
+      context.set.headers['pragma'] = 'no-cache'
+      context.set.headers['expires'] = '0'
+      return new Response(data, {
+        headers: context.set.headers as HeadersInit
+      })
+    },
+    {
+      requireAuthentication: true
     }
-  } catch {
-    res.status(500).send('Erro interno')
-  }
-})
+  )
+  .get(
+    '/:cameraName/playlist.m3u8',
+    async context => {
+      try {
+        const cameraName = context.params.cameraName
+        const camera = await Cameras.getInstance().getCamera(
+          cameraName as CameraName
+        )
+        if (!camera) {
+          return context.status(404, 'Not Found')
+        }
+        const hlsManager = camera.hlsStream
 
-// Rota para obter uma imagem estática (snapshot) da câmera
-router.get('/cameras-service/:cameraName/snapshot.jpg', async (req, res) => {
-  try {
-    const cameraName = req.params.cameraName
-    const camera = await Cameras.getInstance().getCamera(
-      cameraName as CameraName
-    )
-    if (!camera) {
-      return res.status(404).send('Camera not found')
+        if (!hlsManager.isRunning()) {
+          setTimeout(async () => {
+            if (await fs.exists(hlsManager.playlistPath)) {
+              context.set.headers['content-type'] =
+                'application/vnd.apple.mpegurl'
+              context.set.headers['cache-control'] =
+                'no-cache, no-store, must-revalidate'
+              context.set.headers['pragma'] = 'no-cache'
+              context.set.headers['expires'] = '0'
+              return new Response(await fs.readFile(hlsManager.playlistPath), {
+                headers: context.set.headers as HeadersInit
+              })
+            }
+          }, 2000)
+        } else {
+          if (await fs.exists(hlsManager.playlistPath)) {
+            context.set.headers['content-type'] =
+              'application/vnd.apple.mpegurl'
+            context.set.headers['cache-control'] =
+              'no-cache, no-store, must-revalidate'
+            context.set.headers['pragma'] = 'no-cache'
+            context.set.headers['expires'] = '0'
+            return new Response(await fs.readFile(hlsManager.playlistPath), {
+              headers: context.set.headers as HeadersInit
+            })
+          }
+        }
+      } catch {
+        context.status(500, 'Internal Server Error')
+      }
+    },
+    {
+      requireAuthentication: true
     }
-    // Usar fetch para obter a imagem diretamente da câmera
-    const response = await fetch(camera.getSnapshotUrl())
+  )
+  .get(
+    '/:cameraName/:filename',
+    async context => {
+      console.log('get /:cameraName/:filename', context.params)
+      try {
+        const cameraName = context.params.cameraName
+        const camera = await Cameras.getInstance().getCamera(
+          cameraName as CameraName
+        )
+        if (!camera) {
+          return context.status(404, 'Camera not found')
+        }
+        const hlsManager = camera.hlsStream
+        const filename = context.params.filename
+        if (!filename.endsWith('.ts') && !filename.endsWith('.m3u8')) {
+          return context.status(403, 'Acesso negado')
+        }
 
-    if (!response.ok) {
-      throw new Error(`Erro na resposta: ${response.status}`)
+        const filePath = path.join(hlsManager.hlsDir, filename)
+
+        if (await fs.exists(filePath)) {
+          context.set.headers['cache-control'] =
+            'no-cache, no-store, must-revalidate'
+          context.set.headers['pragma'] = 'no-cache'
+          context.set.headers['expires'] = '0'
+          return new Response(await fs.readFile(filePath), {
+            headers: context.set.headers as HeadersInit
+          })
+        } else {
+          return context.status(404, 'Arquivo não encontrado')
+        }
+      } catch (error) {
+        console.error('Error getting /:cameraName/:filename', error)
+        return context.status(500, 'Erro interno')
+      }
+    },
+    {
+      requireAuthentication: true
     }
-
-    const buffer = await response.arrayBuffer()
-    const data = Buffer.from(buffer)
-
-    // Enviar a imagem para o cliente
-    res.set('Content-Type', 'image/jpeg')
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate')
-    res.set('Pragma', 'no-cache')
-    res.set('Expires', '0')
-    res.send(data)
-  } catch {
-    res.status(500).send('Erro ao obter imagem da câmera')
-  }
-})
-
-// Servir os arquivos de segmento
-router.get('/cameras-service/:cameraName/:filename', async (req, res) => {
-  try {
-    const cameraName = req.params.cameraName
-    const camera = await Cameras.getInstance().getCamera(
-      cameraName as CameraName
-    )
-    if (!camera) {
-      return res.status(404).send('Camera not found')
+  )
+  .post(
+    '/:cameraName/up',
+    async context => {
+      const cameraName = context.params.cameraName
+      const camera = await Cameras.getInstance().getCamera(
+        cameraName as CameraName
+      )
+      if (!camera) {
+        return context.status(404, 'Camera not found')
+      }
+      await camera.up()
+      return context.status(200, 'Camera moved up')
+    },
+    {
+      requireAuthentication: true
     }
-    const hlsManager = camera.hlsStream
-    const filename = req.params.filename
-    if (!filename.endsWith('.ts') && !filename.endsWith('.m3u8')) {
-      return res.status(403).send('Acesso negado')
+  )
+  .post(
+    '/:cameraName/down',
+    async context => {
+      const cameraName = context.params.cameraName
+      const camera = await Cameras.getInstance().getCamera(
+        cameraName as CameraName
+      )
+      if (!camera) {
+        return context.status(404, 'Camera not found')
+      }
+      await camera.down()
+      return context.status(200, 'Camera moved down')
+    },
+    {
+      requireAuthentication: true
     }
-
-    const filePath = path.join(hlsManager.hlsDir, filename)
-    if (fs.existsSync(filePath)) {
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate')
-      res.set('Pragma', 'no-cache')
-      res.set('Expires', '0')
-      res.sendFile(filePath)
-    } else {
-      res.status(404).send('Arquivo não encontrado')
+  )
+  .post(
+    '/:cameraName/left',
+    async context => {
+      const cameraName = context.params.cameraName
+      const camera = await Cameras.getInstance().getCamera(
+        cameraName as CameraName
+      )
+      if (!camera) {
+        return context.status(404, 'Camera not found')
+      }
+      await camera.left()
+      return context.status(200, 'Camera moved left')
+    },
+    {
+      requireAuthentication: true
     }
-  } catch {
-    res.status(500).send('Erro interno')
-  }
-})
+  )
+  .post(
+    '/:cameraName/right',
+    async context => {
+      const cameraName = context.params.cameraName
+      const camera = await Cameras.getInstance().getCamera(
+        cameraName as CameraName
+      )
+      if (!camera) {
+        return context.status(404, 'Camera not found')
+      }
+      await camera.right()
+      return context.status(200, 'Camera moved right')
+    },
+    {
+      requireAuthentication: true
+    }
+  )
 
-router.post('/cameras-service/:cameraName/up', async (req, res) => {
-  const cameraName = req.params.cameraName
-  const camera = await Cameras.getInstance().getCamera(cameraName as CameraName)
-  if (!camera) {
-    return res.status(404).send('Camera not found')
-  }
-  await camera.up()
-  res.status(200).send('Camera moved up')
-})
-
-router.post('/cameras-service/:cameraName/down', async (req, res) => {
-  const cameraName = req.params.cameraName
-  const camera = await Cameras.getInstance().getCamera(cameraName as CameraName)
-  if (!camera) {
-    return res.status(404).send('Camera not found')
-  }
-  await camera.down()
-  res.status(200).send('Camera moved down')
-})
-
-router.post('/cameras-service/:cameraName/left', async (req, res) => {
-  const cameraName = req.params.cameraName
-  const camera = await Cameras.getInstance().getCamera(cameraName as CameraName)
-  if (!camera) {
-    return res.status(404).send('Camera not found')
-  }
-  await camera.left()
-  res.status(200).send('Camera moved left')
-})
-
-router.post('/cameras-service/:cameraName/right', async (req, res) => {
-  const cameraName = req.params.cameraName
-  const camera = await Cameras.getInstance().getCamera(cameraName as CameraName)
-  if (!camera) {
-    return res.status(404).send('Camera not found')
-  }
-  await camera.right()
-  res.status(200).send('Camera moved right')
-})
-export default router
+export default app

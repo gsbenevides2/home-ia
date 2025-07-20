@@ -1,4 +1,5 @@
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
+import type { Account, PageResponse } from 'pluggy-sdk'
 import { z } from 'zod'
 import {
   PLUGGY_ACCOUNTS_NAMES,
@@ -54,7 +55,7 @@ export class GetBankAccountDataTool extends AbstractTool<Args> {
     }
   }
 
-  private formatAccountDataToMarkdown(data: any): string {
+  private formatAccountDataToMarkdown(data: PageResponse<Account>): string {
     let markdown = '# 💰 Resumo Financeiro\n\n'
 
     if (!data.results || data.results.length === 0) {
@@ -63,7 +64,7 @@ export class GetBankAccountDataTool extends AbstractTool<Args> {
 
     markdown += `📊 **Total de contas:** ${data.total}\n\n`
 
-    data.results.forEach((account: any, index: number) => {
+    data.results.forEach((account, index) => {
       markdown += `## ${index + 1}. ${account.name}\n\n`
 
       if (account.type === 'BANK') {
@@ -78,7 +79,7 @@ export class GetBankAccountDataTool extends AbstractTool<Args> {
     return markdown
   }
 
-  private formatBankAccount(account: any): string {
+  private formatBankAccount(account: Account): string {
     let markdown = '🏦 **Conta Bancária**\n\n'
 
     markdown += `- **Proprietário:** ${account.owner}\n`
@@ -86,71 +87,108 @@ export class GetBankAccountDataTool extends AbstractTool<Args> {
     markdown += `- **CPF:** ${account.taxNumber}\n`
     markdown += `- **Saldo atual:** R$ ${account.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
 
-    if (account.bankData) {
+    if (account.bankData && account.type === 'BANK') {
       markdown += '\n### 📈 Detalhes da Conta\n\n'
       markdown += `- **Número de transferência:** ${account.bankData.transferNumber}\n`
-      markdown += `- **Saldo de fechamento:** R$ ${account.bankData.closingBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
-      markdown += `- **Saldo investido automaticamente:** R$ ${account.bankData.automaticallyInvestedBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
-      markdown += `- **Limite de cheque especial contratado:** R$ ${account.bankData.overdraftContractedLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
-      markdown += `- **Limite de cheque especial usado:** R$ ${account.bankData.overdraftUsedLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
-      markdown += `- **Valor de cheque especial não arranjado:** R$ ${account.bankData.unarrangedOverdraftAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+      if (account.bankData.closingBalance) {
+        markdown += `- **Saldo de fechamento:** R$ ${account.bankData.closingBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+      }
+      if (account.bankData.automaticallyInvestedBalance) {
+        markdown += `- **Saldo investido automaticamente:** R$ ${account.bankData.automaticallyInvestedBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+      }
+      const newBankData = account.bankData as unknown as {
+        overdraftContractedLimit: number | null
+      }
+      if (newBankData.overdraftContractedLimit) {
+        markdown += `- **Limite de cheque especial contratado:** R$ ${newBankData.overdraftContractedLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+      }
+      if (account.bankData.overdraftUsedLimit) {
+        markdown += `- **Limite de cheque especial usado:** R$ ${account.bankData.overdraftUsedLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+      }
+      if (account.bankData.unarrangedOverdraftAmount) {
+        markdown += `- **Valor de cheque especial não arranjado:** R$ ${account.bankData.unarrangedOverdraftAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+      }
     }
 
-    markdown += `\n**Última atualização:** ${new Date(account.updatedAt).toLocaleString('pt-BR')}\n\n`
+    const newAccount = account as unknown as {
+      updatedAt: string
+    }
+
+    markdown += `\n**Última atualização:** ${new Date(newAccount.updatedAt).toLocaleString('pt-BR')}\n\n`
 
     return markdown
   }
 
-  private formatCreditAccount(account: any): string {
+  private formatCreditAccount(account: Account): string {
     let markdown = '💳 **Cartão de Crédito**\n\n'
 
     markdown += `- **Proprietário:** ${account.owner}\n`
     markdown += `- **Número do cartão:** *${account.number}\n`
     markdown += `- **Saldo atual:** R$ ${account.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
 
-    if (account.creditData) {
+    if (account.creditData && account.type === 'CREDIT') {
       const credit = account.creditData
       markdown += '\n### 💳 Detalhes do Cartão\n\n'
       markdown += `- **Bandeira:** ${credit.brand}\n`
       markdown += `- **Status:** ${credit.status}\n`
-      markdown += `- **Limite total:** R$ ${credit.creditLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
-      markdown += `- **Limite disponível:** R$ ${credit.availableCreditLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
-      markdown += `- **Pagamento mínimo:** R$ ${credit.minimumPayment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+      if (credit.creditLimit) {
+        markdown += `- **Limite total:** R$ ${credit.creditLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+      }
+      if (credit.availableCreditLimit) {
+        markdown += `- **Limite disponível:** R$ ${credit.availableCreditLimit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+      }
+      if (credit.minimumPayment) {
+        markdown += `- **Pagamento mínimo:** R$ ${credit.minimumPayment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+      }
 
       if (credit.balanceDueDate) {
         markdown += `- **Data de vencimento:** ${new Date(credit.balanceDueDate).toLocaleDateString('pt-BR')}\n`
       }
 
       markdown += `- **Limite flexível:** ${credit.isLimitFlexible ? 'Sim' : 'Não'}\n`
-
-      if (
-        credit.disaggregatedCreditLimits &&
-        credit.disaggregatedCreditLimits.length > 0
-      ) {
-        markdown += '\n### 📋 Limites Detalhados\n\n'
-
-        // Agrupar por lineName para evitar repetição
-        const groupedLimits = credit.disaggregatedCreditLimits.reduce(
-          (acc: any, limit: any) => {
-            if (!acc[limit.lineName]) {
-              acc[limit.lineName] = limit
-            }
-            return acc
-          },
-          {}
-        )
-
-        Object.values(groupedLimits).forEach((limit: any) => {
-          const lineName = this.translateLineName(limit.lineName)
-          markdown += `**${lineName}:**\n`
-          markdown += `- Usado: R$ ${limit.usedAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
-          markdown += `- Limite: R$ ${limit.limitAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
-          markdown += `- Disponível: R$ ${limit.availableAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n`
-        })
-      }
     }
+    const credit = account.creditData as unknown as {
+      disaggregatedCreditLimits: {
+        lineName: string
+        limitAmount: number
+        usedAmount: number
+        availableAmount: number
+      }[]
+    }
+    if (credit.disaggregatedCreditLimits.length > 0) {
+      markdown += '\n### 📋 Limites Detalhados\n\n'
 
-    markdown += `\n**Última atualização:** ${new Date(account.updatedAt).toLocaleString('pt-BR')}\n\n`
+      // Agrupar por lineName para evitar repetição
+      const groupedLimits = credit.disaggregatedCreditLimits.reduce(
+        (acc, limit) => {
+          if (!acc[limit.lineName]) {
+            acc[limit.lineName] = limit
+          }
+          return acc
+        },
+        {} as Record<
+          string,
+          {
+            lineName: string
+            limitAmount: number
+            usedAmount: number
+            availableAmount: number
+          }
+        >
+      )
+
+      Object.values(groupedLimits).forEach(limit => {
+        const lineName = this.translateLineName(limit.lineName)
+        markdown += `**${lineName}:**\n`
+        markdown += `- Usado: R$ ${limit.usedAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+        markdown += `- Limite: R$ ${limit.limitAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n`
+        markdown += `- Disponível: R$ ${limit.availableAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n`
+      })
+    }
+    const newAccount = account as unknown as {
+      updatedAt: string
+    }
+    markdown += `\n**Última atualização:** ${new Date(newAccount.updatedAt).toLocaleString('pt-BR')}\n\n`
 
     return markdown
   }

@@ -58,7 +58,7 @@ export class PluggySingletonClient {
 
   retriveAccountNameFromId(id: string) {
     return Object.entries(PLUGGY_ACCOUNTS_IDS).find(
-      ([_, value]) => value === id
+      ([, value]) => value === id
     )?.[0] as (typeof PLUGGY_ACCOUNTS_NAMES)[number] | undefined
   }
 

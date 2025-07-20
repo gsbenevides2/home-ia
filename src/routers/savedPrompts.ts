@@ -1,66 +1,131 @@
-import { Router } from 'express'
+import { Elysia, t } from 'elysia'
 import { SavedPromptDatabase } from '../clients/database/savedPrompts'
 import { addToQueue } from '../queue/queue'
+import { authService } from './authentication'
 
-const savedPromptsRouter = Router()
-
-savedPromptsRouter.get('/service/saved-prompts', async (_, res) => {
-  const prompts = await SavedPromptDatabase.getInstance().getSavedPrompts()
-  res.json(prompts)
+const savedPromptsRouter = new Elysia({
+  prefix: '/service/saved-prompts'
 })
-
-savedPromptsRouter.post('/service/saved-prompts', async (req, res) => {
-  const prompt = await SavedPromptDatabase.getInstance().createSavedPrompt(
-    req.body
-  )
-  res.json(prompt)
-})
-
-savedPromptsRouter.delete('/service/saved-prompts/:id', async (req, res) => {
-  await SavedPromptDatabase.getInstance().deleteSavedPrompt(req.params.id)
-  res.json({ message: 'Prompt deleted' })
-})
-
-savedPromptsRouter.put('/service/saved-prompts/:id', async (req, res) => {
-  await SavedPromptDatabase.getInstance().updateSavedPrompt(
-    req.params.id,
-    req.body
-  )
-  res.json({ message: 'Prompt updated' })
-})
-
-savedPromptsRouter.get('/service/saved-prompts/:id', async (req, res) => {
-  const prompt = await SavedPromptDatabase.getInstance().getSavedPrompt(
-    req.params.id
-  )
-  res.json(prompt)
-})
-
-savedPromptsRouter.post(
-  '/service/saved-prompts/:id/execute',
-  async (req, res) => {
-    const prompt = await SavedPromptDatabase.getInstance().getSavedPrompt(
-      req.params.id
-    )
-
-    if (!prompt) {
-      res.status(404).json({ message: 'Prompt not found' })
-      return
+  .use(authService)
+  .get(
+    '/',
+    async () => {
+      const savedPrompts =
+        await SavedPromptDatabase.getInstance().getSavedPrompts()
+      return {
+        savedPrompts
+      }
+    },
+    {
+      response: t.Object({
+        savedPrompts: t.Array(
+          t.Object({
+            id: t.String(),
+            name: t.String(),
+            prompt: t.String()
+          })
+        )
+      }),
+      requireAuthentication: true
     }
+  )
+  .post(
+    '/',
+    async ({ body }) => {
+      const savedPrompt =
+        await SavedPromptDatabase.getInstance().createSavedPrompt(body)
+      return {
+        savedPrompt
+      }
+    },
+    {
+      body: t.Object({
+        name: t.String(),
+        prompt: t.String()
+      }),
+      requireAuthentication: true
+    }
+  )
+  .delete(
+    '/:id',
+    async ({ params }) => {
+      await SavedPromptDatabase.getInstance().deleteSavedPrompt(params.id)
+      return {
+        message: 'Saved prompt deleted'
+      }
+    },
+    {
+      params: t.Object({
+        id: t.String()
+      }),
+      requireAuthentication: true
+    }
+  )
+  .put(
+    '/:id',
+    async ({ params, body }) => {
+      await SavedPromptDatabase.getInstance().updateSavedPrompt(params.id, body)
+      return {
+        message: 'Saved prompt updated'
+      }
+    },
+    {
+      params: t.Object({
+        id: t.String()
+      }),
+      body: t.Object({
+        name: t.String(),
+        prompt: t.String()
+      }),
+      requireAuthentication: true
+    }
+  )
+  .post(
+    '/:id/execute',
+    async context => {
+      const prompt = await SavedPromptDatabase.getInstance().getSavedPrompt(
+        context.params.id
+      )
 
-    let promptText = prompt.prompt ?? ''
-    const contents: string[] = (req.body?.contents ?? []).filter(
-      (content: string) => content !== ''
-    )
-    contents.forEach((content, index) => {
-      promptText = promptText.replace(`{{content[${index}]}}`, content)
-    })
-    addToQueue('execute-saved-prompt', {
-      prompt: promptText
-    })
+      if (!prompt) {
+        return context.status(404, {
+          message: 'Saved prompt not found'
+        })
+      }
 
-    res.json({ message: 'Prompt enqueued in executation pipeline' })
-  }
-)
+      let promptText = prompt.prompt ?? ''
+      const contents: string[] = (context.body?.contents ?? []).filter(
+        (content: string) => content !== ''
+      )
+      contents.forEach((content, index) => {
+        promptText = promptText.replace(`{{content[${index}]}}`, content)
+      })
+
+      addToQueue('execute-saved-prompt', {
+        prompt: promptText
+      })
+
+      return context.status(200, {
+        message: 'Saved prompt executed'
+      })
+    },
+    {
+      params: t.Object({
+        id: t.String()
+      }),
+      body: t.Object({
+        contents: t.Array(t.String())
+      }),
+      response: {
+        200: t.Object({
+          message: t.String()
+        }),
+        404: t.Object({
+          message: t.String()
+        })
+      },
+      requireAuthentication: true
+    }
+  )
 
 export default savedPromptsRouter

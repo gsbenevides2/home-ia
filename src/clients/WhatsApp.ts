@@ -10,10 +10,11 @@ export class WhatsAppClient {
   private ipcClient: WhatsAppIPCClient | null = null
   private initializationEventEmmiter = new EventEmitter()
   private isReady: boolean = false
-  private qrCode: string = ''
+  public qrCode: string = ''
+  public authenticationEventEmmiter = new EventEmitter()
 
-  public static async getInstance() {
-    if (WhatsAppClient.instance) {
+  public static async getInstance(waitForRelease: boolean = true) {
+    if (WhatsAppClient.instance && waitForRelease) {
       await WhatsAppClient.waitReleaseInstance()
     }
 
@@ -36,23 +37,26 @@ export class WhatsAppClient {
   }
 
   private async startNodeProcess() {
-    const servicePath = path.join(process.cwd(), 'src/whatsapp-service/whatsapp-node-service.mjs')
-    
+    const servicePath = path.join(
+      process.cwd(),
+      'src/whatsapp-service/whatsapp-node-service.mjs'
+    )
+
     Logger.info('WhatsAppClient', 'Starting WhatsApp Node.js service...')
     this.nodeProcess = spawn('node', [servicePath], {
       stdio: ['pipe', 'pipe', 'pipe'],
       detached: false
     })
 
-    this.nodeProcess.stdout?.on('data', (data) => {
+    this.nodeProcess.stdout?.on('data', data => {
       Logger.info('WhatsAppNodeService', data.toString().trim())
     })
 
-    this.nodeProcess.stderr?.on('data', (data) => {
+    this.nodeProcess.stderr?.on('data', data => {
       Logger.error('WhatsAppNodeService', data.toString().trim())
     })
 
-    this.nodeProcess.on('exit', (code) => {
+    this.nodeProcess.on('exit', code => {
       Logger.warn('WhatsAppClient', `Node.js service exited with code ${code}`)
       this.nodeProcess = null
     })
@@ -69,17 +73,19 @@ export class WhatsAppClient {
       }
 
       this.ipcClient = new WhatsAppIPCClient()
-      
-      this.ipcClient.on('qr_update', (qr) => {
+
+      this.ipcClient.on('qr_update', qr => {
         this.qrCode = qr
         Logger.info('WhatsAppClient', 'Awaiting for authentication...')
         this.initializationEventEmmiter.emit('awaitingForAuthentication')
+        this.authenticationEventEmmiter.emit('qrCode', qr)
       })
 
       this.ipcClient.on('ready', () => {
         this.isReady = true
         Logger.info('WhatsAppClient', 'WhatsApp is ready')
         this.initializationEventEmmiter.emit('readyToSendMessages')
+        this.authenticationEventEmmiter.emit('success')
       })
 
       this.ipcClient.on('auth_failed', () => {
@@ -92,8 +98,11 @@ export class WhatsAppClient {
     }
   }
 
-  async connect(): Promise<'readyToSendMessages' | 'awaitingForAuthentication'> {
-    return new Promise(async (resolve) => {
+  async connect(): Promise<
+    'readyToSendMessages' | 'awaitingForAuthentication'
+  > {
+    // eslint-disable-next-line no-async-promise-executor
+    return new Promise(async resolve => {
       this.initializationEventEmmiter.on('readyToSendMessages', () => {
         resolve('readyToSendMessages')
       })
@@ -103,7 +112,7 @@ export class WhatsAppClient {
 
       await this.ensureIPCConnection()
       const result = await this.ipcClient!.connectWhatsApp()
-      
+
       if (result === 'readyToSendMessages') {
         this.isReady = true
       }
@@ -129,10 +138,10 @@ export class WhatsAppClient {
 
   async release() {
     Logger.info('WhatsAppClient', 'Releasing WhatsApp...')
-    
+
     if (this.ipcClient) {
       await this.ipcClient.release()
-      this.ipcClient.disconnect()
+      this.ipcClient?.disconnect()
       this.ipcClient = null
     }
 

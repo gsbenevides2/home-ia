@@ -12,7 +12,6 @@ import type { VoiceBasedChannel } from 'discord.js'
 import {
   ApplicationCommandType,
   Client,
-  Collection,
   GatewayIntentBits,
   Message,
   Partials
@@ -28,11 +27,12 @@ import { downloadAudioInBase64 } from './downloadContent.ts'
 import { splitDiscordMessage } from './messageSplitter.ts'
 
 // Importar decodificador Opus
-let OpusScript: any = null
+let OpusScript: typeof import('opusscript') | null = null
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   OpusScript = require('opusscript')
   console.log('✅ opusscript carregado com sucesso')
-} catch (error) {
+} catch {
   console.log('⚠️ opusscript não disponível, usando fallback')
 }
 
@@ -77,7 +77,6 @@ export class DiscordBot {
   private setupEventHandlers() {
     const DISCORD_ALLOWED_USER_ID = Bun.env.DISCORD_ALLOWED_USER_ID!
     const DISCORD_BOT_ID = Bun.env.DISCORD_BOT_ID!
-    const collection = new Collection()
 
     this.client.on('ready', () => {
       Logger.info('Discord Bot', 'Bot is connected to Discord', null)
@@ -267,8 +266,9 @@ export class DiscordBot {
 
       this.voiceConnection = joinVoiceChannel({
         channelId: VOICE_CHANNEL_ID,
-        guildId: (channel as any).guild.id,
-        adapterCreator: (channel as any).guild.voiceAdapterCreator,
+        guildId: (channel as unknown as VoiceBasedChannel).guild.id,
+        adapterCreator: (channel as unknown as VoiceBasedChannel).guild
+          .voiceAdapterCreator,
         selfDeaf: false,
         selfMute: false
       })
@@ -276,13 +276,23 @@ export class DiscordBot {
       Logger.info('Discord Bot', 'Conectado ao canal de voz!', null)
       this.setupVoiceProcessing()
 
-      this.voiceConnection.on('stateChange', (oldState: any, newState: any) => {
-        Logger.info(
-          'Discord Bot',
-          `Estado da conexão de voz: ${oldState.status} → ${newState.status}`,
-          null
-        )
-      })
+      this.voiceConnection.on(
+        'stateChange',
+        (
+          oldState: {
+            status: string
+          },
+          newState: {
+            status: string
+          }
+        ) => {
+          Logger.info(
+            'Discord Bot',
+            `Estado da conexão de voz: ${oldState.status} → ${newState.status}`,
+            null
+          )
+        }
+      )
     } catch (error) {
       Logger.error('Discord Bot', `Erro ao conectar ao canal de voz: ${error}`)
     }
@@ -292,7 +302,9 @@ export class DiscordBot {
     if (!this.voiceConnection) return
 
     // Configurar decodificador Opus
-    let opusDecoder: any = null
+    let opusDecoder: {
+      decode: (chunk: Buffer) => Buffer
+    } | null = null
     if (OpusScript) {
       try {
         opusDecoder = new OpusScript(48000, 1) // 48kHz, mono
@@ -398,7 +410,7 @@ export class DiscordBot {
               recording.decodedChunks.push(decoded)
               recording.decodedStream.write(decoded)
             }
-          } catch (error) {
+          } catch {
             // Em caso de erro na decodificação, usar dados raw como fallback
             recording.decodedChunks.push(chunk)
             recording.decodedStream.write(chunk)
@@ -445,7 +457,7 @@ export class DiscordBot {
         activeRecordings.delete(userId)
       })
 
-      audioStream.on('error', (error: any) => {
+      audioStream.on('error', (error: unknown) => {
         Logger.error('Discord Bot', `Erro no stream de áudio: ${error}`)
         const recording = activeRecordings.get(userId)
         if (recording) {
