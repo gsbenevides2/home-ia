@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import fs from 'fs/promises'
 import path from 'path'
 import { Cameras, type CameraName } from '../clients/Camera/CamerasSingleton'
+import { Logger } from '../logger'
 import { authService } from './authentication'
 
 const app = new Elysia({
@@ -11,24 +12,34 @@ const app = new Elysia({
   .get(
     '/:cameraName/snapshot.jpg',
     async context => {
+      Logger.info('Camera', 'Getting snapshot')
       const cameraName = context.params.cameraName
+      Logger.info('Camera', 'Camera name', cameraName)
       const camera = await Cameras.getInstance().getCamera(
         cameraName as CameraName
       )
       if (!camera) {
+        Logger.error('Camera', 'Camera not found', cameraName)
         return context.status(404, 'Not Found')
       }
-      const response = await fetch(camera.getSnapshotUrl())
+      const snapshotUrl = camera.getSnapshotUrl()
+      Logger.info('Camera', 'Snapshot URL', snapshotUrl)
+      const response = await fetch(snapshotUrl)
       if (!response.ok) {
+        Logger.error('Camera', 'Failed to fetch snapshot', snapshotUrl)
         return context.status(500, 'Internal Server Error')
       }
+      Logger.info('Camera', 'Snapshot fetched successfully')
       const buffer = await response.arrayBuffer()
+      Logger.info('Camera', 'Buffer fetched successfully')
       const data = Buffer.from(buffer)
+      Logger.info('Camera', 'Data fetched successfully')
       context.set.headers['content-type'] = 'image/jpeg'
       context.set.headers['cache-control'] =
         'no-cache, no-store, must-revalidate'
       context.set.headers['pragma'] = 'no-cache'
       context.set.headers['expires'] = '0'
+      Logger.info('Camera', 'Response headers set')
       return new Response(data, {
         headers: context.set.headers as HeadersInit
       })
