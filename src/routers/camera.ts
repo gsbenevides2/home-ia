@@ -1,4 +1,4 @@
-import { Elysia } from 'elysia'
+import { Elysia, file } from 'elysia'
 import fs from 'fs/promises'
 import path from 'path'
 import { Cameras, type CameraName } from '../clients/Camera/CamerasSingleton'
@@ -33,16 +33,15 @@ const app = new Elysia({
       const buffer = await response.arrayBuffer()
       Logger.info('Camera', 'Buffer fetched successfully')
       const data = Buffer.from(buffer)
-      Logger.info('Camera', 'Data fetched successfully')
-      context.set.headers['content-type'] = 'image/jpeg'
-      context.set.headers['cache-control'] =
-        'no-cache, no-store, must-revalidate'
-      context.set.headers['pragma'] = 'no-cache'
-      context.set.headers['expires'] = '0'
-      Logger.info('Camera', 'Response headers set')
-      return new Response(data, {
-        headers: context.set.headers as HeadersInit
-      })
+
+      const tempDir = path.dirname(process.cwd(), 'temp')
+      if (!(await fs.exists(tempDir))) {
+        await fs.mkdir(tempDir, { recursive: true })
+      }
+
+      const tempFile = path.join(tempDir, 'snapshot.jpg')
+      await fs.writeFile(tempFile, data)
+      return file(tempFile)
     },
     {
       requireAuthentication: true
