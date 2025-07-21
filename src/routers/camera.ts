@@ -63,28 +63,12 @@ const app = new Elysia({
         if (!hlsManager.isRunning()) {
           setTimeout(async () => {
             if (await fs.exists(hlsManager.playlistPath)) {
-              context.set.headers['content-type'] =
-                'application/vnd.apple.mpegurl'
-              context.set.headers['cache-control'] =
-                'no-cache, no-store, must-revalidate'
-              context.set.headers['pragma'] = 'no-cache'
-              context.set.headers['expires'] = '0'
-              return new Response(await fs.readFile(hlsManager.playlistPath), {
-                headers: context.set.headers as HeadersInit
-              })
+              return file(hlsManager.playlistPath)
             }
           }, 2000)
         } else {
           if (await fs.exists(hlsManager.playlistPath)) {
-            context.set.headers['content-type'] =
-              'application/vnd.apple.mpegurl'
-            context.set.headers['cache-control'] =
-              'no-cache, no-store, must-revalidate'
-            context.set.headers['pragma'] = 'no-cache'
-            context.set.headers['expires'] = '0'
-            return new Response(await fs.readFile(hlsManager.playlistPath), {
-              headers: context.set.headers as HeadersInit
-            })
+            return file(hlsManager.playlistPath)
           }
         }
       } catch {
@@ -98,7 +82,6 @@ const app = new Elysia({
   .get(
     '/:cameraName/:filename',
     async context => {
-      console.log('get /:cameraName/:filename', context.params)
       try {
         const cameraName = context.params.cameraName
         const camera = await Cameras.getInstance().getCamera(
@@ -116,13 +99,7 @@ const app = new Elysia({
         const filePath = path.join(hlsManager.hlsDir, filename)
 
         if (await fs.exists(filePath)) {
-          context.set.headers['cache-control'] =
-            'no-cache, no-store, must-revalidate'
-          context.set.headers['pragma'] = 'no-cache'
-          context.set.headers['expires'] = '0'
-          return new Response(await fs.readFile(filePath), {
-            headers: context.set.headers as HeadersInit
-          })
+          return file(filePath)
         } else {
           return context.status(404, 'Arquivo não encontrado')
         }
