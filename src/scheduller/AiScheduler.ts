@@ -1,8 +1,8 @@
-import { Cron } from 'croner'
 import { JobDatabase } from '../clients/database/Jobs'
 import { Logger } from '../logger'
 import { Tracer } from '../logger/Tracer'
 import { Chatbot } from '../mcp/Chatbot'
+import { CronnerManager } from './CronnerManager'
 
 export interface JobData {
   id: string
@@ -13,13 +13,11 @@ export interface JobData {
 }
 
 export class AiScheduller {
-  private static myJobs: Cron[] = []
-
   public static async init() {
     const dbJobs = await this.getJobs()
     for (const dbJob of dbJobs) {
       const { id, time } = dbJob
-      const cron = new Cron(
+      const cron = CronnerManager.newCron(
         time,
         {
           name: id,
@@ -34,7 +32,6 @@ export class AiScheduller {
         'AiScheduller',
         `Retrived from DB Job ${id} scheduled at ${time} next invocation at ${next?.toISOString()}`
       )
-      this.myJobs.push(cron)
     }
   }
 
@@ -50,7 +47,7 @@ export class AiScheduller {
       llm,
       exclude
     })
-    const cron = new Cron(
+    const cron = CronnerManager.newCron(
       time,
       {
         name: this.makeId(id),
@@ -69,7 +66,7 @@ export class AiScheduller {
   }
 
   public static cancelJob(id: string) {
-    const job = this.myJobs.find(job => job.name === this.makeId(id))
+    const job = CronnerManager.getCron(this.makeId(id))
     if (job) {
       job.stop()
     }
@@ -117,7 +114,7 @@ export class AiScheduller {
       exclude: exclude ?? job.exclude
     })
     this.cancelJob(id)
-    const cron = new Cron(
+    const cron = CronnerManager.newCron(
       timeToUpdate,
       { name: this.makeId(id), timezone: 'America/Sao_Paulo' },
       () => this.callback(id)
@@ -133,12 +130,6 @@ export class AiScheduller {
       time: timeToUpdate,
       llm: llm ?? job.llm,
       exclude: exclude ?? job.exclude
-    }
-  }
-
-  public static gracefulShutdown() {
-    for (const job of this.myJobs) {
-      job.stop()
     }
   }
 }

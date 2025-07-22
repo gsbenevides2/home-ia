@@ -1,5 +1,6 @@
 import { AiScheduller } from './AiScheduler'
 import { CalendarNotifierScheduller } from './CalendarNotifierScheduler'
+import { CronnerManager } from './CronnerManager'
 import { TaskScheduller } from './TaskScheduler'
 
 export function StartScheduller() {
@@ -11,9 +12,5 @@ export function StartScheduller() {
 }
 
 export function StopScheduller() {
-  return Promise.all([
-    AiScheduller.gracefulShutdown(),
-    TaskScheduller.gracefulShutdown(),
-    CalendarNotifierScheduller.gracefulShutdown()
-  ])
+  CronnerManager.gracefulShutdown()
 }

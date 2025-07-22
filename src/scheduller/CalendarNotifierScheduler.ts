@@ -1,9 +1,9 @@
-import { Cron } from 'croner'
 import { endOfDay, format, startOfDay, subMinutes } from 'date-fns'
 import type { calendar_v3 } from 'googleapis'
 import { GoogleCalendar } from '../clients/google/Calendar'
 import { DiscordBot } from '../discord'
 import { Logger } from '../logger'
+import { CronnerManager } from './CronnerManager'
 
 const NON_EVENTS = ['workingLocation', 'birthday', 'focusTime', 'outOfOffice']
 const MINUTES_TO_SUBTRACT = 2
@@ -16,33 +16,33 @@ type EventWithCalendar = calendar_v3.Schema$Event & {
 }
 
 export class CalendarNotifierScheduller {
-  private static myJobs: Cron[] = []
   private static events: EventWithCalendar[] = []
-  private static syncCron: Cron | null = null
 
   public static async init() {
     await this.sync()
-    this.makeSyncCron()
   }
 
   public static async sync() {
     Logger.info('CalendarNotifierScheduller', 'Syncing events')
     await this.readEvents()
     await this.updateOrScheduleEventsInCron()
-    await this.cleanUpDeletedEvents()
+    this.makeSyncCron()
     Logger.info('CalendarNotifierScheduller', 'Synced events')
   }
 
   public static makeSyncCron() {
-    this.syncCron = new Cron(
+    CronnerManager.newCron(
       SYNC_CRON,
-      { name: 'calendar-notifier-sync', timezone: 'America/Sao_Paulo' },
+      { name: this.syncCronName, timezone: 'America/Sao_Paulo' },
       () => this.sync()
     )
   }
 
+  private static cronName = 'calendar-notifier'
+  private static syncCronName = 'calendar-notifier-sync'
+
   private static makeId(name: string) {
-    return `calendar-notifier-${name}`
+    return `${this.cronName}-${name}`
   }
 
   private static async readEvents() {
@@ -90,26 +90,22 @@ export class CalendarNotifierScheduller {
   }
 
   private static async updateOrScheduleEventsInCron() {
+    await this.removeAllJobs()
     for (const event of this.events) {
       const id = this.makeId(event.id ?? '')
-      const hasScheduled = this.myJobs.find(job => job.name === id)
-      if (hasScheduled) {
-        hasScheduled.stop()
-      }
       const timeToNotify = event.start?.dateTime ?? event.start?.date ?? ''
       const timeSubtracted = subMinutes(
         new Date(timeToNotify),
         MINUTES_TO_SUBTRACT
       )
 
-      const cron = new Cron(
+      const cron = CronnerManager.newCron(
         timeSubtracted.toISOString(),
         { name: id, timezone: 'America/Sao_Paulo' },
         () => {
           this.notifyEvent(event)
         }
       )
-      this.myJobs.push(cron)
       Logger.info(
         'CalendarNotifierScheduller',
         `Event ${event.id} scheduled at ${timeSubtracted.toISOString()} next invocation at ${cron.nextRun()?.toISOString()}`
@@ -117,15 +113,14 @@ export class CalendarNotifierScheduller {
     }
   }
 
-  private static async cleanUpDeletedEvents() {
-    const events = this.events
-    const myJobs = this.myJobs
-    const jobsToRemove = myJobs.filter(
-      job => !events.some(event => this.makeId(event.id ?? '') === job.name)
-    )
-    for (const job of jobsToRemove) {
-      Logger.info('CalendarNotifierScheduller', `Event ${job.name} removed`)
-      job.stop()
+  private static async removeAllJobs() {
+    const crons = CronnerManager.getCrons()
+    for (const cron of crons) {
+      if (cron.name?.startsWith(this.cronName)) {
+        cron.stop()
+      } else if (cron.name?.startsWith(this.syncCronName)) {
+        cron.stop()
+      }
     }
   }
 
@@ -164,14 +159,5 @@ export class CalendarNotifierScheduller {
     }
 
     DiscordClient.sendMessage(message)
-  }
-
-  public static gracefulShutdown() {
-    for (const job of this.myJobs) {
-      job.stop()
-    }
-    if (this.syncCron) {
-      this.syncCron.stop()
-    }
   }
 }
