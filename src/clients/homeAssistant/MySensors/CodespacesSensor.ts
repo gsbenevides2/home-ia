@@ -1,9 +1,13 @@
-import { CodespacesInstanceStatus } from '../../google/CodespacesComputeEngineMachine.ts'
+import {
+  CodespacesComputeEngineMachine,
+  CodespacesInstanceStatus
+} from '../../google/CodespacesComputeEngineMachine.ts'
 import {
   Sensor,
   type SensorAttributes,
   SensorDeviceClass
 } from '../AbstractEntities/Sensor.ts'
+import { MQTTHomeAssistantClient } from '../MQTT/Client.ts'
 
 interface CodespacesAttributes extends SensorAttributes {
   options: CodespacesInstanceStatus[]
@@ -37,5 +41,12 @@ export class CodespacesSensor {
   async getCodespacesStatus() {
     const response = await this.sensor.getData()
     return response.state
+  }
+
+  async setupButton() {
+    const mqttClient = MQTTHomeAssistantClient.getInstance()
+    mqttClient.createButton('codespaces', 'Toogle Codespaces', '1.0.0', () => {
+      CodespacesComputeEngineMachine.getInstance().toogleMachine()
+    })
   }
 }

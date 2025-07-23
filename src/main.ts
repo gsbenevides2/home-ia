@@ -1,4 +1,5 @@
 import { Cameras } from './clients/Camera/CamerasSingleton'
+import { CodespacesSensor } from './clients/homeAssistant/MySensors/CodespacesSensor.ts'
 import { DiscordBot } from './discord/index.ts'
 import { Logger } from './logger/index.ts'
 import { MCPSSEClientSingleton } from './mcp/client/sse.ts'
@@ -21,6 +22,7 @@ app.listen(port, async () => {
     await DiscordBot.getInstance().connect()
   }
   await SchedulerManager.StartScheduller()
+  await CodespacesSensor.getInstance().setupButton()
 })
 
 process.on('SIGINT', async () => {
