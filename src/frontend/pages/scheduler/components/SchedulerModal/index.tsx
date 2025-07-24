@@ -108,24 +108,6 @@ export default function SchedulerModal({
         }
     };
 
-    const formatDateTimeForInput = (dateString: string) => {
-        try {
-            const date = new Date(dateString);
-            return date.toISOString().slice(0, 16);
-        } catch {
-            return "";
-        }
-    };
-
-    const handleDateTimeChange = (value: string) => {
-        try {
-            const date = new Date(value);
-            setTime(date.toISOString());
-        } catch {
-            setTime(value);
-        }
-    };
-
     return (
         <Dialog open={isOpen} onClose={handleClose} className={styles.dialog}>
             <DialogTitle className={styles.title}>
@@ -183,13 +165,16 @@ export default function SchedulerModal({
                             )
                             : (
                                 <>
-                                    <input
+                                    <TextField
                                         type="datetime-local"
-                                        value={formatDateTimeForInput(time)}
-                                        onChange={(e) =>
-                                            handleDateTimeChange(
-                                                e.target.value,
-                                            )}
+                                        value={time}
+                                        onChange={(
+                                            e: React.ChangeEvent<
+                                                HTMLInputElement
+                                            >,
+                                        ) => {
+                                            setTime(e.target.value);
+                                        }}
                                         className={styles.dateInput}
                                         disabled={loading}
                                         required
@@ -219,9 +204,7 @@ export default function SchedulerModal({
                     <div className={styles.switchContainer}>
                         <Switch
                             checked={exclude}
-                            onChange={(
-                                evt: React.ChangeEvent<HTMLInputElement>,
-                            ) => setExclude(evt.currentTarget.checked)}
+                            onClick={() => setExclude((e) => !e)}
                             label="Excluir job após execução"
                             disabled={loading}
                         />
