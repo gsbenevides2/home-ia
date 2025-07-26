@@ -11,7 +11,7 @@ const args = {
   time: z
     .string()
     .describe(
-      'The time of the job. Use cron syntax for cron jobs or ISO 8601 for date jobs'
+      'The time of the job. Use cron syntax for cron jobs or yyyy-mm-dd hh:mm:ss for date jobs'
     ),
   llm: z
     .string()

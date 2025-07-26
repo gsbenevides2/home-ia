@@ -3,7 +3,6 @@ import { Logger } from '../logger'
 import { Tracer } from '../logger/Tracer'
 import { Chatbot } from '../mcp/Chatbot'
 import { CronnerManager } from './CronnerManager'
-
 export interface JobData {
   id: string
   type: 'cron' | 'date'
@@ -16,9 +15,10 @@ export class AiScheduller {
   public static async init() {
     const dbJobs = await this.getJobs()
     for (const dbJob of dbJobs) {
-      const { id, time } = dbJob
+      const { id, time, type } = dbJob
+      const finalTime = type === 'cron' ? time : this.transformTime(time)
       const cron = CronnerManager.newCron(
-        time,
+        finalTime,
         {
           name: id,
           timezone: 'America/Sao_Paulo'
@@ -47,8 +47,9 @@ export class AiScheduller {
       llm,
       exclude
     })
+    const finalTime = type === 'cron' ? time : this.transformTime(time)
     const cron = CronnerManager.newCron(
-      time,
+      finalTime,
       {
         name: this.makeId(id),
         timezone: 'America/Sao_Paulo'
@@ -131,5 +132,19 @@ export class AiScheduller {
       llm: llm ?? job.llm,
       exclude: exclude ?? job.exclude
     }
+  }
+
+  public static transformTime(timeString: string): Date {
+    const [date, time] = timeString.split(' ')
+    const [year, month, day] = date.split('-')
+    const [hour, minute, second] = time.split(':')
+    const currentDate = new Date()
+    currentDate.setDate(Number(day))
+    currentDate.setMonth(Number(month) - 1)
+    currentDate.setFullYear(Number(year))
+    currentDate.setHours(Number(hour))
+    currentDate.setMinutes(Number(minute))
+    currentDate.setSeconds(Number(second))
+    return currentDate
   }
 }

@@ -10,6 +10,10 @@ import { Switch } from "@rmwc/switch";
 import { TextField } from "@rmwc/textfield";
 import { useEffect, useState } from "react";
 import styles from "./styles.module.css";
+import {
+    formateDateStringInputForAPI,
+    formatFromAPIToStringInput,
+} from "../../utils/formatDate";
 
 type JobAPIResponse = {
     id: string;
@@ -167,13 +171,19 @@ export default function SchedulerModal({
                                 <>
                                     <TextField
                                         type="datetime-local"
-                                        value={time}
+                                        value={formatFromAPIToStringInput(
+                                            time,
+                                        )}
                                         onChange={(
                                             e: React.ChangeEvent<
                                                 HTMLInputElement
                                             >,
                                         ) => {
-                                            setTime(e.target.value);
+                                            setTime(
+                                                formateDateStringInputForAPI(
+                                                    e.target.value,
+                                                ),
+                                            );
                                         }}
                                         className={styles.dateInput}
                                         disabled={loading}
