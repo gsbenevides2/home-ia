@@ -1,6 +1,6 @@
 import { Card } from "@rmwc/card";
 import { Typography } from "@rmwc/typography";
-import styles from "./styles.module.css";
+import styles from "../styles.module.css";
 
 type Props = {
     qrCode: string;
