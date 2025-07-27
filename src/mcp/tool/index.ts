@@ -44,6 +44,7 @@ import { SearchAlbum } from './home_assistant/spotify/searchAlbum'
 import { SearchArtist } from './home_assistant/spotify/searchArtist'
 import { SearchSong } from './home_assistant/spotify/searchSong'
 import { GetTrainStatus } from './home_assistant/train/getStatus'
+import { TurnOffPcTool } from './home_assistant/turnoff_pc'
 import { GetStreamerStatusTool } from './home_assistant/twicth/getStatus'
 import { GetStreamerIdsTool } from './home_assistant/twicth/getStreamerIds'
 import { StartDeviceTool } from './home_assistant/wakeOnLan/startDevice'
@@ -132,7 +133,8 @@ export const toolList = [
   new GetArtistTopTracks(),
   new PlayAlbum(),
   new PlayArtist(),
-  new GetAlbumTracks()
+  new GetAlbumTracks(),
+  new TurnOffPcTool()
 ]
 
 export function registerTools(server: McpServer) {

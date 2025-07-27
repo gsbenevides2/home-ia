@@ -18,8 +18,7 @@ export const WakeOnLan: WakeOnLanType = {
     const macAddress = this.entities[device].replaceAll(':', '_').toLowerCase()
     const sensor = new Button(
       `button.wake_on_lan_${macAddress}`,
-      `button.wake_on_lan_${macAddress}`,
-      {} as never
+      `button.wake_on_lan_${macAddress}`
     )
     await sensor.click()
   }
