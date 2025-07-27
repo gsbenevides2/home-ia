@@ -1,4 +1,4 @@
-import { exec } from 'node:child_process'
+import axios from 'axios'
 import { Logger } from '../../../logger'
 import { MQTTHomeAssistantClient } from '../MQTT/Client'
 export class TurnOffPc {
@@ -21,15 +21,15 @@ export class TurnOffPc {
     }
     const url = new URL(`http://${ip}:8624`)
     url.searchParams.set('auth', password)
-    const command = `curl "${url.toString()}"`
-    Logger.info('TurnOffPc', `Executing curl "${command}"`)
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
+    Logger.info('TurnOffPc', `URL: ${url.toString()}`)
+    axios
+      .get(url.toString())
+      .then(response => {
+        Logger.info('TurnOffPc', `Response: ${response.data}`)
+      })
+      .catch(error => {
         Logger.error('TurnOffPc', `Error: ${error}`)
-      }
-      Logger.info('TurnOffPc', `Output: ${stdout}`)
-      Logger.info('TurnOffPc', `Error: ${stderr}`)
-    })
+      })
   }
 
   async setupButton() {
