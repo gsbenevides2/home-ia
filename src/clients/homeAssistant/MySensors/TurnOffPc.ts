@@ -1,4 +1,4 @@
-import axios from 'axios'
+import { exec } from 'node:child_process'
 import { Logger } from '../../../logger'
 import { MQTTHomeAssistantClient } from '../MQTT/Client'
 export class TurnOffPc {
@@ -15,7 +15,9 @@ export class TurnOffPc {
     if (!ip || !password) {
       throw new Error('TURN_OFF_PC_IP and TURN_OFF_PC_PASSWORD must be set')
     }
-    await axios.get(`http://${ip}:8624/?auth=${password}`)
+    const url = new URL(`http://${ip}:8524`)
+    url.searchParams.set('auth', password)
+    exec(`curl "${url.toString()}"`)
   }
 
   async setupButton() {
