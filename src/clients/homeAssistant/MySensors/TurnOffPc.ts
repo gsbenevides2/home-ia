@@ -21,8 +21,15 @@ export class TurnOffPc {
     }
     const url = new URL(`http://${ip}:8624`)
     url.searchParams.set('auth', password)
-    Logger.info('TurnOffPc', `Executing curl "${url.toString()}"`)
-    exec(`curl "${url.toString()}"`)
+    const command = `curl "${url.toString()}"`
+    Logger.info('TurnOffPc', `Executing curl "${command}"`)
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        Logger.error('TurnOffPc', `Error: ${error}`)
+      }
+      Logger.info('TurnOffPc', `Output: ${stdout}`)
+      Logger.info('TurnOffPc', `Error: ${stderr}`)
+    })
   }
 
   async setupButton() {
