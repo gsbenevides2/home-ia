@@ -15,7 +15,7 @@ export class TurnOffPc {
     if (!ip || !password) {
       throw new Error('TURN_OFF_PC_IP and TURN_OFF_PC_PASSWORD must be set')
     }
-    await axios.get(`http://${ip}:8624?auth=${password}`)
+    await axios.get(`http://${ip}:8624/?auth=${password}`)
   }
 
   async setupButton() {
