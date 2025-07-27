@@ -19,7 +19,7 @@ export class TurnOffPc {
       )
       return
     }
-    const url = new URL(`http://${ip}:8524`)
+    const url = new URL(`http://${ip}:8624`)
     url.searchParams.set('auth', password)
     Logger.info('TurnOffPc', `Executing curl "${url.toString()}"`)
     exec(`curl "${url.toString()}"`)
