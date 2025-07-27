@@ -13,10 +13,15 @@ export class TurnOffPc {
     const password = Bun.env.TURN_OFF_PC_PASSWORD
     Logger.info('TurnOffPc', `Turning off PC ${ip} with password ${password}`)
     if (!ip || !password) {
-      throw new Error('TURN_OFF_PC_IP and TURN_OFF_PC_PASSWORD must be set')
+      Logger.error(
+        'TurnOffPc',
+        'TURN_OFF_PC_IP and TURN_OFF_PC_PASSWORD must be set'
+      )
+      return
     }
     const url = new URL(`http://${ip}:8524`)
     url.searchParams.set('auth', password)
+    Logger.info('TurnOffPc', `Executing curl "${url.toString()}"`)
     exec(`curl "${url.toString()}"`)
   }
 
