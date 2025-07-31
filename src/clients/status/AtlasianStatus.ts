@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { Logger } from '../../logger/index.ts'
 import { type StatusReturn } from './StatusTypes.ts'
 
 type AtlassianStatusResponse = {
@@ -23,8 +24,10 @@ type AtlassianIncidentResponse = {
 export async function fetchFromAtlassianStatuspage(
   endpoint: string
 ): Promise<StatusReturn> {
+  Logger.info('fetchFromAtlassianStatuspage', 'Fetching status', { endpoint })
   const url = `https://${endpoint}/api/v2/status.json`
   const response = await axios.get<AtlassianStatusResponse>(url)
+  Logger.info('fetchFromAtlassianStatuspage', 'Status response', { response })
 
   const status = response.data.status.indicator === 'none' ? 'OK' : 'DOWN'
 
@@ -32,6 +35,9 @@ export async function fetchFromAtlassianStatuspage(
     const unresolvedIncidents = await axios.get<AtlassianIncidentResponse>(
       `https://${endpoint}/api/v2/incidents/unresolved.json`
     )
+    Logger.info('fetchFromAtlassianStatuspage', 'Unresolved incidents', {
+      unresolvedIncidents
+    })
     const problemDescription =
       unresolvedIncidents.data.incidents[0].incident_updates[0].body
 

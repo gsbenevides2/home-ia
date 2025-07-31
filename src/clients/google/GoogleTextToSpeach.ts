@@ -1,4 +1,5 @@
 import { TextToSpeechClient } from '@google-cloud/text-to-speech'
+import { Logger } from '../../logger'
 import { AuthCredentials } from './AuthCrendentials'
 
 export class GoogleTextToSpeach {
@@ -11,6 +12,7 @@ export class GoogleTextToSpeach {
   private constructor() {}
 
   public async textToSpeach(text: string): Promise<string> {
+    Logger.info('GoogleTextToSpeach', 'Converting text to speech', { text })
     const { credentials, projectId } =
       AuthCredentials.getInstance().getCredentials()
 

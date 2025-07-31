@@ -1,3 +1,4 @@
+import { Logger } from '../../../logger/index.ts'
 import {
   StatusPageDatabase,
   type StatusPageDatabaseRow
@@ -30,10 +31,12 @@ export class StatusSensors {
   }
 
   public async getDbStatusPages() {
+    Logger.info('StatusSensors', 'Getting status pages')
     return StatusPageDatabase.getInstance().getChecks()
   }
 
   public async sendSensor(sensorData: StatusPageDatabaseRow) {
+    Logger.info('StatusSensors', 'Sending sensor', { sensorData })
     const response = await platforms[
       sensorData.status_platform as keyof typeof platforms
     ](sensorData.status_url)
@@ -53,11 +56,13 @@ export class StatusSensors {
     await sensor.sendData(status)
   }
   public async sendAllStatus() {
+    Logger.info('StatusSensors', 'Sending all status')
     const statusPages = await this.getDbStatusPages()
     await Promise.all(statusPages.map(this.sendSensor))
   }
 
   public async getStatus(sensorId: string) {
+    Logger.info('StatusSensors', 'Getting status', { sensorId })
     const sensor = new BinarySensor<StatusSensorAttributes>(
       `binary_sensor.${sensorId}`,
       `binary_sensor.${sensorId}`,
@@ -69,6 +74,7 @@ export class StatusSensors {
       }
     )
     const sensorData = await sensor.getData()
+    Logger.info('StatusSensors', 'Status', { sensorData })
     return sensorData
   }
 }

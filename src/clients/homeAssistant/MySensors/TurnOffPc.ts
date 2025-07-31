@@ -9,6 +9,7 @@ export class TurnOffPc {
   }
 
   async turnOffPc() {
+    Logger.info('TurnOffPc', 'Turning off PC')
     const ip = Bun.env.TURN_OFF_PC_IP
     const password = Bun.env.TURN_OFF_PC_PASSWORD
     Logger.info('TurnOffPc', `Turning off PC ${ip} with password ${password}`)
@@ -22,6 +23,7 @@ export class TurnOffPc {
     const url = new URL(`http://${ip}:8624`)
     url.searchParams.set('auth', password)
     Logger.info('TurnOffPc', `URL: ${url.toString()}`)
+    Logger.info('TurnOffPc', 'Sending request')
     axios
       .get(url.toString())
       .then(response => {
@@ -33,6 +35,7 @@ export class TurnOffPc {
   }
 
   async setupButton() {
+    Logger.info('TurnOffPc', 'Setting up button')
     const mqttClient = MQTTHomeAssistantClient.getInstance()
     mqttClient.createButton('turn_off_pc', 'Turn Off PC', '1.0.0', () => {
       TurnOffPc.getInstance().turnOffPc()

@@ -1,5 +1,6 @@
 import EventEmitter from 'events'
 import { PluggyClient } from 'pluggy-sdk'
+import { Logger } from '../../logger'
 
 export const PLUGGY_ACCOUNTS_NAMES = ['Guilherme', 'Pai'] as const
 
@@ -30,19 +31,29 @@ export class PluggySingletonClient {
   eventEmitter = new EventEmitter()
 
   async getAccountData(accountName: (typeof PLUGGY_ACCOUNTS_NAMES)[number]) {
+    Logger.info('PluggySingletonClient', 'Getting account data', {
+      accountName
+    })
     const accountData = await this.client.fetchAccounts(
       PLUGGY_ACCOUNTS_IDS[accountName]
     )
+    Logger.info('PluggySingletonClient', 'Account data', { accountData })
     return accountData
   }
 
   async dispatchUpdateAccountData(
     accountName: (typeof PLUGGY_ACCOUNTS_NAMES)[number]
   ) {
+    Logger.info('PluggySingletonClient', 'Dispatching update account data', {
+      accountName
+    })
     this.eventEmitter.emit(`updateAccountData-${accountName}`)
   }
 
   updateAccountData(accountName: (typeof PLUGGY_ACCOUNTS_NAMES)[number]) {
+    Logger.info('PluggySingletonClient', 'Updating account data', {
+      accountName
+    })
     const accountId = PLUGGY_ACCOUNTS_IDS[accountName]
     return new Promise(resolve => {
       this.client.updateItem(accountId, undefined, {
@@ -65,6 +76,9 @@ export class PluggySingletonClient {
   async getAccountTransactions(
     accountName: (typeof PLUGGY_ACCOUNTS_NAMES)[number]
   ) {
+    Logger.info('PluggySingletonClient', 'Getting account transactions', {
+      accountName
+    })
     const accountData = await this.getAccountData(accountName)
     const transactions = await this.client.fetchTransactions(
       accountData.results[0].id,
@@ -72,6 +86,9 @@ export class PluggySingletonClient {
         pageSize: 4
       }
     )
+    Logger.info('PluggySingletonClient', 'Account transactions', {
+      transactions
+    })
     return transactions
   }
 }

@@ -1,3 +1,5 @@
+import { Logger } from '../../logger'
+
 export class AuthCredentials {
   private static instance: AuthCredentials
 
@@ -6,6 +8,7 @@ export class AuthCredentials {
   }
 
   public getCredentials() {
+    Logger.info('AuthCredentials', 'Getting credentials')
     const projectId = Bun.env.GCP_SERVICE_ACCOUNT_PROJECT_ID
     const clientEmail = Bun.env.GCP_SERVICE_ACCOUNT_CLIENT_EMAIL
     const privateKey = Buffer.from(

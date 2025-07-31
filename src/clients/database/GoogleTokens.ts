@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { json, pgTable, text } from 'drizzle-orm/pg-core'
 import type { Credentials } from 'google-auth-library'
+import { Logger } from '../../logger'
 import { DatabaseClient } from './client'
 
 const table = pgTable('google_tokens', {
@@ -23,6 +24,7 @@ export class GoogleTokensDatabase {
   private constructor() {}
 
   public async getTokens(email: string): Promise<Credentials | null> {
+    Logger.info('GoogleTokensDatabase', 'Getting tokens', { email })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     const result = await drizzleClient
@@ -34,6 +36,7 @@ export class GoogleTokensDatabase {
   }
 
   public async saveTokens(email: string, tokens: Credentials) {
+    Logger.info('GoogleTokensDatabase', 'Saving tokens', { email })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     await drizzleClient
@@ -47,6 +50,7 @@ export class GoogleTokensDatabase {
   }
 
   public async getAllTokens() {
+    Logger.info('GoogleTokensDatabase', 'Getting all tokens')
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     const result = await drizzleClient.select().from(table)
@@ -55,6 +59,7 @@ export class GoogleTokensDatabase {
   }
 
   public async updateTokens(email: string, tokens: Credentials) {
+    Logger.info('GoogleTokensDatabase', 'Updating tokens', { email })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     await drizzleClient

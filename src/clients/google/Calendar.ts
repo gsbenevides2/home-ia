@@ -1,5 +1,6 @@
 import { google } from 'googleapis'
 import type { z } from 'zod'
+import { Logger } from '../../logger'
 import { type Args as CreateEventArgs } from '../../mcp/tool/google/calendar/createEvent'
 import { OauthClient } from './OauthClient'
 export class GoogleCalendar {
@@ -10,6 +11,7 @@ export class GoogleCalendar {
   }
 
   public async listCalendars() {
+    Logger.info('GoogleCalendar', 'Listing calendars')
     const allClients =
       await OauthClient.getInstance().prepareOauthClientsForAllEmails()
     const calendars = await Promise.all(
@@ -44,6 +46,7 @@ export class GoogleCalendar {
     orderBy?: string
     singleEvents?: boolean
   }) {
+    Logger.info('GoogleCalendar', 'Listing events', { args })
     const oauth2Client = await OauthClient.getInstance().getOauthClient(
       args.email
     )
@@ -61,6 +64,7 @@ export class GoogleCalendar {
   public async createEvent(
     args: z.objectOutputType<CreateEventArgs, z.ZodTypeAny>
   ) {
+    Logger.info('GoogleCalendar', 'Creating event', { args })
     const { email, ...rest } = args
     const oauth2Client = await OauthClient.getInstance().getOauthClient(email)
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client })
@@ -85,6 +89,7 @@ export class GoogleCalendar {
     calendarId: string
     eventId: string
   }) {
+    Logger.info('GoogleCalendar', 'Deleting event', { args })
     const { email, calendarId, eventId } = args
     const oauth2Client = await OauthClient.getInstance().getOauthClient(email)
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client })
@@ -111,6 +116,7 @@ export class GoogleCalendar {
     }
     recurrence?: string[]
   }) {
+    Logger.info('GoogleCalendar', 'Updating event', { args })
     const { email, calendarId, eventId, start, end, timeZone, ...rest } = args
     const oauth2Client = await OauthClient.getInstance().getOauthClient(email)
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client })

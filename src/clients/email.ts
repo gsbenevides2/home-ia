@@ -20,12 +20,13 @@ export class EmailClient {
   }
 
   async sendEmail(email: EmailToSend) {
+    const tracer = Tracer.getGlobalTracer()
     const { subject, body, to } = email
     const { EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD } = process.env
     if (!EMAIL_HOST || !EMAIL_PORT || !EMAIL_USER || !EMAIL_PASSWORD) {
       throw new Error('Email credentials not found')
     }
-    const tracer = Tracer.getGlobalTracer()
+
     tracer.setProgram('EmailClient')
     tracer.info(`Sending email to ${to}`, {
       subject,

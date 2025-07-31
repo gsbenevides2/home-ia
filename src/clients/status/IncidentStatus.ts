@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { Logger } from '../../logger/index.ts'
 import { type StatusReturn } from './StatusTypes.ts'
 
 type IncidentIoStatusResponse = {
@@ -24,18 +25,25 @@ type IncidentsResponse = {
 export async function fetchFromIncidentIoStatus(
   endpoint: string
 ): Promise<StatusReturn> {
+  Logger.info('fetchFromIncidentIoStatus', 'Fetching status', { endpoint })
   const url = `https://${endpoint}/proxy/${endpoint}`
   const response = await axios.get<IncidentIoStatusResponse>(url)
+  Logger.info('fetchFromIncidentIoStatus', 'Status response', { response })
   const status =
     response.data.summary.affected_components.length > 0 ? 'DOWN' : 'OK'
-
+  Logger.info('fetchFromIncidentIoStatus', 'Status', { status })
   if (status === 'DOWN') {
     const incidents = await axios.get<IncidentsResponse>(
       `https://${endpoint}/proxy/${endpoint}/incidents`
     )
+    Logger.info('fetchFromIncidentIoStatus', 'Incidents response', {
+      incidents
+    })
     const problemDescription =
       incidents.data.incidents[0].updates[0].message_string
-
+    Logger.info('fetchFromIncidentIoStatus', 'Problem description', {
+      problemDescription
+    })
     return {
       status,
       problemDescription

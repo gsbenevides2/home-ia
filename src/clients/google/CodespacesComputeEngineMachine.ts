@@ -33,6 +33,7 @@ export class CodespacesComputeEngineMachine {
 
   private getInstanceClient() {
     if (!this.instanceClient) {
+      Logger.info('CodespacesComputeEngineMachine', 'Getting instance client')
       const { credentials, projectId } =
         AuthCredentials.getInstance().getCredentials()
 
@@ -60,6 +61,7 @@ export class CodespacesComputeEngineMachine {
   }
 
   async toogleMachine() {
+    Logger.info('CodespacesComputeEngineMachine', 'Toggling machine')
     const status = await this.getMachineStatus()
     if (StatesToStop.includes(status)) {
       await this.stopMachine()
@@ -71,18 +73,22 @@ export class CodespacesComputeEngineMachine {
   }
 
   async startMachine() {
+    Logger.info('CodespacesComputeEngineMachine', 'Starting machine')
     await this.getInstanceClient().start(this.instanceData)
   }
 
   async stopMachine() {
+    Logger.info('CodespacesComputeEngineMachine', 'Stopping machine')
     await this.getInstanceClient().stop(this.instanceData)
   }
 
   async getMachineStatus() {
+    Logger.info('CodespacesComputeEngineMachine', 'Getting machine status')
     const [instanceGetResult] = await this.getInstanceClient().get(
       this.instanceData
     )
     const status = instanceGetResult.status as CodespacesInstanceStatus
+    Logger.info('CodespacesComputeEngineMachine', 'Machine status', { status })
     return status
   }
 }

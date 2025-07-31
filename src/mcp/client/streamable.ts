@@ -1,6 +1,7 @@
 import { Client as SDKMCPClient } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { DEFAULT_REQUEST_TIMEOUT_MSEC } from '@modelcontextprotocol/sdk/shared/protocol.js'
+import { Logger } from '../../logger/index.ts'
 import { EnvironmentOAuthProvider } from './EnvironmentOAuthProvider'
 
 type Tools = Awaited<
@@ -18,6 +19,7 @@ export class MCPStreamableClientSingleton {
     client: SDKMCPClient
     tools: Tools
   }> {
+    Logger.info('MCPStreamableClientSingleton', 'Getting instance')
     if (MCPStreamableClientSingleton.instance)
       return {
         client: MCPStreamableClientSingleton.instance,
@@ -33,6 +35,9 @@ export class MCPStreamableClientSingleton {
       })
     )
     const toolsResult = await mcpClient.listTools()
+    Logger.info('MCPStreamableClientSingleton', 'Tools result', {
+      toolsResult
+    })
     MCPStreamableClientSingleton.tools = toolsResult.tools
     return {
       client: mcpClient,

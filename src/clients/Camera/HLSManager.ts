@@ -1,6 +1,7 @@
 import ffmpeg from 'fluent-ffmpeg'
 import fs from 'fs'
 import path from 'path'
+import { Logger } from '../../logger'
 
 const SEGMENT_DURATION = 1 // Duração de cada segmento em segundos (balanceado para qualidade e latência)
 const PLAYLIST_NAME = 'playlist.m3u8'
@@ -38,6 +39,9 @@ export class HLSManager {
   }
 
   async start() {
+    Logger.info('HLSManager', 'Starting HLS stream', {
+      cameraName: this.cameraName
+    })
     if (this.running) return
     if (this.forceRefreshInProgress) return
 
@@ -62,9 +66,15 @@ export class HLSManager {
     }
 
     try {
+      Logger.info('HLSManager', 'Cleaning up all segments', {
+        cameraName: this.cameraName
+      })
       // Limpe todos os arquivos antigos antes de iniciar
       await this.cleanupAllSegments()
 
+      Logger.info('HLSManager', 'Starting FFmpeg', {
+        cameraName: this.cameraName
+      })
       // Iniciar FFmpeg para gerar segmentos HLS
       this.ffmpegProcess = ffmpeg(this.rtspUrl)
         .inputOptions([
@@ -126,6 +136,10 @@ export class HLSManager {
           this.segmentCount = 0
         })
         .on('stderr', stderrLine => {
+          Logger.info('HLSManager', 'FFmpeg stderr', {
+            cameraName: this.cameraName,
+            stderrLine
+          })
           if (stderrLine.includes('Opening')) {
             this.segmentCount++
             // Resetar contador de tentativas quando segmentos são criados com sucesso
@@ -135,7 +149,10 @@ export class HLSManager {
           }
         })
         .on('error', (err: Error) => {
-          console.log('Erro no FFmpeg', err)
+          Logger.error('HLSManager', 'FFmpeg error', {
+            cameraName: this.cameraName,
+            err
+          })
           const errorMessageOperationNotPermited = err.message.includes(
             'Operation not permitted'
           )
@@ -145,9 +162,14 @@ export class HLSManager {
               Bun.spawnSync(['pkill', 'ffmpeg'], {
                 stderr: 'inherit'
               })
-              console.log('Killed all ffmpeg processes')
+              Logger.info('HLSManager', 'Killed all ffmpeg processes', {
+                cameraName: this.cameraName
+              })
             } catch (error) {
-              console.error('Error killing ffmpeg processes:', error)
+              Logger.error('HLSManager', 'Error killing ffmpeg processes', {
+                cameraName: this.cameraName,
+                error
+              })
             }
           }
 
@@ -155,40 +177,78 @@ export class HLSManager {
           this.scheduleRestart()
         })
         .on('end', () => {
+          Logger.info('HLSManager', 'FFmpeg ended', {
+            cameraName: this.cameraName
+          })
           this.running = false
           this.scheduleRestart()
         })
 
       // Inicia o processo sem esperar
       this.ffmpegProcess.run()
-    } catch {
+      Logger.info('HLSManager', 'FFmpeg started', {
+        cameraName: this.cameraName
+      })
+    } catch (error) {
+      Logger.error('HLSManager', 'Error starting FFmpeg', {
+        cameraName: this.cameraName,
+        error
+      })
       this.running = false
       this.scheduleRestart()
     }
   }
 
   setRtspUrl(rtspUrl: string) {
+    Logger.info('HLSManager', 'Setting RTSP URL', {
+      cameraName: this.cameraName,
+      rtspUrl
+    })
     this.rtspUrl = rtspUrl
   }
 
   private scheduleRestart() {
+    Logger.info('HLSManager', 'Scheduling restart', {
+      cameraName: this.cameraName
+    })
     // Só reinicia após um erro ou término do FFmpeg
     setTimeout(() => this.start(), RESTART_DELAY)
   }
 
   private async cleanupAllSegments() {
+    Logger.info('HLSManager', 'Cleaning up all segments', {
+      cameraName: this.cameraName,
+      hlsDir: this.hlsDir
+    })
     try {
       const files = await fs.promises.readdir(HLS_DIR)
+      Logger.info('HLSManager', 'Files', {
+        cameraName: this.cameraName,
+        files
+      })
       for (const file of files) {
         if (file.endsWith('.ts') || file.endsWith('.m3u8')) {
           try {
             await fs.promises.unlink(path.join(HLS_DIR, file))
-          } catch {
+            Logger.info('HLSManager', 'Unlinked file', {
+              cameraName: this.cameraName,
+              file
+            })
+          } catch (error) {
+            Logger.error('HLSManager', 'Error unlinking file', {
+              cameraName: this.cameraName,
+              file,
+              error
+            })
             // Ignora erros se o arquivo já foi removido
           }
         }
       }
     } catch (error) {
+      Logger.error('HLSManager', 'Error cleaning up all segments', {
+        cameraName: this.cameraName,
+        error
+      })
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         // Ignora erro se o diretório não existir
       }
@@ -196,6 +256,9 @@ export class HLSManager {
   }
 
   private async cleanupOldSegments() {
+    Logger.info('HLSManager', 'Cleaning up old segments', {
+      cameraName: this.cameraName
+    })
     if (this.isCleaningUp) return
     this.isCleaningUp = true
 
@@ -225,7 +288,12 @@ export class HLSManager {
         for (const file of filesToRemove) {
           try {
             await fs.promises.unlink(path.join(HLS_DIR, file))
-          } catch {
+          } catch (error) {
+            Logger.error('HLSManager', 'Error unlinking file', {
+              cameraName: this.cameraName,
+              file,
+              error
+            })
             // Ignora erros se o arquivo já foi removido
           }
         }
@@ -238,13 +306,20 @@ export class HLSManager {
   }
 
   async stop() {
+    Logger.info('HLSManager', 'Stopping HLS stream', {
+      cameraName: this.cameraName
+    })
     if (this.ffmpegProcess) {
       try {
         this.ffmpegProcess.kill('SIGTERM')
         await Bun.spawn(['pkill', 'ffmpeg'], {
           stderr: 'inherit'
         })
-      } catch {
+      } catch (error) {
+        Logger.error('HLSManager', 'Error killing ffmpeg processes', {
+          cameraName: this.cameraName,
+          error
+        })
         // Ignora erros ao encerrar FFmpeg
       }
       this.ffmpegProcess = null
@@ -253,6 +328,9 @@ export class HLSManager {
     this.running = false
 
     if (this.cleanupInterval) {
+      Logger.info('HLSManager', 'Cleaning up cleanup interval', {
+        cameraName: this.cameraName
+      })
       clearInterval(this.cleanupInterval)
       this.cleanupInterval = null
     }
@@ -261,14 +339,23 @@ export class HLSManager {
   }
 
   isRunning() {
+    Logger.info('HLSManager', 'Checking if HLS stream is running', {
+      cameraName: this.cameraName
+    })
     return this.running
   }
 
   async forceRefresh() {
+    Logger.info('HLSManager', 'Force refreshing HLS stream', {
+      cameraName: this.cameraName
+    })
     return
   }
 
   get playlistPath() {
+    Logger.info('HLSManager', 'Getting playlist path', {
+      cameraName: this.cameraName
+    })
     return path.join(this.hlsDir, PLAYLIST_NAME)
   }
 }

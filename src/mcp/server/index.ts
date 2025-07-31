@@ -8,9 +8,9 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js'
-import console from 'node:console'
 import { randomUUID } from 'node:crypto'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { Logger } from '../../logger/index.ts'
 import { registerTools } from '../tool/index.ts'
 import { TransportsManager } from './transportsManager.ts'
 
@@ -50,6 +50,7 @@ export class MCPServer {
   public async handleAuthentication(
     req: Request
   ): Promise<Response | 'continue'> {
+    Logger.info('MCPServer', 'Handling authentication')
     const url = new URL(req.url)
     const token = url.searchParams.get('token') as string
     const sessionIdQueryParam = url.searchParams.get('sessionId') as string
@@ -69,8 +70,9 @@ export class MCPServer {
   }
 
   public async connectSSE(res: ServerResponse) {
+    Logger.info('MCPServer', 'Connecting SSE')
     const transport = new SSEServerTransport('/messages', res)
-    console.log('transport', transport)
+    Logger.info('MCPServer', 'SSE transport', { transport })
     this.transports.addSSE(transport.sessionId, transport)
     res.on('close', () => {
       this.transports.removeSSE(transport.sessionId)
@@ -83,6 +85,7 @@ export class MCPServer {
     body: unknown,
     res: ServerResponse
   ) {
+    Logger.info('MCPServer', 'Handling SSE post message')
     if (!req.url) throw new Error('Request URL is required')
     const url = new URL(req.url)
     const sessionId = url.searchParams.get('sessionId') as string
@@ -100,6 +103,7 @@ export class MCPServer {
     body: unknown,
     res: ServerResponse
   ) {
+    Logger.info('MCPServer', 'Handling streamable')
     const method = req.method?.toLowerCase()
     switch (method) {
       case 'post':
@@ -119,6 +123,7 @@ export class MCPServer {
     body: unknown,
     res: ServerResponse
   ) {
+    Logger.info('MCPServer', 'Handling streamable post')
     // Check for existing session ID
     const sessionId = req.headers['mcp-session-id'] as string | undefined
     let transport: StreamableHTTPServerTransport | undefined
@@ -168,6 +173,7 @@ export class MCPServer {
     req: IncomingMessage,
     res: ServerResponse
   ) {
+    Logger.info('MCPServer', 'Handling streamable get delete')
     const sessionId = req.headers['mcp-session-id'] as string | undefined
     if (!sessionId || !this.transports.getStreamable(sessionId)) {
       res.statusCode = 400

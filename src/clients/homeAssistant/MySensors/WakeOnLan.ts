@@ -1,3 +1,4 @@
+import { Logger } from '../../../logger'
 import { Button } from '../AbstractEntities/Button'
 
 export type WakeOnLanDevice = WakeOnLanType['devices'][number]
@@ -15,6 +16,7 @@ export const WakeOnLan: WakeOnLanType = {
   },
 
   async wakeUp(device: WakeOnLanDevice) {
+    Logger.info('WakeOnLan', 'Waking up device', { device })
     const macAddress = this.entities[device].replaceAll(':', '_').toLowerCase()
     const sensor = new Button(
       `button.wake_on_lan_${macAddress}`,

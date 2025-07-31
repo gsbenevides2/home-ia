@@ -1,5 +1,6 @@
 import { eq, sql } from 'drizzle-orm'
 import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { Logger } from '../../logger'
 import { DatabaseClient } from './client'
 
 const table = pgTable('saved_prompts', {
@@ -30,6 +31,7 @@ export class SavedPromptDatabase {
   public async getSavedPrompt(
     id: string
   ): Promise<SavedPromptDatabaseRow | null> {
+    Logger.info('SavedPromptDatabase', 'Getting saved prompt', { id })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     const result = await drizzleClient
@@ -41,6 +43,7 @@ export class SavedPromptDatabase {
   }
 
   public async getSavedPrompts(): Promise<SavedPromptDatabaseRow[]> {
+    Logger.info('SavedPromptDatabase', 'Getting saved prompts')
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     const result = await drizzleClient.select().from(table)
@@ -51,6 +54,7 @@ export class SavedPromptDatabase {
   public async createSavedPrompt(
     prompt: Pick<SavedPromptDatabaseRow, 'name' | 'prompt'>
   ): Promise<SavedPromptDatabaseRow> {
+    Logger.info('SavedPromptDatabase', 'Creating saved prompt', { prompt })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     const result = await drizzleClient.insert(table).values(prompt).returning()
@@ -59,6 +63,7 @@ export class SavedPromptDatabase {
   }
 
   public async deleteSavedPrompt(id: string): Promise<void> {
+    Logger.info('SavedPromptDatabase', 'Deleting saved prompt', { id })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     await drizzleClient.delete(table).where(eq(table.id, id))
@@ -69,6 +74,7 @@ export class SavedPromptDatabase {
     id: string,
     prompt: Pick<SavedPromptDatabaseRow, 'name' | 'prompt'>
   ): Promise<void> {
+    Logger.info('SavedPromptDatabase', 'Updating saved prompt', { id, prompt })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     await drizzleClient.update(table).set(prompt).where(eq(table.id, id))

@@ -19,23 +19,28 @@ export class CalendarNotifierScheduller {
   private static events: EventWithCalendar[] = []
 
   public static async init() {
+    Logger.info('CalendarNotifierScheduller', 'Initializing')
     await this.sync()
   }
 
   public static async sync() {
     Logger.info('CalendarNotifierScheduller', 'Syncing events')
     await this.readEvents()
+    Logger.info('CalendarNotifierScheduller', 'Events read')
     await this.updateOrScheduleEventsInCron()
+    Logger.info('CalendarNotifierScheduller', 'Events scheduled')
     this.makeSyncCron()
     Logger.info('CalendarNotifierScheduller', 'Synced events')
   }
 
   public static makeSyncCron() {
+    Logger.info('CalendarNotifierScheduller', 'Making sync cron')
     CronnerManager.newCron(
       SYNC_CRON,
       { name: this.syncCronName, timezone: 'America/Sao_Paulo' },
       () => this.sync()
     )
+    Logger.info('CalendarNotifierScheduller', 'Sync cron made')
   }
 
   private static cronName = 'calendar-notifier'
@@ -46,13 +51,16 @@ export class CalendarNotifierScheduller {
   }
 
   private static async readEvents() {
+    Logger.info('CalendarNotifierScheduller', 'Reading events')
     const calendars = await GoogleCalendar.getInstance().listCalendars()
+    Logger.info('CalendarNotifierScheduller', 'Calendars read')
     const nomDuplicatedCalendars = calendars.filter(
       (calendar, index, self) =>
         index === self.findIndex(t => t.id === calendar.id)
     )
     const start = startOfDay(new Date())
     const end = endOfDay(new Date())
+    Logger.info('CalendarNotifierScheduller', 'Start and end dates set')
     const gaxiosResponses = await Promise.all(
       nomDuplicatedCalendars.map(calendar =>
         GoogleCalendar.getInstance().listEvents({
@@ -66,6 +74,7 @@ export class CalendarNotifierScheduller {
         })
       )
     )
+    Logger.info('CalendarNotifierScheduller', 'Gaxios responses received')
     const events = gaxiosResponses
       .flatMap((response, index) => {
         const calendar = calendars[index]
@@ -82,15 +91,22 @@ export class CalendarNotifierScheduller {
       .filter(
         (event, index, self) => index === self.findIndex(t => t.id === event.id)
       )
+    Logger.info('CalendarNotifierScheduller', 'Events filtered')
     Logger.info(
       'CalendarNotifierScheduller',
       `Retrived ${events.length} events from ${calendars.length} calendars`
     )
     this.events = events
+    Logger.info('CalendarNotifierScheduller', 'Events set')
   }
 
   private static async updateOrScheduleEventsInCron() {
+    Logger.info(
+      'CalendarNotifierScheduller',
+      'Updating or scheduling events in cron'
+    )
     await this.removeAllJobs()
+    Logger.info('CalendarNotifierScheduller', 'Jobs removed')
     for (const event of this.events) {
       const id = this.makeId(event.id ?? '')
       const timeToNotify = event.start?.dateTime ?? event.start?.date ?? ''
@@ -98,7 +114,7 @@ export class CalendarNotifierScheduller {
         new Date(timeToNotify),
         MINUTES_TO_SUBTRACT
       )
-
+      Logger.info('CalendarNotifierScheduller', 'Cron created', { id })
       const cron = CronnerManager.newCron(
         timeSubtracted.toISOString(),
         { name: id, timezone: 'America/Sao_Paulo' },

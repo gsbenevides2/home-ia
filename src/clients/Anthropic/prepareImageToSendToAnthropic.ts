@@ -1,6 +1,12 @@
 import sharp from 'sharp'
+import { Logger } from '../../logger'
 
 export async function prepareImageToSendToAnthropic(imageUrl: string) {
+  Logger.info(
+    'prepareImageToSendToAnthropic',
+    'Preparing image to send to Anthropic',
+    { imageUrl }
+  )
   try {
     const imageDownBuffer = await fetch(imageUrl).then(res => res.arrayBuffer())
     // Load the image
@@ -58,13 +64,21 @@ export async function prepareImageToSendToAnthropic(imageUrl: string) {
 
       quality -= 10
     }
-
+    Logger.info(
+      'prepareImageToSendToAnthropic',
+      'Image prepared to send to Anthropic',
+      { imageUrl }
+    )
     return {
       mimeType: 'image/jpeg',
       data: imageBuffer
     }
   } catch (error) {
-    console.error('Error processing image:', error)
+    Logger.error(
+      'prepareImageToSendToAnthropic',
+      'Error processing image:',
+      error
+    )
     throw error
   }
 }

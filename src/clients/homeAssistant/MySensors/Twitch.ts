@@ -1,3 +1,4 @@
+import { Logger } from '../../../logger'
 import { Entity } from '../AbstractEntities/Entity'
 import { Sensor, type SensorAttributes } from '../AbstractEntities/Sensor'
 
@@ -33,6 +34,7 @@ export type TwitchType = {
 
 export const Twitch: TwitchType = {
   getStreamers: async () => {
+    Logger.info('Twitch', 'Getting streamers')
     const entities = await Entity.getAllEntities()
     const twitchEntities = entities.filter(entity => {
       const icon = entity.attributes.entity_picture
@@ -47,6 +49,7 @@ export const Twitch: TwitchType = {
     }))
   },
   getStreamerStatus: async (streamerId: string) => {
+    Logger.info('Twitch', 'Getting streamer status', { streamerId })
     const sensor = new Sensor<TwitchSensorState, TwitchSensorAttributes>(
       `sensor.${streamerId}`,
       `sensor.${streamerId}`,
@@ -67,6 +70,7 @@ export const Twitch: TwitchType = {
       }
     )
     const data = await sensor.getData()
+    Logger.info('Twitch', 'Streamer status', { data })
     return {
       status: data.state,
       attributes: {

@@ -1,3 +1,4 @@
+import { Logger } from '../../logger'
 import { Camera } from './Camera'
 
 const camerasNames = ['rua'] as const
@@ -32,23 +33,29 @@ export class Cameras {
   }
 
   async initAll() {
+    Logger.info('CamerasSingleton', 'Initializing all cameras')
     await Promise.all(Object.values(this.cameras).map(camera => camera.init()))
+    Logger.info('CamerasSingleton', 'All cameras initialized')
   }
 
   async getCamera(cameraName: CameraName) {
     if (!this.cameras[cameraName]) {
+      Logger.error('CamerasSingleton', 'Camera not found', { cameraName })
       return null
     }
     return this.cameras[cameraName]
   }
 
   async stopAll() {
+    Logger.info('CamerasSingleton', 'Stopping all cameras')
     await Promise.all(
       Object.values(this.cameras).map(camera => camera.hlsStream.stop())
     )
+    Logger.info('CamerasSingleton', 'All cameras stopped')
   }
 
   getAvailableCameras() {
+    Logger.info('CamerasSingleton', 'Getting available cameras')
     return camerasNames
   }
 }

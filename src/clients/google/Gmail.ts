@@ -1,4 +1,5 @@
 import { google } from 'googleapis'
+import { Logger } from '../../logger'
 import { OauthClient } from './OauthClient'
 
 export class GoogleGmail {
@@ -20,6 +21,7 @@ export class GoogleGmail {
     labelIds?: string[]
     includeSpamTrash?: boolean
   }) {
+    Logger.info('GoogleGmail', 'Listing emails', { args })
     const oauth2Client = await OauthClient.getInstance().getOauthClient(
       args.email
     )
@@ -58,6 +60,7 @@ export class GoogleGmail {
     messageId: string
     format?: 'minimal' | 'full' | 'raw' | 'metadata'
   }) {
+    Logger.info('GoogleGmail', 'Getting email by ID', { args })
     const oauth2Client = await OauthClient.getInstance().getOauthClient(
       args.email
     )
@@ -73,6 +76,7 @@ export class GoogleGmail {
   }
 
   public async markAsRead(args: { email: string; messageIds: string[] }) {
+    Logger.info('GoogleGmail', 'Marking as read', { args })
     const oauth2Client = await OauthClient.getInstance().getOauthClient(
       args.email
     )
@@ -91,6 +95,7 @@ export class GoogleGmail {
   }
 
   public async markAsUnread(args: { email: string; messageIds: string[] }) {
+    Logger.info('GoogleGmail', 'Marking as unread', { args })
     const oauth2Client = await OauthClient.getInstance().getOauthClient(
       args.email
     )
@@ -113,6 +118,7 @@ export class GoogleGmail {
     query: string
     maxResults?: number
   }) {
+    Logger.info('GoogleGmail', 'Searching emails', { args })
     const oauth2Client = await OauthClient.getInstance().getOauthClient(
       args.email
     )
@@ -145,6 +151,7 @@ export class GoogleGmail {
   }
 
   public async getUnreadEmails(args: { email: string; maxResults?: number }) {
+    Logger.info('GoogleGmail', 'Getting unread emails', { args })
     return this.listEmails({
       email: args.email,
       maxResults: args.maxResults,
@@ -153,6 +160,7 @@ export class GoogleGmail {
   }
 
   public async getLabels(args: { email: string }) {
+    Logger.info('GoogleGmail', 'Getting labels', { args })
     const oauth2Client = await OauthClient.getInstance().getOauthClient(
       args.email
     )
@@ -171,6 +179,7 @@ export class GoogleGmail {
     labelIds?: string[]
     labelFilterAction?: 'include' | 'exclude'
   }) {
+    Logger.info('GoogleGmail', 'Watching for new emails', { args })
     const oauth2Client = await OauthClient.getInstance().getOauthClient(
       args.email
     )

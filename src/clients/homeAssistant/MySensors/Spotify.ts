@@ -1,3 +1,4 @@
+import { Logger } from '../../../logger'
 import { MediaPlayer } from '../AbstractEntities/MediaPlayer'
 
 type SpotifyAccounts = SpotifyType['accounts'][number]
@@ -19,6 +20,7 @@ export const Spotify = {
   },
 
   getSensor: (account: SpotifyAccounts) => {
+    Logger.info('Spotify', 'Getting sensor', { account })
     return new MediaPlayer(
       Spotify.entities[account],
       Spotify.entities[account],
@@ -48,41 +50,49 @@ export const Spotify = {
   },
 
   play: async (account: SpotifyAccounts) => {
+    Logger.info('Spotify', 'Playing', { account })
     const sensor = Spotify.getSensor(account)
     await sensor.play()
   },
 
   pause: async (account: SpotifyAccounts) => {
+    Logger.info('Spotify', 'Pausing', { account })
     const sensor = Spotify.getSensor(account)
     await sensor.pause()
   },
 
   next: async (account: SpotifyAccounts) => {
+    Logger.info('Spotify', 'Next', { account })
     const sensor = Spotify.getSensor(account)
     await sensor.next()
   },
 
   previous: async (account: SpotifyAccounts) => {
+    Logger.info('Spotify', 'Previous', { account })
     const sensor = Spotify.getSensor(account)
     await sensor.previous()
   },
 
   setVolume: async (account: SpotifyAccounts, volume: number) => {
+    Logger.info('Spotify', 'Setting volume', { account, volume })
     const sensor = Spotify.getSensor(account)
     await sensor.setVolume(volume)
   },
 
   playSong: async (account: SpotifyAccounts, uri: string) => {
+    Logger.info('Spotify', 'Playing song', { account, uri })
     const sensor = Spotify.getSensor(account)
     await sensor.playSong(uri, 'spotify://track')
   },
 
   playAlbum: async (account: SpotifyAccounts, uri: string) => {
+    Logger.info('Spotify', 'Playing album', { account, uri })
     const sensor = Spotify.getSensor(account)
     await sensor.playSong(uri, 'spotify://album')
   },
 
   playArtist: async (account: SpotifyAccounts, uri: string) => {
+    Logger.info('Spotify', 'Playing artist', { account, uri })
     const sensor = Spotify.getSensor(account)
     await sensor.playSong(uri, 'spotify://artist')
   }

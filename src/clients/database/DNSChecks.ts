@@ -1,4 +1,5 @@
 import { pgTable, text } from 'drizzle-orm/pg-core'
+import { Logger } from '../../logger'
 import { DatabaseClient } from './client'
 
 const table = pgTable('dns_checks', {
@@ -24,6 +25,7 @@ export class DNSChecksDatabase {
   private constructor() {}
 
   public async getChecks() {
+    Logger.info('DNSChecksDatabase', 'Getting checks')
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     const result = await drizzleClient.select().from(table)

@@ -1,5 +1,6 @@
 import { eq, sql } from 'drizzle-orm'
 import { boolean, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { Logger } from '../../logger'
 import { DatabaseClient } from './client'
 
 const table = pgTable('jobs', {
@@ -32,6 +33,7 @@ export class JobDatabase {
   }
 
   public async getJobs(): Promise<JobDatabaseRow[]> {
+    Logger.info('JobDatabase', 'Getting jobs')
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     const result = await drizzleClient.select().from(table)
@@ -40,6 +42,7 @@ export class JobDatabase {
   }
 
   public async getJob(id: string): Promise<JobDatabaseRow | null> {
+    Logger.info('JobDatabase', 'Getting job', { id })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     const result = await drizzleClient
@@ -53,6 +56,7 @@ export class JobDatabase {
   public async createJob(
     job: Omit<JobDatabaseRow, 'id' | 'created_at'>
   ): Promise<string> {
+    Logger.info('JobDatabase', 'Creating job', { job })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     const result = await drizzleClient.insert(table).values(job).returning()
@@ -61,6 +65,7 @@ export class JobDatabase {
   }
 
   public async deleteJob(id: string): Promise<void> {
+    Logger.info('JobDatabase', 'Deleting job', { id })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     await drizzleClient.delete(table).where(eq(table.id, id))
@@ -71,6 +76,7 @@ export class JobDatabase {
     id: string,
     job: Omit<JobDatabaseRow, 'id' | 'created_at'>
   ): Promise<void> {
+    Logger.info('JobDatabase', 'Updating job', { id, job })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     await drizzleClient.update(table).set(job).where(eq(table.id, id))

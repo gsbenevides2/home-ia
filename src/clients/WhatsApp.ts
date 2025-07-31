@@ -14,6 +14,7 @@ export class WhatsAppClient {
   public authenticationEventEmmiter = new EventEmitter()
 
   public static async getInstance(waitForRelease: boolean = true) {
+    Logger.info('WhatsAppClient', 'Getting instance', { waitForRelease })
     if (WhatsAppClient.instance && waitForRelease) {
       await WhatsAppClient.waitReleaseInstance()
     }
@@ -21,16 +22,21 @@ export class WhatsAppClient {
     if (!WhatsAppClient.instance) {
       WhatsAppClient.instance = new WhatsAppClient()
     }
+    Logger.info('WhatsAppClient', 'Instance', {
+      instance: WhatsAppClient.instance
+    })
     return WhatsAppClient.instance
   }
 
   private static async waitReleaseInstance() {
+    Logger.info('WhatsAppClient', 'Waiting for instance to be released')
     while (WhatsAppClient.instance) {
       await new Promise(resolve => setTimeout(resolve, 1000))
     }
   }
 
   public static forceCurrentInstanceRelease() {
+    Logger.info('WhatsAppClient', 'Force current instance release')
     if (WhatsAppClient.instance) {
       WhatsAppClient.instance.release()
     }

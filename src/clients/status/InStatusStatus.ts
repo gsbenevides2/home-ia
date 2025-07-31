@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { Logger } from '../../logger/index.ts'
 import { type StatusReturn } from './StatusTypes.ts'
 
 type AtlassianStatusResponse = {
@@ -19,8 +20,10 @@ type AtlassianStatusResponse = {
 export async function fetchFromInstatusStatuspage(
   endpoint: string
 ): Promise<StatusReturn> {
+  Logger.info('fetchFromInstatusStatuspage', 'Fetching status', { endpoint })
   const url = `https://${endpoint}/summary.json`
   const response = await axios.get<AtlassianStatusResponse>(url)
+  Logger.info('fetchFromInstatusStatuspage', 'Status response', { response })
   const isDown =
     response.data.page.status === 'HASISSUES' ||
     (response.data.activeIncidents && response.data.activeIncidents.length > 0)

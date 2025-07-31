@@ -1,3 +1,4 @@
+import { Logger } from '../../../logger'
 import { Sensor, type SensorAttributes } from '../AbstractEntities/Sensor'
 
 type PrinterStates =
@@ -75,11 +76,14 @@ export class Printer {
   )
 
   private async getPrinterStatus() {
+    Logger.info('Printer', 'Getting printer status')
     const printerStatus = await this.printSensor.getData()
+    Logger.info('Printer', 'Printer status', { printerStatus })
     return printerStatus.state
   }
 
   private async getConnectionStatus() {
+    Logger.info('Printer', 'Getting connection status')
     const connectionStatus = await this.connectionSensor.getData()
     return connectionStatus.state
   }
@@ -90,11 +94,17 @@ export class Printer {
     pagesLevel: string
     scannerLevel: string
   }> {
+    Logger.info('Printer', 'Getting printer color and pages levels')
     const colorCMYLevel = await this.colorCMYLevelSensor.getData()
     const colorBlackLevel = await this.colorBlackLevelSensor.getData()
     const pagesLevel = await this.pagesLevelSensor.getData()
     const scannerLevel = await this.scannerLevelSensor.getData()
-
+    Logger.info('Printer', 'Printer color and pages levels', {
+      colorCMYLevel,
+      colorBlackLevel,
+      pagesLevel,
+      scannerLevel
+    })
     return {
       colorCMYLevel:
         colorCMYLevel.state === 'unavailable'
@@ -116,11 +126,17 @@ export class Printer {
   }
 
   public async getAllPrinterStatus() {
+    Logger.info('Printer', 'Getting all printer status')
     const [printerStatus, connectionStatus, colorCMYLevel] = await Promise.all([
       this.getPrinterStatus(),
       this.getConnectionStatus(),
       this.getPrinterColorAndPagesLevels()
     ])
+    Logger.info('Printer', 'All printer status', {
+      printerStatus,
+      connectionStatus,
+      colorCMYLevel
+    })
 
     return {
       printerStatus,

@@ -1,5 +1,6 @@
 import { SpeechClient } from '@google-cloud/speech'
 import type { google } from '@google-cloud/speech/build/protos/protos'
+import { Logger } from '../../logger'
 import { AuthCredentials } from './AuthCrendentials'
 
 type AudioEncoding =
@@ -20,6 +21,11 @@ export class GoogleSpeachToText {
     sampleRateHertz: number = 48000,
     languageCode: string = 'pt-BR'
   ): Promise<string> {
+    Logger.info('GoogleSpeachToText', 'Transcribing audio', {
+      encoding,
+      sampleRateHertz,
+      languageCode
+    })
     const { credentials, projectId } =
       AuthCredentials.getInstance().getCredentials()
     const client = new SpeechClient({

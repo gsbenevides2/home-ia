@@ -3,22 +3,24 @@ import { spawn } from 'node:child_process'
 import { Logger } from '../logger/index.ts'
 
 function nodeSpawn(command: string) {
+  Logger.info('MakeDNSTest', 'Running command', { command })
   const child = spawn(command, { shell: true })
   let result = ''
   return new Promise<string>((resolve, reject) => {
-    child.stdout.on('data', (data) => {
+    child.stdout.on('data', data => {
       result += data.toString()
     })
-    child.stderr.on('data', (data) => {
+    child.stderr.on('data', data => {
       reject(data.toString())
     })
     child.on('close', () => resolve(result))
   })
 }
 async function runDigCommand(domain: string, ns: string, tracerId: string) {
+  Logger.info('MakeDNSTest', 'Running dig command', { domain, ns })
   try {
     const result = await nodeSpawn(`/usr/bin/dig ${domain} @${ns} +short CNAME`)
-
+    Logger.info('MakeDNSTest', 'Dig command result', { result })
     return result.split('\n')[0]
   } catch (error) {
     Logger.error('MakeDNSTest', 'Error running dig command:', error, tracerId)
@@ -27,11 +29,22 @@ async function runDigCommand(domain: string, ns: string, tracerId: string) {
 }
 
 async function getNSRecords(domain: string) {
+  Logger.info('MakeDNSTest', 'Getting NS records', { domain })
   const result = await nodeSpawn(`/usr/bin/dig ${domain} +short NS`)
-  return result.split('\n').filter((line) => line.trim() !== '')
+  Logger.info('MakeDNSTest', 'NS records', { result })
+  return result.split('\n').filter(line => line.trim() !== '')
 }
 
-export async function makeDNSTest(domain: string, expectedCname: string, nsDomain: string): Promise<boolean> {
+export async function makeDNSTest(
+  domain: string,
+  expectedCname: string,
+  nsDomain: string
+): Promise<boolean> {
+  Logger.info('MakeDNSTest', 'Making DNS test', {
+    domain,
+    expectedCname,
+    nsDomain
+  })
   let testResult = false
   const tracerId = randomUUIDv7()
   const nsRecords = await getNSRecords(nsDomain)
@@ -41,7 +54,7 @@ export async function makeDNSTest(domain: string, expectedCname: string, nsDomai
       `Checking DNS records`,
       {
         domain,
-        ns,
+        ns
       },
       tracerId
     )
@@ -52,7 +65,7 @@ export async function makeDNSTest(domain: string, expectedCname: string, nsDomai
         'Error running dig command:',
         {
           domain,
-          ns,
+          ns
         },
         tracerId
       )
@@ -64,7 +77,7 @@ export async function makeDNSTest(domain: string, expectedCname: string, nsDomai
         `Test passed`,
         {
           domain,
-          ns,
+          ns
         },
         tracerId
       )
@@ -77,10 +90,11 @@ export async function makeDNSTest(domain: string, expectedCname: string, nsDomai
       'MakeDNSTest',
       `Test failed`,
       {
-        domain,
+        domain
       },
       tracerId
     )
   }
+  Logger.info('MakeDNSTest', 'DNS test result', { testResult })
   return testResult
 }

@@ -1,5 +1,6 @@
 import type { OAuth2Client } from 'google-auth-library'
 import { google } from 'googleapis'
+import { Logger } from '../../../logger'
 import { GoogleTokensDatabase } from '../../database/GoogleTokens'
 import {
   OAUTH_REDIRECT_URI_PATHNAME,
@@ -35,6 +36,7 @@ export class OauthClient {
   ]
 
   public async handleOauthUrl() {
+    Logger.info('OauthClient', 'Handling OAuth URL')
     const redirectUri = this.redirectUri.toString()
     const oauth2Client = new google.auth.OAuth2(
       process.env.GCP_OAUTH_CLIENT_ID,
@@ -58,6 +60,7 @@ export class OauthClient {
   }
 
   public async handleOauthRedirect(req: Request) {
+    Logger.info('OauthClient', 'Handling OAuth Redirect')
     const code = new URL(req.url).searchParams.get('code')
     if (code) {
       throw new Error('Code not found')
@@ -77,10 +80,12 @@ export class OauthClient {
     if (!email) {
       throw new Error('Email not found')
     }
+    Logger.info('OauthClient', 'Saving tokens', { email })
     await GoogleTokensDatabase.getInstance().saveTokens(email, tokens)
   }
 
   public async getOauthClient(email: string) {
+    Logger.info('OauthClient', 'Getting OAuth client', { email })
     const tokens = await GoogleTokensDatabase.getInstance().getTokens(email)
     if (!tokens) {
       throw new Error('Tokens not found')
@@ -101,6 +106,7 @@ export class OauthClient {
   }
 
   public async prepareOauthClientsForAllEmails() {
+    Logger.info('OauthClient', 'Preparing OAuth clients for all emails')
     const tokens = await GoogleTokensDatabase.getInstance().getAllTokens()
     const oauth2Clients: {
       email: string

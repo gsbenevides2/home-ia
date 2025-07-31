@@ -1,8 +1,8 @@
 import { Client as SDKMCPClient } from '@modelcontextprotocol/sdk/client/index.js'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
 import { DEFAULT_REQUEST_TIMEOUT_MSEC } from '@modelcontextprotocol/sdk/shared/protocol.js'
+import { Logger } from '../../logger/index.ts'
 import { EnvironmentOAuthProvider } from './EnvironmentOAuthProvider'
-
 type Tools = Awaited<
   ReturnType<typeof SDKMCPClient.prototype.listTools>
 >['tools']
@@ -18,6 +18,7 @@ export class MCPSSEClientSingleton {
     client: SDKMCPClient
     tools: Tools
   }> {
+    Logger.info('MCPSSEClientSingleton', 'Getting instance')
     if (MCPSSEClientSingleton.instance)
       return {
         client: MCPSSEClientSingleton.instance,
@@ -34,6 +35,9 @@ export class MCPSSEClientSingleton {
     )
     const toolsResult = await mcpClient.listTools()
     MCPSSEClientSingleton.tools = toolsResult.tools
+    Logger.info('MCPSSEClientSingleton', 'Tools result', {
+      tools: MCPSSEClientSingleton.tools
+    })
     return {
       client: mcpClient,
       tools: MCPSSEClientSingleton.tools

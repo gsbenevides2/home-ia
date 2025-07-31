@@ -11,6 +11,7 @@ import {
   timestamp,
   uuid
 } from 'drizzle-orm/pg-core'
+import { Logger } from '../../logger'
 import { DatabaseClient } from './client'
 
 const table = pgTable('chatbot', {
@@ -45,6 +46,7 @@ export class ChatbotDatabase {
   private constructor() {}
 
   public async getMessagesOldMessages() {
+    Logger.info('ChatbotDatabase', 'Getting old messages')
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
 
@@ -83,6 +85,9 @@ export class ChatbotDatabase {
   public async saveMessage(
     message: Pick<ChatbotDatabaseRow, 'content' | 'role' | 'interactionId'>
   ) {
+    Logger.info('ChatbotDatabase', 'Saving message', {
+      message: message.content
+    })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     await drizzleClient.insert(table).values({
@@ -94,6 +99,7 @@ export class ChatbotDatabase {
   }
 
   public async clearMessages() {
+    Logger.info('ChatbotDatabase', 'Clearing messages')
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     await drizzleClient.delete(table)
@@ -103,6 +109,9 @@ export class ChatbotDatabase {
   public async editSpecificMessage(
     message: Pick<ChatbotDatabaseRow, 'content' | 'id'>
   ) {
+    Logger.info('ChatbotDatabase', 'Editing specific message', {
+      message: message.content
+    })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     await drizzleClient
@@ -115,6 +124,9 @@ export class ChatbotDatabase {
   }
 
   public async blockInteraction(interactionId: string) {
+    Logger.info('ChatbotDatabase', 'Blocking interaction', {
+      interactionId
+    })
     const { connection, drizzleClient } =
       await DatabaseClient.getInstance().getConnection()
     await drizzleClient

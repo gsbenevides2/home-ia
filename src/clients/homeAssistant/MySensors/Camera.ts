@@ -1,3 +1,4 @@
+import { Logger } from '../../../logger'
 import {
   BinarySensor,
   BinarySensorDeviceClass,
@@ -27,8 +28,14 @@ export const Camera: CameraType = {
   },
 
   async getMotionDetectionSensor(name: MotionDetectionAreas) {
+    Logger.info('Camera HomeAssistant', 'Getting motion detection sensor', {
+      name
+    })
     const sensor = this.motionDetectionSensor[name]
     const { state } = await sensor.getData()
+    Logger.info('Camera HomeAssistant', 'Motion detection sensor state', {
+      state
+    })
     return state === 'on'
   }
 }

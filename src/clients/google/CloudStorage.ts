@@ -1,5 +1,6 @@
 import { Storage } from '@google-cloud/storage'
 import { randomUUID } from 'node:crypto'
+import { Logger } from '../../logger'
 import { AuthCredentials } from './AuthCrendentials'
 
 export class GoogleCloudStorage {
@@ -16,6 +17,10 @@ export class GoogleCloudStorage {
     fileName: string,
     bucketName: string
   ): Promise<string> {
+    Logger.info('GoogleCloudStorage', 'Uploading file', {
+      fileName,
+      bucketName
+    })
     const { credentials, projectId } =
       AuthCredentials.getInstance().getCredentials()
     const storage = new Storage({
@@ -39,6 +44,11 @@ export class GoogleCloudStorage {
     pathToFile: string,
     downloadToken: string
   ) => {
+    Logger.info('GoogleCloudStorage', 'Creating persistent download URL', {
+      bucket,
+      pathToFile,
+      downloadToken
+    })
     return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(
       pathToFile
     )}?alt=media&token=${downloadToken}`

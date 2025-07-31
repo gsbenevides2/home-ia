@@ -1,3 +1,4 @@
+import { Logger } from '../../../logger/index.ts'
 import {
   CodespacesComputeEngineMachine,
   CodespacesInstanceStatus
@@ -35,15 +36,18 @@ export class CodespacesSensor {
   )
 
   async sendState(state: CodespacesInstanceStatus) {
+    Logger.info('CodespacesSensor', 'Sending state', { state })
     await this.sensor.sendData(state)
   }
 
   async getCodespacesStatus() {
+    Logger.info('CodespacesSensor', 'Getting codespaces status')
     const response = await this.sensor.getData()
     return response.state
   }
 
   async setupButton() {
+    Logger.info('CodespacesSensor', 'Setting up button')
     const mqttClient = MQTTHomeAssistantClient.getInstance()
     mqttClient.createButton('codespaces', 'Toogle Codespaces', '1.0.0', () => {
       CodespacesComputeEngineMachine.getInstance().toogleMachine()

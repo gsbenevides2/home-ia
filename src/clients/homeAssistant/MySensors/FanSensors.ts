@@ -1,3 +1,4 @@
+import { Logger } from '../../../logger/index.ts'
 import { asyncFind } from '../../../utils/arrays.ts'
 import {
   SensorDeviceClass,
@@ -42,16 +43,19 @@ export const FanSensors = {
   },
 
   async getFanRoom(room: (typeof this.rooms)[number]) {
+    Logger.info('FanSensors', 'Getting fan room', { room })
     const roomData = this.switches[room]
     const velocities = Object.keys(roomData) as (keyof typeof roomData)[]
     const states = await asyncFind(velocities, async velocity => {
       const state = await roomData[velocity].getData()
       return state.state === 'on'
     })
+    Logger.info('FanSensors', 'Fan room state', { room, states })
     return states ?? 'off'
   },
 
   async setFanRoom(room: FanSensorsRooms, velocity: Velocities) {
+    Logger.info('FanSensors', 'Setting fan room', { room, velocity })
     const roomData = this.switches[room]
     if (velocity === 'desligado') {
       const switches = Object.values(roomData)

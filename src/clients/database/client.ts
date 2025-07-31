@@ -1,5 +1,6 @@
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
+import { Logger } from '../../logger'
 
 export class DatabaseClient {
   private static instance: DatabaseClient
@@ -13,6 +14,7 @@ export class DatabaseClient {
   private pool: Pool
 
   private constructor() {
+    Logger.info('DatabaseClient', 'Initializing database client')
     this.pool = new Pool({
       database: Bun.env.DB_NAME,
       host: Bun.env.DB_HOST,
@@ -21,6 +23,7 @@ export class DatabaseClient {
       password: Bun.env.DB_PASSWORD,
       max: 10
     })
+    Logger.info('DatabaseClient', 'Database client initialized')
   }
 
   public async getConnection() {
