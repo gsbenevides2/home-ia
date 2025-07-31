@@ -50,6 +50,7 @@ export class CodespacesSensor {
     Logger.info('CodespacesSensor', 'Setting up button')
     const mqttClient = MQTTHomeAssistantClient.getInstance()
     mqttClient.createButton('codespaces', 'Toogle Codespaces', '1.0.0', () => {
+      Logger.info('CodespacesSensor', 'Toogle codespaces')
       CodespacesComputeEngineMachine.getInstance().toogleMachine()
     })
   }

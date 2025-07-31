@@ -38,6 +38,7 @@ export class TurnOffPc {
     Logger.info('TurnOffPc', 'Setting up button')
     const mqttClient = MQTTHomeAssistantClient.getInstance()
     mqttClient.createButton('turn_off_pc', 'Turn Off PC', '1.0.0', () => {
+      Logger.info('TurnOffPc', 'Turning off PC')
       TurnOffPc.getInstance().turnOffPc()
     })
   }
